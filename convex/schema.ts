@@ -113,6 +113,9 @@ export default defineSchema({
     language: v.string(),
     // Set for caregivers: the profile holds the patient's anatomy and meds, run by the caregiver.
     caresFor: v.optional(caresForValidator),
+    // false: the user tapped "I don't know", so Villi assumes the most cautious anatomy
+    // until they confirm it with their care team. Missing on older rows means confirmed.
+    anatomyConfirmed: v.optional(v.boolean()),
     clinicianDemoVerified: v.boolean(),
     synthetic: v.boolean(),
     // What the user tapped on the gut diagram (coarse, non-identifying).

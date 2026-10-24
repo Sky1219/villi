@@ -29,6 +29,7 @@ type Profile = {
   diagram: DiagramState;
   language: string;
   caresFor: CaresFor | null;
+  anatomyConfirmed: boolean;
   meds: { name: string; dosageForm: string | null }[];
 };
 
@@ -624,6 +625,7 @@ export const run = internalAction({
           checkingFor: personFor(profile.role, profile.caresFor),
           anatomy: profile.anatomyText,
           anatomyGroup: profile.anatomyKey,
+          anatomyConfirmed: profile.anatomyConfirmed,
           medsOnFile: profile.meds,
         },
         item: {

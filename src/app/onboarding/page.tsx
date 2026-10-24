@@ -111,7 +111,7 @@ function Onboarding({ anonId, profile }: { anonId: string; profile: Profile | nu
     setSaving(true);
     setError(null);
     try {
-      await upsert({ anonId, role, language, caresFor: caresFor ?? undefined, anatomy, diagram: { removed, stomaAfter } });
+      await upsert({ anonId, role, language, caresFor: caresFor ?? undefined, anatomy, diagram: { removed, stomaAfter }, anatomyConfirmed: true });
       setStep("meds");
     } catch (e) {
       setError(friendlyError(e));
@@ -119,6 +119,43 @@ function Onboarding({ anonId, profile }: { anonId: string; profile: Profile | nu
       setSaving(false);
     }
   }
+
+  // "I don't know": the most cautious anatomy (end-jejunostomy, no colon) until the care team confirms it.
+  async function dontKnow() {
+    setSaving(true);
+    setError(null);
+    try {
+      await upsert({
+        anonId,
+        role,
+        language,
+        caresFor: caresFor ?? undefined,
+        anatomy: { stomaType: "jejunostomy", colonInContinuity: false, bowelLengthBand: "unknown" },
+        diagram: { removed: ["ileum", ...COLON], stomaAfter: "jejunum" },
+        anatomyConfirmed: false,
+      });
+      setStep("meds");
+    } catch (e) {
+      setError(friendlyError(e));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const dontKnowButton = (
+    <div className="space-y-1 border-t border-border pt-4">
+      <button
+        disabled={saving}
+        onClick={dontKnow}
+        className="min-h-12 w-full rounded-xl border border-border bg-surface px-4 font-bold disabled:opacity-60"
+      >
+        I don&apos;t know {their} anatomy
+      </button>
+      <p className="text-sm text-muted">
+        Villi will assume the most cautious case and add a question for {their} care team about what was removed.
+      </p>
+    </div>
+  );
 
   const title: Record<Step, string> = {
     role: "Who is this for?",
@@ -313,6 +350,13 @@ function Onboarding({ anonId, profile }: { anonId: string; profile: Profile | nu
             I&apos;d rather describe it
           </button>
         </>
+      )}
+
+      {(step === "colon" || step === "smallBowel" || step === "stoma" || step === "check") && dontKnowButton}
+      {error && step !== "check" && (
+        <p role="alert" className="text-sm text-flag">
+          {error}
+        </p>
       )}
 
       {step === "describe" && <QuickProfileForm anonId={anonId} onDone={() => setStep("meds")} />}

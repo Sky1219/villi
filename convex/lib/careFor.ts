@@ -30,6 +30,13 @@ export function personFor(role: string, caresFor: CaresFor | null | undefined): 
   return caresFor ? PERSON[caresFor] : "the person you care for";
 }
 
+// The first question for someone who tapped "I don't know" in onboarding.
+export function anatomyQuestionFor(role: string, caresFor: CaresFor | null | undefined): string {
+  if (role !== "caregiver") return "What exactly was removed, and how much small intestine do I have left?";
+  const who = caresFor ? PERSON[caresFor].replace(/^your /, "my ") : "the person I care for";
+  return `What exactly was removed in ${who}'s surgery, and how much small intestine is left?`;
+}
+
 // "Prepared by: the patient" or "Prepared by: a family caregiver (their son or daughter)".
 export function preparedBy(role: string, caresFor: CaresFor | null | undefined): string {
   if (role !== "caregiver") return "the patient";

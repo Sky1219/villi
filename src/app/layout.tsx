@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Atkinson_Hyperlegible } from "next/font/google";
 import "./globals.css";
 import { ConvexClientProvider } from "@/components/ConvexClientProvider";
+import { AnatomyBanner } from "@/components/AnatomyBanner";
 
 const atkinson = Atkinson_Hyperlegible({
   variable: "--font-atkinson",
@@ -28,7 +29,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" className={`${atkinson.variable} h-full antialiased`}>
       <body className="min-h-full font-sans">
         <ConvexClientProvider>
-          <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-4 pb-10">{children}</div>
+          <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-4 pb-10">
+            <AnatomyBanner />
+            {children}
+          </div>
         </ConvexClientProvider>
       </body>
     </html>

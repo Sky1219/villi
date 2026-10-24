@@ -11,7 +11,8 @@ import { anatomyValidator, caresForValidator, roleValidator } from "./schema";
 import { internal } from "./_generated/api";
 import { applyCareOutcomeTransition, applyPooledTransition } from "./community";
 import { SEGMENTS, anatomyKeyOf, defaultDiagram, describeAnatomy, type DiagramState, type SegmentId } from "./lib/anatomy";
-import type { Doc } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
+import { anatomyQuestionFor, type CaresFor } from "./lib/careFor";
 
 // The anonId (random UUID in localStorage) is the capability secret. It is
 // never returned by any query, and every public function resolves it here.
@@ -22,6 +23,22 @@ export async function requireProfile(
   const profile = await findProfile(ctx, anonId);
   if (!profile) throw new ConvexError("No profile for this device. Set one up first.");
   return profile;
+}
+
+// "I don't know my anatomy" starts the sheet with the question that settles it.
+async function ensureAnatomyQuestion(ctx: MutationCtx, profileId: Id<"profiles">, role: string, caresFor: CaresFor | undefined) {
+  const text = anatomyQuestionFor(role, caresFor);
+  const existing = await ctx.db.query("questions").withIndex("by_profileId", (q) => q.eq("profileId", profileId)).take(100);
+  if (existing.some((q) => q.text === text)) return;
+  await ctx.db.insert("questions", {
+    profileId,
+    text,
+    context: {},
+    resolved: false,
+    status: "open",
+    synthetic: false,
+    createdAt: Date.now(),
+  });
 }
 
 async function findProfile(ctx: QueryCtx | MutationCtx, anonId: string) {
@@ -159,6 +176,7 @@ function publicProfile(p: Doc<"profiles">) {
     anatomyText: describeAnatomy(p.anatomy),
     language: p.language,
     caresFor: p.role === "caregiver" ? (p.caresFor ?? null) : null,
+    anatomyConfirmed: p.anatomyConfirmed !== false,
     clinicianDemoVerified: p.clinicianDemoVerified,
     templateKey: p.templateKey ?? null,
   };
@@ -188,6 +206,7 @@ export const upsert = mutation({
     language: v.string(),
     caresFor: v.optional(caresForValidator),
     diagram: v.optional(v.object({ removed: v.array(v.string()), stomaAfter: v.union(v.string(), v.null()) })),
+    anatomyConfirmed: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     if (args.anonId.length < 20) throw new ConvexError("bad device id");
@@ -204,19 +223,14 @@ export const upsert = mutation({
       anatomyKey: anatomyKeyOf(args.anatomy),
       language: args.language.slice(0, 16),
       caresFor: args.role === "caregiver" ? (args.caresFor ?? "other") : undefined,
-      // Honor-system in the hackathon build, badged "demo verification".
-      clinicianDemoVerified: args.role === "clinician",
+      anatomyConfirmed: args.anatomyConfirmed ?? true,
+      // No clinician role is offered in the UI; real verification is a production task.
+      clinicianDemoVerified: false,
     };
-    if (existing) {
-      await ctx.db.patch("profiles", existing._id, fields);
-      return null;
-    }
-    await ctx.db.insert("profiles", {
-      anonId: args.anonId,
-      ...fields,
-      synthetic: false,
-      createdAt: Date.now(),
-    });
+    let profileId = existing?._id;
+    if (existing) await ctx.db.patch("profiles", existing._id, fields);
+    else profileId = await ctx.db.insert("profiles", { anonId: args.anonId, ...fields, synthetic: false, createdAt: Date.now() });
+    if (fields.anatomyConfirmed === false && profileId) await ensureAnatomyQuestion(ctx, profileId, fields.role, fields.caresFor);
     return null;
   },
 });
@@ -362,6 +376,7 @@ export const getById = internalQuery({
       diagram: diagramOf(p),
       language: p.language,
       caresFor: p.role === "caregiver" ? (p.caresFor ?? null) : null,
+      anatomyConfirmed: p.anatomyConfirmed !== false,
       meds: meds.map((m) => ({ name: m.name, dosageForm: m.dosageForm ?? null })),
     };
   },
