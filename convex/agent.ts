@@ -6,7 +6,8 @@ import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { anthropicClient, mainModel } from "./lib/llm";
 import { AGENT_SYSTEM } from "./lib/prompts";
-import { readPhoto, joinPhotoName } from "./lib/vision";
+import { readPhoto, readTablet, joinPhotoName } from "./lib/vision";
+import type { PillMatch } from "./lib/pillMatch";
 import { AnswerSchema, answerJsonSchema, type Answer } from "./lib/answerSchema";
 import { emptyRegistry, lintAnswer, type CitationRegistry } from "./lib/safety";
 import { scopeTagsFor, type Anatomy } from "./lib/anatomy";
@@ -388,10 +389,71 @@ export const run = internalAction({
       const agent = new Agent(ctx, args.answerId, answer.profileId, profile);
       await agent.trace("get_profile", `${profile.anatomyText}; ${profile.meds.length} meds on file; language ${profile.language}`);
 
+      // "I saw something": closed-set match against this user's own meds.
+      let sawContext: unknown = null;
+      if (answer.input.saw) {
+        const saw = { ...answer.input.saw };
+        if (answer.input.photoId) {
+          const url = await ctx.storage.getUrl(answer.input.photoId);
+          const read = url ? await readTablet(env, url) : null;
+          if (read?.isTabletOrCapsule) {
+            // The user's own chips win over what the photo suggests.
+            saw.shape ??= read.shape;
+            saw.color ??= read.color;
+            saw.imprint ??= read.imprint;
+            await agent.trace("read_photo", `photo shows a ${[read.color, read.shape].filter(Boolean).join(" ") || "tablet"}${read.imprint ? `, imprint "${read.imprint}"` : ""}`);
+          } else {
+            await agent.trace("read_photo", "photo didn't show a tablet clearly", false);
+          }
+        }
+        const desc = [saw.size, saw.color, saw.shape].filter(Boolean).join(" ") || "tablet";
+        await ctx.runMutation(internal.answers.setIdentified, {
+          answerId: args.answerId,
+          identified: `Something seen: ${desc}${saw.imprint ? ` marked "${saw.imprint}"` : ""}`,
+          clearPhoto: !!answer.input.photoId,
+        });
+        const res: { matches: PillMatch[]; checked: number; labels: Record<string, LabelResult> } = await ctx.runAction(
+          internal.meds.matchPill,
+          { profileId: answer.profileId, saw },
+        );
+        const top = res.matches[0];
+        // Each possible match's printed strength identifies the product; it is not a dose.
+        for (const m of res.matches) agent.reg.allowedStrengths.push(...strengthsIn(m.name));
+        if (top) {
+          // Only the top possible match's label is citable in this answer.
+          await agent.fetchLabel(top.name);
+          agent.itemName = top.name;
+        }
+        await agent.trace(
+          "match_pill",
+          res.matches.length
+            ? `possible match among your ${res.checked} meds: ${res.matches.map((m) => `${m.name} (${m.reasons.join(", ")})`).join("; ")}`
+            : `no likely match among your ${res.checked} meds`,
+          res.matches.length > 0,
+        );
+        sawContext = {
+          whatTheUserSaw: { ...saw, description: desc },
+          medsChecked: res.checked,
+          possibleMatches: res.matches.map((m) => ({
+            name: m.name,
+            why: m.reasons,
+            releaseForm: m.releaseForm,
+            labelAppearance: m.evidence,
+          })),
+        };
+      }
+
       // 1. Identify the item. Photos are read, then deleted.
-      let itemName = answer.kind === "followup" ? (parent?.identified ?? parent?.inputText ?? "") : (answer.input.text ?? "");
+      const saw = !!answer.input.saw;
+      let itemName = saw
+        ? agent.itemName || "an unidentified tablet"
+        : answer.kind === "followup"
+          ? (parent?.identified ?? parent?.inputText ?? "")
+          : (answer.input.text ?? "");
       let category: "pill" | "drink" | "food" | "action" = answer.input.category ?? "pill";
-      if (answer.kind === "scan" && answer.input.photoId) {
+      if (saw) {
+        // Identified and photo handled above.
+      } else if (answer.kind === "scan" && answer.input.photoId) {
         const url = await ctx.storage.getUrl(answer.input.photoId);
         const seen = url ? await readPhoto(env, url) : null;
         if (seen?.legible && seen.name) {
@@ -422,7 +484,7 @@ export const run = internalAction({
       agent.itemName = itemName;
 
       // canonicalize_item: one catalog entry per thing, in any language, never merged across release forms.
-      try {
+      if (!saw) try {
         const canon: Canonical = await ctx.runAction(internal.canonicalize.run, {
           text: itemName,
           categoryHint: answer.input.category ?? (answer.input.photoId ? category : undefined),
@@ -442,7 +504,13 @@ export const run = internalAction({
       }
 
       // 2. Prefetch the label server-side so the first model turn already has it.
-      const label = category === "pill" ? await agent.fetchLabel(itemName) : null;
+      const label = saw
+        ? agent.itemName
+          ? await ctx.runAction(internal.fda.fetchLabel, { name: agent.itemName })
+          : null
+        : category === "pill"
+          ? await agent.fetchLabel(itemName)
+          : null;
 
       const context = {
         profile: {
@@ -459,13 +527,15 @@ export const run = internalAction({
           attributes: agent.item?.attributes ?? null,
         },
         fdaLabel: label ? labelForModel(label) : null,
+        sawSomething: sawContext,
         followUp:
           answer.kind === "followup"
             ? { question: answer.input.text, previousAnswer: parent?.final ?? null }
             : null,
       };
-      const userText =
-        answer.kind === "followup"
+      const userText = saw
+        ? `The user saw what looked like an intact tablet, capsule or shell in their output. Explain what that can and cannot mean for this anatomy, which of their own medicines it could possibly be (from sawSomething.possibleMatches only, as a possible match, never an identification), and end with a question for the pharmacist.`
+        : answer.kind === "followup"
           ? `Follow-up question about ${itemName}: "${answer.input.text}". Answer it under the same rules, re-reading the label sections and guidelines.`
           : `Can a body like this one use ${itemName}?`;
 

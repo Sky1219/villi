@@ -63,6 +63,10 @@ function hintFromName(name: string): ReleaseForm | null {
 }
 
 // "Metoprolol succinate ER 50 mg tablets" -> "metoprolol succinate"
+export function labelKeyFor(name: string): string {
+  return `${coreName(name)}|${hintFromName(name) ?? "any"}`;
+}
+
 export function coreName(name: string): string {
   return name
     .toLowerCase()
@@ -77,7 +81,7 @@ export function coreName(name: string): string {
     .trim();
 }
 
-function computeFlags(sections: Record<string, string>, releaseForm: ReleaseForm) {
+export function computeFlags(sections: Record<string, string>, releaseForm: ReleaseForm) {
   const flags: LabelResult["flags"] = [];
   if (releaseForm === "extended-release" || releaseForm === "delayed-release") {
     flags.push({ flag: releaseForm, section: "dosage_form", evidence: "NDC dosage form" });
@@ -136,6 +140,7 @@ function rank(
   const desired = hint ?? "immediate-release";
   const strengths = Array.from(name.toUpperCase().matchAll(/(\d+(?:\.\d+)?)\s?(MG|MCG|G)\b/g), (m) => `${m[1]} ${m[2]}`);
   const wantsChild = /child|infant|pediatric/i.test(name);
+  const wantsOdt = /\bodt\b|disintegrat|dissolv|melt/i.test(name);
   const hintWords: Record<string, RegExp> = {
     "extended-release": /EXTENDED[- ]RELEASE|SUSTAINED|\bER\b|\bXL\b/,
     "delayed-release": /DELAYED[- ]RELEASE|ENTERIC/,
@@ -153,6 +158,7 @@ function rank(
     if (!hint && !/ORAL SOLUTION|SUSPENSION|SYRUP|LIQUID/.test(text)) s += 15;
     if (strengths.some((st) => text.includes(st))) s += 15;
     if (!wantsChild && /CHILD|INFANT|PEDIATRIC/.test(text + brand.toUpperCase())) s -= 40;
+    if (!wantsOdt && /ORALLY DISINTEGRATING|\bODT\b/.test(text + brand.toUpperCase())) s -= 30;
     if (brand.startsWith(core) || generic.startsWith(core)) s += 30;
     if (generic.split(",").length === 1) s += 10; // single-ingredient products first
     if ((l.openfda?.is_original_packager as boolean[] | undefined)?.[0] === true) s += 5;
@@ -315,7 +321,7 @@ export const clearCache = internalMutation({
 export const fetchLabel = internalAction({
   args: { name: v.string() },
   handler: async (ctx, args): Promise<LabelResult> => {
-    const queryKey = `${coreName(args.name)}|${hintFromName(args.name) ?? "any"}`;
+    const queryKey = labelKeyFor(args.name);
     const cached: Doc<"fda_label_cache"> | null = await ctx.runQuery(internal.fda.getCached, { queryKey });
     if (cached && Date.now() - cached.fetchedAt < (cached.found ? FOUND_TTL : MISSING_TTL)) {
       return fromRow(cached);

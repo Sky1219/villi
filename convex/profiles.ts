@@ -8,6 +8,7 @@ import {
   type QueryCtx,
 } from "./_generated/server";
 import { anatomyValidator, roleValidator } from "./schema";
+import { internal } from "./_generated/api";
 import { SEGMENTS, anatomyKeyOf, defaultDiagram, describeAnatomy, type DiagramState, type SegmentId } from "./lib/anatomy";
 import type { Doc } from "./_generated/dataModel";
 
@@ -154,7 +155,8 @@ export const cloneDemo = mutation({
       .withIndex("by_profileId", (q) => q.eq("profileId", template._id))
       .take(50);
     for (const { _id, _creationTime, profileId: _p, ...rest } of meds) {
-      await ctx.db.insert("meds", { ...rest, profileId, addedAt: Date.now() });
+      const medId = await ctx.db.insert("meds", { ...rest, profileId, addedAt: Date.now() });
+      await ctx.scheduler.runAfter(0, internal.meds.enrich, { medId });
     }
     return null;
   },

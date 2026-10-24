@@ -22,6 +22,7 @@ import type * as lib_evidence from "../lib/evidence.js";
 import type * as lib_llm from "../lib/llm.js";
 import type * as lib_moderation from "../lib/moderation.js";
 import type * as lib_moderationFixtures from "../lib/moderationFixtures.js";
+import type * as lib_pillMatch from "../lib/pillMatch.js";
 import type * as lib_prompts from "../lib/prompts.js";
 import type * as lib_retrier from "../lib/retrier.js";
 import type * as lib_safety from "../lib/safety.js";
@@ -35,6 +36,7 @@ import type * as profiles from "../profiles.js";
 import type * as questions from "../questions.js";
 import type * as reviewer from "../reviewer.js";
 import type * as seed from "../seed.js";
+import type * as sheet from "../sheet.js";
 import type * as swaps from "../swaps.js";
 
 import type {
@@ -58,6 +60,7 @@ declare const fullApi: ApiFromModules<{
   "lib/llm": typeof lib_llm;
   "lib/moderation": typeof lib_moderation;
   "lib/moderationFixtures": typeof lib_moderationFixtures;
+  "lib/pillMatch": typeof lib_pillMatch;
   "lib/prompts": typeof lib_prompts;
   "lib/retrier": typeof lib_retrier;
   "lib/safety": typeof lib_safety;
@@ -71,6 +74,7 @@ declare const fullApi: ApiFromModules<{
   questions: typeof questions;
   reviewer: typeof reviewer;
   seed: typeof seed;
+  sheet: typeof sheet;
   swaps: typeof swaps;
 }>;
 

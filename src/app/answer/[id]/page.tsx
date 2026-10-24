@@ -28,6 +28,7 @@ const TOOL_LABEL: Record<string, string> = {
   query_swaps: "Safe-swaps board",
   query_care_team_answers: "Care-team answers",
   lookup_ors: "ORS reference",
+  match_pill: "Your medicines",
   safety_lint: "Safety check",
   submit_answer: "Drafted answer",
   reviewer: "Second reviewer",
@@ -346,10 +347,10 @@ function AnswerView({ anonId, answerId }: { anonId: string; answerId: Id<"answer
       <section>
         <p className="text-sm text-muted">{a.kind === "followup" ? "Follow-up" : "Checking"}</p>
         <h1 className="text-2xl font-bold">{a.kind === "followup" ? a.inputText : (a.identified ?? a.inputText ?? "Your photo")}</h1>
-        {a.kind === "scan" && a.identified && a.hadPhoto === false && a.inputText === null && (
+        {a.kind === "scan" && !a.isSaw && a.identified && a.hadPhoto === false && a.inputText === null && (
           <p className="text-sm text-muted">Read from your photo.</p>
         )}
-        {a.kind === "scan" && a.identified && (
+        {a.kind === "scan" && !a.isSaw && a.identified && (
           <Link href={`/?fix=1`} className="text-sm font-bold text-accent underline">
             Not right? Type the name instead
           </Link>
@@ -369,7 +370,7 @@ function AnswerView({ anonId, answerId }: { anonId: string; answerId: Id<"answer
         <section className="rounded-2xl border border-border bg-surface-2 p-4">
           <p className="font-bold">{a.status === "blocked" ? "This answer didn't pass the safety check." : "Something went wrong."}</p>
           <p className="mt-1 text-sm text-muted">{a.error}</p>
-          {retryText && (
+          {retryText && !a.isSaw && (
             <button
               onClick={async () => {
                 const id = await start({ anonId, text: retryText });

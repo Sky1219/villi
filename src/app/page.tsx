@@ -86,6 +86,10 @@ function Home({ anonId }: { anonId: string }) {
 
       <ScanBox anonId={anonId} />
 
+      <Link href="/saw" className="flex min-h-12 items-center justify-center rounded-xl border border-border bg-surface font-bold">
+        I saw something (a tablet came through)
+      </Link>
+
       <QuickLog anonId={anonId} />
 
       <section>

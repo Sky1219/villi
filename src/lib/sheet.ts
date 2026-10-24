@@ -1,0 +1,49 @@
+import type { FunctionReturnType } from "convex/server";
+import type { api } from "@convex/_generated/api";
+import { citationLabel } from "@/lib/citations";
+
+export type SheetData = NonNullable<FunctionReturnType<typeof api.sheet.get>>;
+
+export const OUTCOME_WORD = { helped: "helped", neutral: "no change", hurt: "worse" } as const;
+
+export function citeText(c: string | null): string {
+  if (!c) return "";
+  const [kind, ...rest] = c.split(":");
+  return ` (${citationLabel(kind, rest.join(":"))})`;
+}
+
+// Patterns are hypotheses from the user's own log, never conclusions.
+export function patternSentence(p: SheetData["patterns"][number]): string {
+  const top = (["hurt", "helped", "neutral"] as const).reduce((a, b) => (p[b] > p[a] ? b : a));
+  return `${p.item}: logged ${OUTCOME_WORD[top]} ${p[top]} of ${p.total} times (${p.helped} helped, ${p.neutral} no change, ${p.hurt} worse)`;
+}
+
+export function sheetMarkdown(d: SheetData, date: string): string {
+  const lines: string[] = [];
+  lines.push(`# Appointment sheet`, ``, `Prepared with Villi on ${date}. Anatomy: ${d.anatomyText}.`, ``);
+  lines.push(`## Questions to ask`, ``);
+  if (d.open.length === 0) lines.push(`- (none open)`);
+  d.open.forEach((q, i) => lines.push(`${i + 1}. ${q.text}${q.itemName ? ` _(about ${q.itemName})_` : ""}`));
+  lines.push(``, `## Patterns in my own log (to discuss, not conclusions)`, ``);
+  if (d.patterns.length === 0) lines.push(`- Not enough entries yet.`);
+  d.patterns.forEach((p) => lines.push(`- ${patternSentence(p)}`));
+  lines.push(``, `## Medicines and what the labels say`, ``);
+  if (d.meds.length === 0) lines.push(`- (no medicines on file)`);
+  for (const m of d.meds) {
+    const flags = m.flags.map((f) => `${f.text}${citeText(f.citation)}`).join("; ");
+    lines.push(`- **${m.name}**${m.dosageForm ? `: ${m.dosageForm.toLowerCase()}` : ""}${flags ? `. Flags: ${flags}` : m.labelChecked ? ". No flags in the sections checked" : ". Label not checked yet"}`);
+  }
+  if (d.answered.length) {
+    lines.push(``, `## Answered`, ``);
+    for (const q of d.answered) {
+      lines.push(`- ${q.text}`);
+      if (q.answer) lines.push(`  - ${q.answer.professionalType}: ${q.answer.text}`);
+    }
+  }
+  lines.push(
+    ``,
+    `---`,
+    `Villi flags and cites; it does not make treatment decisions. Label text from openFDA, which says not to rely on it alone for medical decisions.`,
+  );
+  return lines.join("\n");
+}

@@ -2,8 +2,10 @@ import { ConvexError, v } from "convex/values";
 import { env, internalAction, internalMutation, internalQuery, mutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { requireProfile } from "./profiles";
+import { sawValidator } from "./schema";
 import { joinPhotoName, readPhoto } from "./lib/vision";
 import type { LabelResult } from "./fda";
+import { matchPills, type MedForMatch, type PillMatch } from "./lib/pillMatch";
 
 const MAX_MEDS = 30;
 
@@ -105,5 +107,42 @@ export const enrich = internalAction({
       fdaLabelKey: label.queryKey,
     });
     return null;
+  },
+});
+
+export const listForProfile = internalQuery({
+  args: { profileId: v.id("profiles") },
+  handler: async (ctx, args) => {
+    const meds = await ctx.db
+      .query("meds")
+      .withIndex("by_profileId", (q) => q.eq("profileId", args.profileId))
+      .take(MAX_MEDS);
+    return meds.map((m) => ({ name: m.name, dosageForm: m.dosageForm ?? null }));
+  },
+});
+
+
+// match_pill: closed set, this profile's own meds only.
+export const matchPill = internalAction({
+  args: { profileId: v.id("profiles"), saw: sawValidator },
+  handler: async (ctx, args): Promise<{ matches: PillMatch[]; checked: number; labels: Record<string, LabelResult> }> => {
+    const meds: { name: string; dosageForm: string | null }[] = await ctx.runQuery(internal.meds.listForProfile, {
+      profileId: args.profileId,
+    });
+    const labels: Record<string, LabelResult> = {};
+    const forMatch: MedForMatch[] = await Promise.all(
+      meds.map(async (m) => {
+        const label: LabelResult = await ctx.runAction(internal.fda.fetchLabel, { name: m.name });
+        labels[m.name] = label;
+        const s = label.sections;
+        return {
+          name: m.name,
+          dosageForm: label.dosageForms[0] ?? m.dosageForm,
+          releaseForm: label.releaseForm,
+          labelText: [s.how_supplied, s.dosage_forms_and_strengths, s.description, s.spl_unclassified_section].filter(Boolean).join(" "),
+        };
+      }),
+    );
+    return { matches: matchPills(args.saw, forMatch), checked: meds.length, labels };
   },
 });

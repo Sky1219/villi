@@ -62,6 +62,13 @@ export const traceStepValidator = v.object({
   at: v.number(),
 });
 
+export const sawValidator = v.object({
+  shape: v.union(v.string(), v.null()),
+  color: v.union(v.string(), v.null()),
+  size: v.union(v.string(), v.null()),
+  imprint: v.union(v.string(), v.null()),
+});
+
 export const answerStatusValidator = v.union(
   v.literal("queued"),
   v.literal("running"),
@@ -267,6 +274,8 @@ export default defineSchema({
       text: v.optional(v.string()),
       photoId: v.optional(v.id("_storage")),
       category: v.optional(categoryValidator),
+      // "I saw something": chips the user picked (coarse descriptors only).
+      saw: v.optional(sawValidator),
     }),
     status: answerStatusValidator,
     // What the agent identified, shown as correctable before the answer lands.

@@ -49,3 +49,33 @@ export function joinPhotoName(seen: VisionRead): string {
     return `${acc} ${part}`.trim();
   }, "");
 }
+
+export const TabletSchema = z.object({
+  shape: z.enum(["round", "oval", "oblong", "capsule", "other"]).nullable(),
+  color: z.enum(["white", "yellow", "pink", "orange", "blue", "green", "brown", "red", "two-tone", "other"]).nullable(),
+  imprint: z.string().nullable(),
+  isTabletOrCapsule: z.boolean(),
+});
+export type TabletRead = z.infer<typeof TabletSchema>;
+
+// "I saw something": a tablet or shell photographed on a clean surface.
+export async function readTablet(e: LlmEnv, url: string): Promise<TabletRead | null> {
+  const client = anthropicClient(e);
+  const res = await client.messages.parse({
+    model: fastModel(e),
+    max_tokens: 1000,
+    system:
+      "You describe a single tablet, capsule or tablet shell photographed on a plain surface. Report only shape, color and any printed or debossed imprint you can actually read. Never guess a drug name. If the photo is not of a tablet or capsule, set isTabletOrCapsule=false and the other fields null.",
+    output_config: { effort: "low", format: zodOutputFormat(TabletSchema) },
+    messages: [
+      {
+        role: "user",
+        content: [
+          { type: "image", source: { type: "url", url } },
+          { type: "text", text: "Describe this tablet's shape, color and imprint." },
+        ],
+      },
+    ],
+  });
+  return res.parsed_output;
+}

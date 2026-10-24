@@ -4,7 +4,7 @@ import { internalMutation, internalQuery, mutation, query } from "./_generated/s
 import { internal } from "./_generated/api";
 import { retrier } from "./lib/retrier";
 import type { Doc } from "./_generated/dataModel";
-import { categoryValidator } from "./schema";
+import { categoryValidator, sawValidator } from "./schema";
 import { requireProfile } from "./profiles";
 
 const MAX_TRACE = 40;
@@ -20,6 +20,7 @@ function publicAnswer(a: Doc<"answers">) {
     status: a.status,
     inputText: a.input.text ?? null,
     hadPhoto: !!a.input.photoId,
+    isSaw: !!a.input.saw,
     identified: a.identified ?? null,
     itemId: a.itemId ?? null,
     toolTrace: a.toolTrace,
@@ -46,11 +47,18 @@ export const start = mutation({
     photoId: v.optional(v.id("_storage")),
     category: v.optional(categoryValidator),
     parentId: v.optional(v.id("answers")),
+    saw: v.optional(sawValidator),
   },
   handler: async (ctx, args) => {
     const profile = await requireProfile(ctx, args.anonId);
     const text = args.text?.trim().slice(0, 500);
-    if (!text && !args.photoId) throw new ConvexError("Type a name or add a photo.");
+    if (!text && !args.photoId && !args.saw) throw new ConvexError("Type a name or add a photo.");
+    const saw = args.saw && {
+      shape: args.saw.shape?.slice(0, 20) ?? null,
+      color: args.saw.color?.slice(0, 20) ?? null,
+      size: args.saw.size?.slice(0, 20) ?? null,
+      imprint: args.saw.imprint?.trim().slice(0, 20) || null,
+    };
 
     // Per-device rate limit: the URL is public and every scan costs model time.
     const recent = await ctx.db
@@ -70,7 +78,7 @@ export const start = mutation({
       profileId: profile._id,
       kind: args.parentId ? "followup" : "scan",
       parentId: args.parentId,
-      input: { text, photoId: args.photoId, category: args.category },
+      input: { text, photoId: args.photoId, category: saw ? "pill" : args.category, saw },
       status: "queued",
       toolTrace: [],
       createdAt: Date.now(),

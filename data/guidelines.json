@@ -41,7 +41,7 @@
       "diagram": {
         "segmentIds": ["jejunum", "ileum", "cecum", "ascending-colon", "transverse-colon", "descending-sigmoid"],
         "mode": "releases-here",
-        "label": "Built to release slowly along a long intestine; a shorter gut gives it less time"
+        "label": "Timed-release and coated designs expect a long intestine; a shorter gut gives them less time"
       }
     },
     {
