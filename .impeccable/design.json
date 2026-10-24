@@ -1,0 +1,481 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-24T10:49:34.540075+00:00",
+  "title": "Design System: Villi",
+  "extensions": {
+    "colorMeta": {
+      "warm-rust": {
+        "role": "primary",
+        "displayName": "Warm Rust",
+        "canonical": "#ac4126",
+        "darkCanonical": "#e07a5f",
+        "tonalRamp": [
+          "oklch(15% 0.146 35.2)",
+          "oklch(27% 0.146 35.2)",
+          "oklch(39% 0.146 35.2)",
+          "oklch(51% 0.146 35.2)",
+          "oklch(63% 0.146 35.2)",
+          "oklch(75% 0.146 35.2)",
+          "oklch(85% 0.146 35.2)",
+          "oklch(95% 0.146 35.2)"
+        ]
+      },
+      "warm-rust-ink": {
+        "role": "primary",
+        "displayName": "Warm Rust Ink",
+        "canonical": "#ffffff",
+        "darkCanonical": "#1b1714",
+        "tonalRamp": [
+          "oklch(15% 0.000 89.9)",
+          "oklch(27% 0.000 89.9)",
+          "oklch(39% 0.000 89.9)",
+          "oklch(51% 0.000 89.9)",
+          "oklch(63% 0.000 89.9)",
+          "oklch(75% 0.000 89.9)",
+          "oklch(85% 0.000 89.9)",
+          "oklch(95% 0.000 89.9)"
+        ]
+      },
+      "rust-wash": {
+        "role": "primary",
+        "displayName": "Rust Wash",
+        "canonical": "#f6dfd6",
+        "darkCanonical": "#3f2a22",
+        "tonalRamp": [
+          "oklch(15% 0.028 42.7)",
+          "oklch(27% 0.028 42.7)",
+          "oklch(39% 0.028 42.7)",
+          "oklch(51% 0.028 42.7)",
+          "oklch(63% 0.028 42.7)",
+          "oklch(75% 0.028 42.7)",
+          "oklch(85% 0.028 42.7)",
+          "oklch(95% 0.028 42.7)"
+        ]
+      },
+      "oat-paper": {
+        "role": "neutral",
+        "displayName": "Oat Paper",
+        "canonical": "#fbf6ef",
+        "darkCanonical": "#1b1714",
+        "tonalRamp": [
+          "oklch(15% 0.011 76.6)",
+          "oklch(27% 0.011 76.6)",
+          "oklch(39% 0.011 76.6)",
+          "oklch(51% 0.011 76.6)",
+          "oklch(63% 0.011 76.6)",
+          "oklch(75% 0.011 76.6)",
+          "oklch(85% 0.011 76.6)",
+          "oklch(95% 0.011 76.6)"
+        ]
+      },
+      "card-white": {
+        "role": "neutral",
+        "displayName": "Card White",
+        "canonical": "#ffffff",
+        "darkCanonical": "#26201c",
+        "tonalRamp": [
+          "oklch(15% 0.000 89.9)",
+          "oklch(27% 0.000 89.9)",
+          "oklch(39% 0.000 89.9)",
+          "oklch(51% 0.000 89.9)",
+          "oklch(63% 0.000 89.9)",
+          "oklch(75% 0.000 89.9)",
+          "oklch(85% 0.000 89.9)",
+          "oklch(95% 0.000 89.9)"
+        ]
+      },
+      "linen": {
+        "role": "neutral",
+        "displayName": "Linen",
+        "canonical": "#f4ece1",
+        "darkCanonical": "#2f2823",
+        "tonalRamp": [
+          "oklch(15% 0.017 76.1)",
+          "oklch(27% 0.017 76.1)",
+          "oklch(39% 0.017 76.1)",
+          "oklch(51% 0.017 76.1)",
+          "oklch(63% 0.017 76.1)",
+          "oklch(75% 0.017 76.1)",
+          "oklch(85% 0.017 76.1)",
+          "oklch(95% 0.017 76.1)"
+        ]
+      },
+      "roasted-ink": {
+        "role": "neutral",
+        "displayName": "Roasted Ink",
+        "canonical": "#2b2420",
+        "darkCanonical": "#f3ebe2",
+        "tonalRamp": [
+          "oklch(15% 0.013 51.6)",
+          "oklch(27% 0.013 51.6)",
+          "oklch(39% 0.013 51.6)",
+          "oklch(51% 0.013 51.6)",
+          "oklch(63% 0.013 51.6)",
+          "oklch(75% 0.013 51.6)",
+          "oklch(85% 0.013 51.6)",
+          "oklch(95% 0.013 51.6)"
+        ]
+      },
+      "driftwood": {
+        "role": "neutral",
+        "displayName": "Driftwood",
+        "canonical": "#6e625a",
+        "darkCanonical": "#b3a597",
+        "tonalRamp": [
+          "oklch(15% 0.020 55.9)",
+          "oklch(27% 0.020 55.9)",
+          "oklch(39% 0.020 55.9)",
+          "oklch(51% 0.020 55.9)",
+          "oklch(63% 0.020 55.9)",
+          "oklch(75% 0.020 55.9)",
+          "oklch(85% 0.020 55.9)",
+          "oklch(95% 0.020 55.9)"
+        ]
+      },
+      "sandstone-line": {
+        "role": "neutral",
+        "displayName": "Sandstone Line",
+        "canonical": "#e6dacb",
+        "darkCanonical": "#3d342e",
+        "tonalRamp": [
+          "oklch(15% 0.024 73.6)",
+          "oklch(27% 0.024 73.6)",
+          "oklch(39% 0.024 73.6)",
+          "oklch(51% 0.024 73.6)",
+          "oklch(63% 0.024 73.6)",
+          "oklch(75% 0.024 73.6)",
+          "oklch(85% 0.024 73.6)",
+          "oklch(95% 0.024 73.6)"
+        ]
+      },
+      "flag-red": {
+        "role": "semantic",
+        "displayName": "Flag Red",
+        "canonical": "#b4321f",
+        "darkCanonical": "#ff8a73",
+        "tonalRamp": [
+          "oklch(15% 0.160 31.4)",
+          "oklch(27% 0.160 31.4)",
+          "oklch(39% 0.160 31.4)",
+          "oklch(51% 0.160 31.4)",
+          "oklch(63% 0.160 31.4)",
+          "oklch(75% 0.160 31.4)",
+          "oklch(85% 0.160 31.4)",
+          "oklch(95% 0.160 31.4)"
+        ]
+      },
+      "flag-wash": {
+        "role": "semantic",
+        "displayName": "Flag Wash",
+        "canonical": "#fbe3dd",
+        "darkCanonical": "#44241d",
+        "tonalRamp": [
+          "oklch(15% 0.028 34.3)",
+          "oklch(27% 0.028 34.3)",
+          "oklch(39% 0.028 34.3)",
+          "oklch(51% 0.028 34.3)",
+          "oklch(63% 0.028 34.3)",
+          "oklch(75% 0.028 34.3)",
+          "oklch(85% 0.028 34.3)",
+          "oklch(95% 0.028 34.3)"
+        ]
+      },
+      "sage-ok": {
+        "role": "semantic",
+        "displayName": "Sage",
+        "canonical": "#2f6b3a",
+        "darkCanonical": "#9fd3a3",
+        "tonalRamp": [
+          "oklch(15% 0.100 147.7)",
+          "oklch(27% 0.100 147.7)",
+          "oklch(39% 0.100 147.7)",
+          "oklch(51% 0.100 147.7)",
+          "oklch(63% 0.100 147.7)",
+          "oklch(75% 0.100 147.7)",
+          "oklch(85% 0.100 147.7)",
+          "oklch(95% 0.100 147.7)"
+        ]
+      },
+      "sage-wash": {
+        "role": "semantic",
+        "displayName": "Sage Wash",
+        "canonical": "#e4efe3",
+        "darkCanonical": "#22331f",
+        "tonalRamp": [
+          "oklch(15% 0.020 143.0)",
+          "oklch(27% 0.020 143.0)",
+          "oklch(39% 0.020 143.0)",
+          "oklch(51% 0.020 143.0)",
+          "oklch(63% 0.020 143.0)",
+          "oklch(75% 0.020 143.0)",
+          "oklch(85% 0.020 143.0)",
+          "oklch(95% 0.020 143.0)"
+        ]
+      },
+      "harbor-blue": {
+        "role": "semantic",
+        "displayName": "Harbor Blue",
+        "canonical": "#2c5a85",
+        "darkCanonical": "#9cc3ea",
+        "tonalRamp": [
+          "oklch(15% 0.087 248.9)",
+          "oklch(27% 0.087 248.9)",
+          "oklch(39% 0.087 248.9)",
+          "oklch(51% 0.087 248.9)",
+          "oklch(63% 0.087 248.9)",
+          "oklch(75% 0.087 248.9)",
+          "oklch(85% 0.087 248.9)",
+          "oklch(95% 0.087 248.9)"
+        ]
+      },
+      "harbor-wash": {
+        "role": "semantic",
+        "displayName": "Harbor Wash",
+        "canonical": "#e3ebf3",
+        "darkCanonical": "#1f2c39",
+        "tonalRamp": [
+          "oklch(15% 0.014 248.0)",
+          "oklch(27% 0.014 248.0)",
+          "oklch(39% 0.014 248.0)",
+          "oklch(51% 0.014 248.0)",
+          "oklch(63% 0.014 248.0)",
+          "oklch(75% 0.014 248.0)",
+          "oklch(85% 0.014 248.0)",
+          "oklch(95% 0.014 248.0)"
+        ]
+      },
+      "removed-gray": {
+        "role": "semantic",
+        "displayName": "Removed Gray",
+        "canonical": "#c9bdb0",
+        "darkCanonical": "#5a5048",
+        "tonalRamp": [
+          "oklch(15% 0.023 69.7)",
+          "oklch(27% 0.023 69.7)",
+          "oklch(39% 0.023 69.7)",
+          "oklch(51% 0.023 69.7)",
+          "oklch(63% 0.023 69.7)",
+          "oklch(75% 0.023 69.7)",
+          "oklch(85% 0.023 69.7)",
+          "oklch(95% 0.023 69.7)"
+        ]
+      },
+      "living-segment": {
+        "role": "semantic",
+        "displayName": "Living Segment",
+        "canonical": "#e9a48c",
+        "darkCanonical": "#b9705a",
+        "tonalRamp": [
+          "oklch(15% 0.089 40.0)",
+          "oklch(27% 0.089 40.0)",
+          "oklch(39% 0.089 40.0)",
+          "oklch(51% 0.089 40.0)",
+          "oklch(63% 0.089 40.0)",
+          "oklch(75% 0.089 40.0)",
+          "oklch(85% 0.089 40.0)",
+          "oklch(95% 0.089 40.0)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "The Villi wordmark in the home header only."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Item name on an answer; page titles."
+      },
+      "verdict": {
+        "displayName": "Verdict",
+        "purpose": "The one-sentence verdict in the answer state card."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Primary card headings, the ASK question, primary button labels."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Default copy and inputs; bold for in-card section headings."
+      },
+      "body-small": {
+        "displayName": "Body Small",
+        "purpose": "Supporting lines, trace steps, help-now text."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Uppercase state tags, eyebrows, badges."
+      }
+    },
+    "shadows": [
+      {
+        "name": "counter-lift",
+        "value": "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
+        "purpose": "Scan box and home entry cards only."
+      }
+    ],
+    "motion": [
+      {
+        "name": "villi-pulse-trace",
+        "value": "villi-pulse 1.2s ease-in-out infinite",
+        "purpose": "Working dot in the live tool trace; motion-safe only."
+      },
+      {
+        "name": "villi-pulse-diagram",
+        "value": "villi-pulse 1.8s ease-in-out infinite",
+        "purpose": "Cited gut-diagram highlight; motion-safe only."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "column",
+        "value": "448px",
+        "purpose": "Single max-w-md column on every viewport."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single Warm Rust action per card: Take a photo, Add to appointment sheet.",
+      "html": "<button class=\"ds-btn-primary\"><svg aria-hidden=\"true\" width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M4 8h3l2-3h6l2 3h3v11H4z\"/><circle cx=\"12\" cy=\"13\" r=\"3.5\"/></svg>Take a photo</button>",
+      "css": ".ds-btn-primary{font-family:var(--font-atkinson),ui-sans-serif,system-ui,sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:56px;padding:12px 16px;border:0;border-radius:12px;background:var(--accent,#ac4126);color:var(--accent-ink,#fff);font-size:1.125rem;font-weight:700;cursor:pointer}.ds-btn-primary:hover{filter:brightness(0.95)}.ds-btn-primary:focus-visible{outline:3px solid var(--focus,#2c5a85);outline-offset:2px}.ds-btn-primary:disabled{opacity:.6}"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Secondary action beside an input: Check, Ask, Try again.",
+      "html": "<button class=\"ds-btn-outline\">Check</button>",
+      "css": ".ds-btn-outline{font-family:var(--font-atkinson),ui-sans-serif,system-ui,sans-serif;min-height:48px;padding:0 16px;border:1px solid var(--accent,#ac4126);border-radius:12px;background:transparent;color:var(--accent,#ac4126);font-size:1rem;font-weight:700;cursor:pointer}.ds-btn-outline:hover{background:var(--accent-soft,#f6dfd6)}.ds-btn-outline:focus-visible{outline:3px solid var(--focus,#2c5a85);outline-offset:2px}.ds-btn-outline:disabled{opacity:.5}"
+    },
+    {
+      "name": "Nav Button",
+      "kind": "nav",
+      "refersTo": "button-nav",
+      "description": "Two-up home navigation to Community and Your sheet.",
+      "html": "<nav class=\"ds-nav\"><a href=\"#\">Community</a><a href=\"#\">Your sheet (2)</a></nav>",
+      "css": ".ds-nav{font-family:var(--font-atkinson),ui-sans-serif,system-ui,sans-serif;display:grid;grid-template-columns:1fr 1fr;gap:8px}.ds-nav a{display:flex;min-height:48px;align-items:center;justify-content:center;border:1px solid var(--border,#e6dacb);border-radius:12px;background:var(--surface,#fff);color:var(--foreground,#2b2420);font-weight:700;text-decoration:none}.ds-nav a:hover{background:var(--surface-2,#f4ece1)}.ds-nav a:focus-visible{outline:3px solid var(--focus,#2c5a85);outline-offset:2px}"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Item name entry; Oat Paper fill one step below the card.",
+      "html": "<input class=\"ds-input\" placeholder=\"e.g. Gatorade, or Metoprolol ER 50 mg\" aria-label=\"Item name\">",
+      "css": ".ds-input{font-family:var(--font-atkinson),ui-sans-serif,system-ui,sans-serif;min-height:48px;width:100%;padding:0 12px;border:1px solid var(--border,#e6dacb);border-radius:12px;background:var(--background,#fbf6ef);color:var(--foreground,#2b2420);font-size:1rem}.ds-input::placeholder{color:var(--muted,#6e625a)}.ds-input:focus-visible{outline:3px solid var(--focus,#2c5a85);outline-offset:2px}"
+    },
+    {
+      "name": "Choice Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Toggle chip for anatomy, shape, color and language choices; selected state via aria-pressed.",
+      "html": "<div class=\"ds-chips\"><button class=\"ds-chip\" aria-pressed=\"true\">Round</button><button class=\"ds-chip\" aria-pressed=\"false\">Oval</button></div>",
+      "css": ".ds-chips{display:flex;gap:8px}.ds-chip{font-family:var(--font-atkinson),ui-sans-serif,system-ui,sans-serif;min-height:48px;padding:8px 12px;border:1px solid var(--border,#e6dacb);border-radius:12px;background:var(--surface,#fff);color:var(--foreground,#2b2420);font-size:1rem;cursor:pointer}.ds-chip[aria-pressed=true]{border-color:var(--accent,#ac4126);background:var(--accent-soft,#f6dfd6);font-weight:700}.ds-chip:focus-visible{outline:3px solid var(--focus,#2c5a85);outline-offset:2px}"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Default answer section (Why, community, sources) with a citation pill.",
+      "html": "<section class=\"ds-card\"><h2>Why</h2><p>This tablet is designed to release slowly, in a gut that is now much shorter. <span class=\"ds-cite\">G</span></p></section>",
+      "css": ".ds-card{font-family:var(--font-atkinson),ui-sans-serif,system-ui,sans-serif;padding:16px;border:1px solid var(--border,#e6dacb);border-radius:16px;background:var(--surface,#fff);color:var(--foreground,#2b2420)}.ds-card h2{margin:0 0 8px;font-size:1rem;font-weight:700}.ds-card p{margin:0;line-height:1.5}.ds-cite{display:inline-flex;align-items:center;min-height:24px;padding:2px 10px;border-radius:9999px;background:var(--info-soft,#e3ebf3);color:var(--info,#2c5a85);font-size:.75rem;font-weight:700}"
+    },
+    {
+      "name": "Answer State Card",
+      "kind": "custom",
+      "refersTo": "card",
+      "description": "Signature: state tag plus one-sentence verdict. Flag state shown; no state is ever green.",
+      "html": "<section class=\"ds-state\"><p class=\"ds-state-tag\">Flag to discuss</p><p class=\"ds-state-verdict\">This extended-release tablet may not have time to release in your gut.</p></section>",
+      "css": ".ds-state{font-family:var(--font-atkinson),ui-sans-serif,system-ui,sans-serif;padding:16px;border:2px solid var(--flag,#b4321f);border-radius:16px;background:var(--flag-soft,#fbe3dd);color:var(--foreground,#2b2420)}.ds-state-tag{margin:0 0 4px;font-size:.75rem;font-weight:700;letter-spacing:.025em;text-transform:uppercase;color:var(--flag,#b4321f)}.ds-state-verdict{margin:0;font-size:1.25rem;font-weight:700;line-height:1.375}"
+    },
+    {
+      "name": "ASK Card",
+      "kind": "custom",
+      "refersTo": "ask-card",
+      "description": "Signature: the one question to bring to a professional; ends every answer.",
+      "html": "<section class=\"ds-ask\"><h2>Ask your pharmacist or doctor</h2><p>Is there an immediate-release version of this medicine that would work for my anatomy?</p><button>Add to appointment sheet</button></section>",
+      "css": ".ds-ask{font-family:var(--font-atkinson),ui-sans-serif,system-ui,sans-serif;padding:16px;border:2px solid var(--accent,#ac4126);border-radius:16px;background:var(--accent-soft,#f6dfd6);color:var(--foreground,#2b2420)}.ds-ask h2{margin:0 0 4px;font-size:.875rem;font-weight:700;letter-spacing:.025em;text-transform:uppercase;color:var(--accent,#ac4126)}.ds-ask p{margin:0;font-size:1.125rem;font-weight:700;line-height:1.375}.ds-ask button{font-family:var(--font-atkinson),ui-sans-serif,system-ui,sans-serif;margin-top:12px;width:100%;min-height:48px;border:0;border-radius:12px;background:var(--accent,#ac4126);color:var(--accent-ink,#fff);font-size:1rem;font-weight:700;cursor:pointer}.ds-ask button:focus-visible{outline:3px solid var(--focus,#2c5a85);outline-offset:2px}"
+    },
+    {
+      "name": "Community Bar",
+      "kind": "custom",
+      "refersTo": "card",
+      "description": "Anatomy-split tolerance counts with denominator and demo badge.",
+      "html": "<div class=\"ds-bar\"><div class=\"ds-bar-track\" aria-hidden=\"true\"><span style=\"width:55%;background:var(--ok,#2f6b3a)\"></span><span style=\"width:30%;background:var(--removed,#c9bdb0)\"></span><span style=\"width:15%;background:var(--flag,#b4321f)\"></span></div><p>11 helped · 6 no change · 3 hurt <span class=\"ds-muted\">(of 20)</span> <span class=\"ds-demo\">demo data</span></p></div>",
+      "css": ".ds-bar{font-family:var(--font-atkinson),ui-sans-serif,system-ui,sans-serif;color:var(--foreground,#2b2420)}.ds-bar-track{display:flex;height:12px;overflow:hidden;border-radius:9999px;background:var(--surface-2,#f4ece1)}.ds-bar p{margin:4px 0 0;font-size:.875rem}.ds-muted{color:var(--muted,#6e625a)}.ds-demo{padding:2px 8px;border-radius:9999px;background:var(--surface-2,#f4ece1);color:var(--muted,#6e625a);font-size:.75rem;font-weight:700}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Honest Pharmacist",
+    "overview": "Villi looks like the best pharmacist you've ever had, leaning over the counter with the label in hand. It's clear and calm, warm without being cute, and it never sounds more sure than the evidence. Everything on screen is there to help someone who is tired, maybe dehydrated, maybe reading in their second language, understand one verdict and walk away with one question. The warmth is in the materials (oat paper, linen, a single warm rust accent). The honesty is in the structure: every answer opens with a state tag, a plain verdict, and its sources, and none of those states is ever painted as \"safe\".\n\nIt's a single phone-width column with big, forgiving controls, the kind you can hit with a shaky thumb. Surfaces are layered like paper on a counter: an oat-colored page, white cards on top, linen panels for context and state. A gentle shadow lifts only the few entry points that start something. The one illustration is the hand-drawn flat gut diagram, and it only ever shows what a citation says.",
+    "keyCharacteristics": [
+      "One warm rust accent for action and for the question to bring to a professional; everything else is paper and ink.",
+      "Atkinson Hyperlegible everywhere, regular and bold only, sized for low vision.",
+      "Three answer states told apart by surface and border, never by a green \"all clear\".",
+      "Tap targets of 44px at minimum, and usually 48 to 64px.",
+      "Flat 2D SVG only: no photos of bodies, no 3D anatomy, no stoma-bag imagery.",
+      "Light and dark modes are both first-class, with every token defined twice."
+    ],
+    "rules": [
+      {
+        "name": "The No Green Light Rule",
+        "body": "No answer state uses Sage. \"Nothing found in the sources I checked\" is a plain white card with a Sandstone border, and \"Can't tell yet\" is Linen. Green appears only on evidence (the counts of people it helped, where the gut absorbs), never on a verdict.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Voice Rule",
+        "body": "Warm Rust is the only accent. If a screen has two rust-filled elements competing, one of them should become an outline.",
+        "section": "colors"
+      },
+      {
+        "name": "The Wash-and-Ink Rule",
+        "body": "Each signal hue is used either as a pale wash behind roasted-ink text or as text and border on a neutral surface, never as a large saturated fill.",
+        "section": "colors"
+      },
+      {
+        "name": "The Bold Means Something Rule",
+        "body": "There are only two weights. Bold marks a heading, a verdict, an action or a selected chip. It's never used for emphasis inside a sentence.",
+        "section": "typography"
+      },
+      {
+        "name": "The Plain Print Rule",
+        "body": "No italics, no light weights, no decorative faces. Every word should be readable by someone who is exhausted and has their phone's text size turned up.",
+        "section": "typography"
+      },
+      {
+        "name": "The One Thumb Rule",
+        "body": "Every interactive element is at least 44px tall (`min-h-11`). Primary rows are 48px, the main camera action is 56px, and home entry cards are 64px.",
+        "section": "layout"
+      },
+      {
+        "name": "The Paper-on-Counter Rule",
+        "body": "Use a tonal layer and a hairline border before reaching for a shadow. The counter lift is reserved for entry points, so it stays meaningful.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Thick Border Means State Rule",
+        "body": "A 2px border marks the answer state card, the ASK card, the help-now panel and the \"Set up your own\" outline. A 1px border is everything else.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** keep every interactive element at least 44px tall, and 48px for rows in lists and forms.",
+      "**Do** pair every signal color with a word: the state tag, the count, the legend. Color is never the only carrier.",
+      "**Do** define every new token in both the light `:root` block and the `prefers-color-scheme: dark` block of `globals.css`, then map it through `@theme inline`.",
+      "**Do** wrap all looping motion in `motion-safe:` and keep it to opacity pulses.",
+      "**Do** set `lang` and `dir` on any container that renders answer text in the profile language.",
+      "**Do** check any new Warm Rust text against the surface under it. Warm Rust is tuned to clear WCAG 2.2 AA at every size on the surfaces it sits on today: 4.65:1 on Rust Wash, 5.1:1 on Linen, 5.5:1 on Oat Paper, 5.9:1 on Card White. In dark mode it is 4.55:1 on Rust Wash."
+    ],
+    "donts": [
+      "**Don't** paint any answer state, verdict or \"nothing found\" result green, and don't use a check mark next to a verdict.",
+      "**Don't** add photographs of bodies, 3D or realistic anatomy, or stoma-bag imagery. The flat gut diagram is the only anatomical illustration.",
+      "**Don't** introduce a second accent hue, a second typeface, or a light or italic weight.",
+      "**Don't** use shadows beyond the counter lift, and don't lift anything that isn't an entry point.",
+      "**Don't** lighten Warm Rust or put rust text on any surface lighter in tone than Rust Wash. It has no contrast headroom left below 4.5:1 on the ASK card.",
+      "**Don't** shrink body copy below 0.875rem except for captions and disclaimers, which stay 0.75rem in Driftwood."
+    ]
+  }
+}
