@@ -8,6 +8,7 @@ import { GutDiagram } from "@/components/GutDiagram";
 import { MedsEditor } from "@/components/MedsEditor";
 import { MedReview } from "@/components/MedReview";
 import { AfterChangeCards } from "@/components/AfterChange";
+import { DeviceLinks, EnterDeviceCode } from "@/components/DeviceLinks";
 import { QuickLog } from "@/components/QuickLog";
 import { DeleteMyData } from "@/components/DeleteMyData";
 import { ScanBox } from "@/components/ScanBox";
@@ -24,7 +25,7 @@ function Header() {
   );
 }
 
-function Welcome() {
+function Welcome({ anonId }: { anonId: string }) {
   return (
     <main className="space-y-6">
       <Header />
@@ -50,6 +51,7 @@ function Welcome() {
       >
         Set up your own (about a minute)
       </Link>
+      <EnterDeviceCode anonId={anonId} />
       <p className="text-sm text-muted">No name, no birthday, no medical history. Only coarse anatomy, tied to a random id on this device.</p>
     </main>
   );
@@ -122,7 +124,7 @@ function Home({ anonId }: { anonId: string }) {
   // "Not right? Type the name instead" lands here with the read name to correct.
   const prefill = typeof window === "undefined" ? "" : (new URLSearchParams(window.location.search).get("q") ?? "");
   if (profile === undefined) return <p className="pt-10 text-center text-muted">Loading…</p>;
-  if (profile === null) return <Welcome />;
+  if (profile === null) return <Welcome anonId={anonId} />;
 
   return (
     <main className="space-y-5">
@@ -174,6 +176,8 @@ function Home({ anonId }: { anonId: string }) {
       <MedReview anonId={anonId} person={personFor(profile.role, profile.caresFor)} />
 
       {answers && answers.length > 0 && <RecentChecks answers={answers} />}
+
+      <DeviceLinks anonId={anonId} />
 
       <footer className="space-y-2 pt-2 text-xs text-muted">
         <p>

@@ -270,6 +270,36 @@ export default defineSchema({
     .index("by_token", ["token"])
     .index("by_profileId", ["profileId"]),
 
+  // "Use Villi on another phone": a second device's own anonId resolves to the
+  // same profile. Deleting the row revokes that device.
+  device_links: defineTable({
+    anonId: v.string(),
+    profileId: v.id("profiles"),
+    createdAt: v.number(),
+  })
+    .index("by_anonId", ["anonId"])
+    .index("by_profileId", ["profileId"]),
+
+  // Six-digit, single-use, 10-minute codes that create a device link.
+  device_codes: defineTable({
+    profileId: v.id("profiles"),
+    code: v.string(),
+    createdAt: v.number(),
+    expiresAt: v.number(),
+    usedAt: v.optional(v.number()),
+  })
+    .index("by_code", ["code"])
+    .index("by_profileId", ["profileId"]),
+
+  // Every attempt to enter a code, so guessing is throttled per device and overall.
+  device_link_attempts: defineTable({
+    anonId: v.string(),
+    ok: v.boolean(),
+    at: v.number(),
+  })
+    .index("by_anonId_and_at", ["anonId", "at"])
+    .index("by_at", ["at"]),
+
   questions: defineTable({
     profileId: v.id("profiles"),
     text: v.string(),

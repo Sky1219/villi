@@ -23,7 +23,8 @@ Started 05:52 PDT (H0). Updated after every task. Broken things first.
 | B5 what care teams changed | 6316b5a | Done, tests only; UI not opened in a browser; seed run in convex-test |
 | B7 "Something's wrong with this answer" | ac66863 | Done, tests only (done before B6 because B6 counts it; the B6 funnel tally also landed in this commit) |
 | B6 impact funnel and safety record | 90533b6 | Done, tests only (`convex/impact.test.ts`); UI not opened in a browser |
-| B8 "How Villi decides" page | (next commit) | Done; every sentence checked against the code by reading it; not opened in a browser |
+| B8 "How Villi decides" page | c87da45 | Done; every sentence checked against the code by reading it; not opened in a browser |
+| B9 second phone on the same profile | (next commit) | Done, tests only (`convex/deviceLinks.test.ts`); UI not opened in a browser |
 
 ## Decisions to check
 
@@ -71,6 +72,8 @@ Started 05:52 PDT (H0). Updated after every task. Broken things first.
 - B6: `/impact` now leads with "From a flag to a change (real use only)": flags raised (flagged checks + flagged medicines in the list review) → question saved (from a flagged check, or "Add a question" on a flagged review row, new `context.fromReview`) → asked → answer logged (self vs care-team link shown separately) → something changed (form changed or monitoring) → two-week outcome (helped / no change / worse). Each stage is a strict subset of the one before, with "% of the step before", by anatomy, and the honest zero state "No real answers logged yet. This weekend, real use is the builder's own checks." Then a Medicine list review card (reviewed / flagged by anatomy), a Safety record (approved / edited / blocked / failed, code-check fixes, logs and swaps shared vs private with demo shares marked, warning cards shown, "Something's wrong" reports), and the old metric cards under "All activity, including demo data". All bounded scans in the one `impact.summary` query; questions from non-flagged answers are deliberately not in the funnel.
 
 - B8: `/how` is a static page linked from the home footer and the answer receipt. The checked-chunk numbers are computed from `data/guidelines.json` at build time, so they stay true.
+
+- B9: "Use Villi on another phone" (home, above Delete my data) makes a 6-digit code, valid 10 minutes, single use; making a new one cancels the old. The new phone taps "I have a code from another phone" on the welcome screen. New tables `device_links`, `device_codes`, `device_link_attempts`. **`requireProfile` changed:** `findProfile` still looks up the device's own profile first, exactly as before, and only if there is none falls back to a `device_links` row; every existing flow goes through it unchanged for single-device users (all 80-odd tests still pass). Guessing is throttled: 5 wrong codes per device per 10 minutes, and 100 wrong codes across all devices per 10 minutes, after which even a right code is refused until the window passes. A phone that already has its own profile can't join (delete its data first). Max 5 linked phones. The device list never shows other phones' ids. **Decision:** "Delete my data" on *either* phone deletes the whole shared profile and all its links (it is one profile); "Remove" on a phone in the list only unlinks it. If you'd rather a linked phone's Delete only unlinks itself, that's a two-line change in `deleteMine`.
 
 ## Couldn't do
 

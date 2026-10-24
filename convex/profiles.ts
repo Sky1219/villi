@@ -26,11 +26,119 @@ export async function requireProfile(
 
 async function findProfile(ctx: QueryCtx | MutationCtx, anonId: string) {
   if (anonId.length < 20) return null;
-  return await ctx.db
+  const own = await ctx.db
     .query("profiles")
     .withIndex("by_anonId", (q) => q.eq("anonId", anonId))
     .unique();
+  if (own) return own;
+  // A second phone linked with a code reaches the same profile through its own anonId.
+  const link = await ctx.db
+    .query("device_links")
+    .withIndex("by_anonId", (q) => q.eq("anonId", anonId))
+    .unique();
+  return link ? await ctx.db.get("profiles", link.profileId) : null;
 }
+
+// ---- "Use Villi on another phone"
+
+const CODE_MS = 10 * 60_000;
+const MAX_DEVICES = 5;
+
+function sixDigits(): string {
+  const n = crypto.getRandomValues(new Uint32Array(1))[0] % 1_000_000;
+  return n.toString().padStart(6, "0");
+}
+
+export const createDeviceCode = mutation({
+  args: { anonId: v.string() },
+  handler: async (ctx, args) => {
+    const p = await requireProfile(ctx, args.anonId);
+    const now = Date.now();
+    const recent = await ctx.db
+      .query("device_codes")
+      .withIndex("by_profileId", (q) => q.eq("profileId", p._id))
+      .order("desc")
+      .take(10);
+    if (recent.filter((c) => c.createdAt > now - 3_600_000).length >= 5) {
+      throw new ConvexError("That's a lot of codes in an hour. Try again later.");
+    }
+    const links = await ctx.db.query("device_links").withIndex("by_profileId", (q) => q.eq("profileId", p._id)).take(MAX_DEVICES + 1);
+    if (links.length >= MAX_DEVICES) throw new ConvexError("This profile is already on 5 other phones. Remove one first.");
+    // Older unused codes stop working when a new one is made.
+    for (const c of recent) if (!c.usedAt && c.expiresAt > now) await ctx.db.patch("device_codes", c._id, { expiresAt: now });
+    let code = sixDigits();
+    for (let i = 0; i < 5; i++) {
+      const clash = await ctx.db.query("device_codes").withIndex("by_code", (q) => q.eq("code", code)).take(5);
+      if (!clash.some((c) => !c.usedAt && c.expiresAt > now)) break;
+      code = sixDigits();
+    }
+    await ctx.db.insert("device_codes", { profileId: p._id, code, createdAt: now, expiresAt: now + CODE_MS });
+    return { code, expiresAt: now + CODE_MS };
+  },
+});
+
+// Returns a result instead of throwing, so the attempt is recorded either way.
+export const redeemDeviceCode = mutation({
+  args: { anonId: v.string(), code: v.string() },
+  handler: async (ctx, args): Promise<{ ok: true } | { ok: false; reason: string }> => {
+    if (args.anonId.length < 20) return { ok: false, reason: "bad device id" };
+    const now = Date.now();
+    const mine = await ctx.db
+      .query("device_link_attempts")
+      .withIndex("by_anonId_and_at", (q) => q.eq("anonId", args.anonId).gt("at", now - CODE_MS))
+      .take(10);
+    const everyone = await ctx.db
+      .query("device_link_attempts")
+      .withIndex("by_at", (q) => q.gt("at", now - CODE_MS))
+      .take(200);
+    if (mine.filter((a) => !a.ok).length >= 5 || everyone.filter((a) => !a.ok).length >= 100) {
+      return { ok: false, reason: "Too many tries. Wait ten minutes and ask for a new code." };
+    }
+    const fail = async (reason: string) => {
+      await ctx.db.insert("device_link_attempts", { anonId: args.anonId, ok: false, at: now });
+      return { ok: false as const, reason };
+    };
+    if (await ctx.db.query("profiles").withIndex("by_anonId", (q) => q.eq("anonId", args.anonId)).unique()) {
+      return { ok: false, reason: "This phone already has its own profile. Delete its data first, then enter the code." };
+    }
+    const code = args.code.replace(/\D/g, "");
+    if (code.length !== 6) return await fail("Enter the 6-digit code.");
+    const row = (await ctx.db.query("device_codes").withIndex("by_code", (q) => q.eq("code", code)).take(5)).find(
+      (c) => !c.usedAt && c.expiresAt > now,
+    );
+    if (!row) return await fail("That code didn't work. Codes last ten minutes and work once.");
+    await ctx.db.patch("device_codes", row._id, { usedAt: now });
+    const existing = await ctx.db.query("device_links").withIndex("by_anonId", (q) => q.eq("anonId", args.anonId)).unique();
+    if (existing) await ctx.db.delete("device_links", existing._id);
+    await ctx.db.insert("device_links", { anonId: args.anonId, profileId: row.profileId, createdAt: now });
+    await ctx.db.insert("device_link_attempts", { anonId: args.anonId, ok: true, at: now });
+    return { ok: true };
+  },
+});
+
+// The other phones on this profile. Never returns their anonIds.
+export const listDevices = query({
+  args: { anonId: v.string() },
+  handler: async (ctx, args) => {
+    const p = await requireProfile(ctx, args.anonId);
+    const links = await ctx.db.query("device_links").withIndex("by_profileId", (q) => q.eq("profileId", p._id)).take(MAX_DEVICES + 1);
+    return {
+      thisIsLinked: p.anonId !== args.anonId,
+      devices: links.map((l) => ({ _id: l._id, createdAt: l.createdAt, isThisPhone: l.anonId === args.anonId })),
+    };
+  },
+});
+
+export const revokeDevice = mutation({
+  args: { anonId: v.string(), linkId: v.id("device_links") },
+  handler: async (ctx, args) => {
+    const p = await requireProfile(ctx, args.anonId);
+    const l = await ctx.db.get("device_links", args.linkId);
+    if (!l || l.profileId !== p._id) throw new ConvexError("Phone not found");
+    await ctx.db.delete("device_links", l._id);
+    return null;
+  },
+});
 
 export function diagramOf(p: Doc<"profiles">): DiagramState {
   if (!p.diagram) return defaultDiagram(p.anatomy);
@@ -224,6 +332,11 @@ export const deleteMine = mutation({
     for (const m of meds) await ctx.db.delete("meds", m._id);
     const links = await ctx.db.query("team_links").withIndex("by_profileId", (q) => q.eq("profileId", p._id)).take(BATCH);
     for (const l of links) await ctx.db.delete("team_links", l._id);
+    // Other phones linked to this profile lose access with it.
+    const devices = await ctx.db.query("device_links").withIndex("by_profileId", (q) => q.eq("profileId", p._id)).take(BATCH);
+    for (const d of devices) await ctx.db.delete("device_links", d._id);
+    const codes = await ctx.db.query("device_codes").withIndex("by_profileId", (q) => q.eq("profileId", p._id)).take(BATCH);
+    for (const c of codes) await ctx.db.delete("device_codes", c._id);
 
     const more = logs.length === BATCH || answers.length === 50 || votes.length === BATCH || swaps.length === BATCH || care.length === BATCH || questions.length === BATCH || links.length === BATCH;
     if (more) return { done: false };
