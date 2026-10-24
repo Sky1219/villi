@@ -87,6 +87,14 @@ export const sawValidator = v.object({
   imprint: v.union(v.string(), v.null()),
 });
 
+// "Something's wrong with this answer": one tap, no free text.
+export const problemKindValidator = v.union(
+  v.literal("wrong_item"),
+  v.literal("unsupported_claim"),
+  v.literal("confusing"),
+  v.literal("other"),
+);
+
 export const answerStatusValidator = v.union(
   v.literal("queued"),
   v.literal("running"),
@@ -351,6 +359,8 @@ export default defineSchema({
     error: v.optional(v.string()),
     // "Was this useful?" on the answer card.
     useful: v.optional(v.boolean()),
+    problemReport: v.optional(problemKindValidator),
+    problemReportedAt: v.optional(v.number()),
     // "Check the new form": the question whose form change this check follows.
     followsQuestionId: v.optional(v.id("questions")),
     createdAt: v.number(),

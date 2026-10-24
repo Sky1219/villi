@@ -4,7 +4,7 @@ import { internalMutation, internalQuery, mutation, query } from "./_generated/s
 import { internal } from "./_generated/api";
 import { retrier } from "./lib/retrier";
 import type { Doc } from "./_generated/dataModel";
-import { categoryValidator, sawValidator } from "./schema";
+import { categoryValidator, problemKindValidator, sawValidator } from "./schema";
 import { requireProfile } from "./profiles";
 import { AMOUNT_QUESTION_MESSAGE, AMOUNT_QUESTION_RE, OPEN_QUESTION_MESSAGE, OPEN_QUESTION_RE } from "./lib/answerSchema";
 
@@ -28,6 +28,7 @@ function publicAnswer(a: Doc<"answers">) {
     final: done ? a.final : null,
     reviewSummary: a.reviewSummary ?? null,
     useful: a.useful ?? null,
+    problemReport: a.problemReport ?? null,
     error: a.status === "failed" || a.status === "blocked" ? (a.error ?? null) : null,
     createdAt: a.createdAt,
   };
@@ -119,6 +120,33 @@ export const rateUseful = mutation({
     const a = await ctx.db.get("answers", args.answerId);
     if (!a || a.profileId !== profile._id || a.status !== "final") throw new ConvexError("Answer not found");
     await ctx.db.patch("answers", a._id, { useful: args.useful });
+    return null;
+  },
+});
+
+// "Something's wrong with this answer": the user's own final answers only,
+// rate-limited, a fixed set of reasons and no free text. Tapping again clears it.
+// Each report is a candidate new reviewer fixture (see the README evals plan).
+export const reportProblem = mutation({
+  args: { anonId: v.string(), answerId: v.id("answers"), kind: v.union(problemKindValidator, v.null()) },
+  handler: async (ctx, args) => {
+    const profile = await requireProfile(ctx, args.anonId);
+    const a = await ctx.db.get("answers", args.answerId);
+    if (!a || a.profileId !== profile._id || a.status !== "final") throw new ConvexError("Answer not found");
+    if (args.kind) {
+      const recent = await ctx.db
+        .query("answers")
+        .withIndex("by_profileId", (q) => q.eq("profileId", profile._id))
+        .order("desc")
+        .take(50);
+      if (recent.filter((r) => r._id !== a._id && (r.problemReportedAt ?? 0) > Date.now() - 3_600_000).length >= 10) {
+        throw new ConvexError("That's a lot of reports in an hour. Try again later.");
+      }
+    }
+    await ctx.db.patch("answers", a._id, {
+      problemReport: args.kind ?? undefined,
+      problemReportedAt: args.kind ? Date.now() : undefined,
+    });
     return null;
   },
 });

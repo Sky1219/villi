@@ -396,6 +396,51 @@ function Useful({ anonId, answerId, value }: { anonId: string; answerId: Id<"ans
   );
 }
 
+const PROBLEMS = [
+  ["wrong_item", "Wrong medicine identified"],
+  ["unsupported_claim", "A claim isn't supported by its source"],
+  ["confusing", "Confusing"],
+  ["other", "Other"],
+] as const;
+
+function SomethingWrong({ anonId, answerId, value }: { anonId: string; answerId: Id<"answers">; value: string | null }) {
+  const report = useMutation(api.answers.reportProblem);
+  const [error, setError] = useState<string | null>(null);
+  return (
+    <section className="rounded-2xl border border-border bg-surface p-4">
+      <h2 id="wrong" className="mb-1 font-bold">
+        Something wrong with this answer?
+      </h2>
+      <p className="mb-2 text-xs text-muted">One tap. It marks this answer for a closer look; nothing else is sent.</p>
+      <div role="group" aria-labelledby="wrong" className="grid grid-cols-2 gap-2">
+        {PROBLEMS.map(([k, label]) => (
+          <button
+            key={k}
+            aria-pressed={value === k}
+            onClick={async () => {
+              setError(null);
+              try {
+                await report({ anonId, answerId, kind: value === k ? null : k });
+              } catch (e) {
+                setError(friendlyError(e));
+              }
+            }}
+            className={`min-h-11 rounded-xl border px-3 text-left text-sm ${value === k ? "border-accent bg-accent-soft font-bold text-accent" : "border-border"}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {value && <p className="mt-2 text-sm text-muted">Thanks. Marked for a closer look.</p>}
+      {error && (
+        <p role="alert" className="mt-2 text-sm text-flag">
+          {error}
+        </p>
+      )}
+    </section>
+  );
+}
+
 function FollowUp({ anonId, parentId }: { anonId: string; parentId: Id<"answers"> }) {
   const start = useMutation(api.answers.start);
   const router = useRouter();
@@ -533,6 +578,7 @@ function AnswerView({ anonId, answerId }: { anonId: string; answerId: Id<"answer
       {done && (
         <div className="space-y-3 pt-4">
           <Useful anonId={anonId} answerId={a._id} value={a.useful} />
+          <SomethingWrong anonId={anonId} answerId={a._id} value={a.problemReport} />
           <FollowUp anonId={anonId} parentId={a.kind === "followup" && a.parentId ? a.parentId : a._id} />
           {a.itemId && itemName && <LogCard anonId={anonId} answerId={a._id} itemName={itemName} person={person} />}
         </div>
