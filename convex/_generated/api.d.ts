@@ -19,6 +19,7 @@ import type * as impact from "../impact.js";
 import type * as lib_anatomy from "../lib/anatomy.js";
 import type * as lib_answerSchema from "../lib/answerSchema.js";
 import type * as lib_careFor from "../lib/careFor.js";
+import type * as lib_cat from "../lib/cat.js";
 import type * as lib_drugTable from "../lib/drugTable.js";
 import type * as lib_embed from "../lib/embed.js";
 import type * as lib_evidence from "../lib/evidence.js";
@@ -62,6 +63,7 @@ declare const fullApi: ApiFromModules<{
   "lib/anatomy": typeof lib_anatomy;
   "lib/answerSchema": typeof lib_answerSchema;
   "lib/careFor": typeof lib_careFor;
+  "lib/cat": typeof lib_cat;
   "lib/drugTable": typeof lib_drugTable;
   "lib/embed": typeof lib_embed;
   "lib/evidence": typeof lib_evidence;
