@@ -88,7 +88,7 @@ export function ScanBox({ anonId, initialText = "" }: { anonId: string; initialT
           id="scan-text"
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="e.g. Gatorade, or Metoprolol ER 50 mg"
+          placeholder="e.g. Metoprolol ER 50 mg"
           className="min-h-12 flex-1 rounded-xl border border-border bg-background px-3 text-base"
           autoComplete="off"
         />

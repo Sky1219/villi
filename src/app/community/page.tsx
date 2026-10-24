@@ -32,7 +32,7 @@ function Cites({ citations }: { citations: string[] }) {
       {citations.map((c) => {
         const [kind, ...rest] = c.split(":");
         return (
-          <span key={c} title={c} className="rounded-full bg-info-soft px-2 py-0.5 text-xs font-bold text-info">
+          <span key={c} title={c} className="rounded-full bg-info-soft px-2.5 py-1 text-xs font-bold text-info">
             {citationLabel(kind, rest.join(":"))}
             {kind === "G" && sectionOf(rest.join(":")) ? ` · ${sectionOf(rest.join(":"))}` : ""}
           </span>

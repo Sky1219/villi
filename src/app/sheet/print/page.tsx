@@ -32,7 +32,7 @@ function Print({ anonId }: { anonId: string }) {
           {d.open.map((q) => (
             <li key={q._id}>
               {q.text}
-              {q.itemName && <span className="italic"> (about {q.itemName})</span>}
+              {q.itemName && <span className="text-muted"> (about {q.itemName})</span>}
               <div className="mt-1 h-10 border-b border-dashed border-neutral-400" aria-label="Space for the answer" />
             </li>
           ))}
@@ -41,7 +41,7 @@ function Print({ anonId }: { anonId: string }) {
       </section>
       <section>
         <h2 className="mb-1 text-lg font-bold">Patterns in my own log</h2>
-        <p className="text-sm italic">To discuss, not conclusions.</p>
+        <p className="text-sm text-muted">To discuss, not conclusions.</p>
         <ul className="list-disc space-y-1 pl-6">
           {d.patterns.map((p) => (
             <li key={p.item}>{patternSentence(p)}</li>

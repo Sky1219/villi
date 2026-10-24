@@ -87,7 +87,7 @@ export function QuickLog({ anonId }: { anonId: string }) {
                   {l.note && <span className="text-muted"> · {l.note}</span>}
                 </span>
                 <span
-                  className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-bold ${
+                  className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${
                     l.status === "shared" ? "bg-ok-soft text-ok" : "bg-surface-2 text-muted"
                   }`}
                 >

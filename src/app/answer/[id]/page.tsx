@@ -250,7 +250,7 @@ function AnswerCard({
             <h2 className="mb-2 flex items-center gap-2 font-bold">
               People with your anatomy
               {final.community.includesSynthetic && (
-                <span className="rounded-full bg-surface-2 px-2 py-0.5 text-xs font-bold text-muted">demo data</span>
+                <span className="rounded-full bg-surface-2 px-2.5 py-1 text-xs font-bold text-muted">demo data</span>
               )}
             </h2>
             <Counts c={final.community.matchingAnatomy} />

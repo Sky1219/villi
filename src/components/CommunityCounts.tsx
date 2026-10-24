@@ -22,14 +22,16 @@ function Bar({ helped, neutral, hurt }: { helped: number; neutral: number; hurt:
 
 export function CommunityCounts({ anonId, itemId }: { anonId: string; itemId: Id<"items"> }) {
   const c = useQuery(api.community.liveCounts, { anonId, itemId });
+  const profile = useQuery(api.profiles.me, { anonId });
   if (!c) return null;
+  const likeLabel = profile?.role === "caregiver" ? "(like them)" : "(like you)";
   const rows = [...c.byAnatomy].sort((a, b) => Number(b.anatomyKey === c.anatomyKey) - Number(a.anatomyKey === c.anatomyKey));
 
   return (
     <section className="rounded-2xl border border-border bg-surface p-4" aria-live="polite">
       <h2 className="mb-1 flex flex-wrap items-center gap-2 font-bold">
         What people logged for {c.canonicalName}
-        {c.includesSynthetic && <span className="rounded-full bg-surface-2 px-2 py-0.5 text-xs font-bold text-muted">demo data</span>}
+        {c.includesSynthetic && <span className="rounded-full bg-surface-2 px-2.5 py-1 text-xs font-bold text-muted">demo data</span>}
       </h2>
       <p className="mb-3 text-xs text-muted">Self-reported, not a trial. Evidence about tolerance, not a recommendation. Updates live.</p>
       {rows.length === 0 && <p className="text-sm text-muted">No one has logged this yet. Your log would be the first.</p>}
@@ -40,7 +42,7 @@ export function CommunityCounts({ anonId, itemId }: { anonId: string; itemId: Id
             <div className="min-w-0 flex-1">
               <p className="text-sm font-bold">
                 {r.label}
-                {r.anatomyKey === c.anatomyKey && <span className="ml-1 font-normal text-accent">(like you)</span>}
+                {r.anatomyKey === c.anatomyKey && <span className="ml-1 font-normal text-accent">{likeLabel}</span>}
               </p>
               {r.total < MIN_N ? (
                 <p className="text-sm text-muted">Too few reports to say ({r.total})</p>
