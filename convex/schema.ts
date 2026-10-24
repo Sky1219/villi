@@ -1,0 +1,308 @@
+import { defineSchema, defineTable } from "convex/server";
+import { v } from "convex/values";
+
+export const EMBEDDING_DIMS = 1024;
+
+export const anatomyValidator = v.object({
+  colonInContinuity: v.boolean(),
+  stomaType: v.union(
+    v.literal("none"),
+    v.literal("ileostomy"),
+    v.literal("colostomy"),
+    v.literal("jejunostomy"),
+  ),
+  bowelLengthBand: v.union(
+    v.literal("unknown"),
+    v.literal("<100cm"),
+    v.literal("100-200cm"),
+    v.literal(">200cm"),
+  ),
+});
+
+export const roleValidator = v.union(
+  v.literal("patient"),
+  v.literal("caregiver"),
+  v.literal("clinician"),
+);
+
+export const outcomeValidator = v.union(
+  v.literal("helped"),
+  v.literal("neutral"),
+  v.literal("hurt"),
+);
+
+export const categoryValidator = v.union(
+  v.literal("pill"),
+  v.literal("drink"),
+  v.literal("food"),
+  v.literal("action"),
+);
+
+export const professionalTypeValidator = v.union(
+  v.literal("pharmacist"),
+  v.literal("dietitian"),
+  v.literal("doctor"),
+  v.literal("nurse"),
+);
+
+export const segmentModeValidator = v.union(
+  v.literal("absorbs-here"),
+  v.literal("releases-here"),
+  v.literal("missing"),
+);
+
+// null = waiting on moderation, true = visible to others, false = author only.
+const pooled = v.union(v.boolean(), v.null());
+
+export const traceStepValidator = v.object({
+  step: v.number(),
+  tool: v.string(),
+  summary: v.string(),
+  ok: v.boolean(),
+  at: v.number(),
+});
+
+export const answerStatusValidator = v.union(
+  v.literal("queued"),
+  v.literal("running"),
+  v.literal("reviewing"),
+  v.literal("final"),
+  v.literal("blocked"),
+  v.literal("failed"),
+);
+
+export default defineSchema({
+  profiles: defineTable({
+    anonId: v.string(),
+    role: roleValidator,
+    anatomy: anatomyValidator,
+    anatomyKey: v.string(),
+    language: v.string(),
+    clinicianDemoVerified: v.boolean(),
+    synthetic: v.boolean(),
+    // "father" | "peer" for demo templates that /demo clones.
+    templateKey: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_anonId", ["anonId"])
+    .index("by_templateKey", ["templateKey"])
+    .index("by_synthetic", ["synthetic"]),
+
+  meds: defineTable({
+    profileId: v.id("profiles"),
+    name: v.string(),
+    genericName: v.optional(v.string()),
+    dosageForm: v.optional(v.string()),
+    // Key into fda_label_cache (labels are ~200 KB; we store a trimmed copy there).
+    fdaLabelKey: v.optional(v.string()),
+    imprint: v.optional(v.string()),
+    color: v.optional(v.string()),
+    shape: v.optional(v.string()),
+    addedAt: v.number(),
+  }).index("by_profileId", ["profileId"]),
+
+  items: defineTable({
+    canonicalName: v.string(),
+    category: categoryValidator,
+    attributes: v.record(
+      v.string(),
+      v.union(v.string(), v.number(), v.boolean(), v.array(v.string())),
+    ),
+    aliases: v.array(v.string()),
+    // canonicalName + aliases joined, for the full-text fallback.
+    searchText: v.string(),
+    embedding: v.optional(v.array(v.float64())),
+    synthetic: v.boolean(),
+  })
+    .index("by_canonicalName", ["canonicalName"])
+    .searchIndex("search_text", {
+      searchField: "searchText",
+      filterFields: ["category"],
+    })
+    .vectorIndex("by_embedding", {
+      vectorField: "embedding",
+      dimensions: EMBEDDING_DIMS,
+      filterFields: ["category"],
+    }),
+
+  log_entries: defineTable({
+    profileId: v.id("profiles"),
+    anatomySnapshot: anatomyValidator,
+    anatomyKey: v.string(),
+    itemId: v.id("items"),
+    outcome: outcomeValidator,
+    note: v.optional(v.string()),
+    photoId: v.optional(v.id("_storage")),
+    pooled,
+    moderationReason: v.optional(v.string()),
+    nudgeUser: v.optional(v.string()),
+    synthetic: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_profileId", ["profileId"])
+    .index("by_profileId_and_itemId", ["profileId", "itemId"])
+    .index("by_synthetic", ["synthetic"]),
+
+  swaps: defineTable({
+    profileId: v.id("profiles"),
+    anatomySnapshot: anatomyValidator,
+    anatomyKey: v.string(),
+    insteadOfItemId: v.id("items"),
+    useItemId: v.id("items"),
+    note: v.string(),
+    pooled,
+    moderationReason: v.optional(v.string()),
+    guidelineCheck: v.optional(
+      v.object({ passed: v.boolean(), citations: v.array(v.string()) }),
+    ),
+    upvotes: v.number(),
+    clinicianEndorsements: v.array(v.id("profiles")),
+    synthetic: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_insteadOfItemId", ["insteadOfItemId"])
+    .index("by_pooled_and_anatomyKey", ["pooled", "anatomyKey"])
+    .index("by_profileId", ["profileId"])
+    .index("by_synthetic", ["synthetic"]),
+
+  care_team_answers: defineTable({
+    profileId: v.id("profiles"),
+    anatomySnapshot: anatomyValidator,
+    anatomyKey: v.string(),
+    questionId: v.optional(v.id("questions")),
+    questionText: v.string(),
+    itemId: v.optional(v.id("items")),
+    professionalType: professionalTypeValidator,
+    answerText: v.string(),
+    pooled,
+    moderationReason: v.optional(v.string()),
+    clinicianEndorsements: v.array(v.id("profiles")),
+    synthetic: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_pooled_and_anatomyKey", ["pooled", "anatomyKey"])
+    .index("by_itemId", ["itemId"])
+    .index("by_profileId", ["profileId"])
+    .index("by_synthetic", ["synthetic"])
+    .searchIndex("search_question", {
+      searchField: "questionText",
+      filterFields: ["pooled", "anatomyKey"],
+    }),
+
+  questions: defineTable({
+    profileId: v.id("profiles"),
+    text: v.string(),
+    context: v.object({
+      answerId: v.optional(v.id("answers")),
+      itemName: v.optional(v.string()),
+      citations: v.optional(v.array(v.string())),
+    }),
+    resolved: v.boolean(),
+    synthetic: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_profileId", ["profileId"])
+    .index("by_synthetic", ["synthetic"]),
+
+  guideline_chunks: defineTable({
+    // Stable citation id: `${sourceId}#${locator}`. Never the Convex _id.
+    chunkId: v.string(),
+    sourceId: v.string(),
+    sourceTitle: v.string(),
+    sourceUrl: v.string(),
+    locator: v.string(),
+    text: v.string(),
+    quote: v.optional(v.string()),
+    tags: v.array(v.string()),
+    anatomyScope: v.array(v.string()),
+    appliesTo: v.optional(v.string()),
+    diagram: v.optional(
+      v.object({
+        segmentIds: v.array(v.string()),
+        mode: segmentModeValidator,
+        label: v.string(),
+      }),
+    ),
+    verified: v.boolean(),
+    contentHash: v.string(),
+    embedding: v.optional(v.array(v.float64())),
+  })
+    .index("by_chunkId", ["chunkId"])
+    .searchIndex("search_text", { searchField: "text" })
+    .vectorIndex("by_embedding", {
+      vectorField: "embedding",
+      dimensions: EMBEDDING_DIMS,
+      filterFields: ["sourceId"],
+    }),
+
+  answers: defineTable({
+    profileId: v.id("profiles"),
+    kind: v.union(v.literal("scan"), v.literal("followup")),
+    parentId: v.optional(v.id("answers")),
+    input: v.object({
+      text: v.optional(v.string()),
+      photoId: v.optional(v.id("_storage")),
+      category: v.optional(categoryValidator),
+    }),
+    status: answerStatusValidator,
+    // What the agent identified, shown as correctable before the answer lands.
+    identified: v.optional(v.string()),
+    toolTrace: v.array(traceStepValidator),
+    // Reviewed answer JSON (see lib/answerSchema.ts). Only answers.finalize writes it.
+    final: v.optional(v.any()),
+    reviewSummary: v.optional(
+      v.object({
+        approved: v.boolean(),
+        edited: v.boolean(),
+        blockedReasons: v.array(v.string()),
+      }),
+    ),
+    error: v.optional(v.string()),
+    createdAt: v.number(),
+  }).index("by_profileId", ["profileId"]),
+
+  // Hidden from every public query: drafts must never reach the client.
+  answer_reviews: defineTable({
+    answerId: v.id("answers"),
+    draft: v.any(),
+    lint: v.array(v.string()),
+    reviewerDecision: v.optional(
+      v.object({
+        approved: v.boolean(),
+        edits: v.union(v.string(), v.null()),
+        blockedReasons: v.array(v.string()),
+      }),
+    ),
+    // CitationRegistry from lib/safety.ts: what the agent actually retrieved.
+    registry: v.any(),
+    runId: v.optional(v.string()),
+    attempts: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_answerId", ["answerId"])
+    .index("by_runId", ["runId"]),
+
+  aggregates: defineTable({
+    itemId: v.id("items"),
+    anatomyKey: v.string(),
+    helped: v.number(),
+    neutral: v.number(),
+    hurt: v.number(),
+    syntheticCount: v.number(),
+  }).index("by_itemId_and_anatomyKey", ["itemId", "anatomyKey"]),
+
+  fda_label_cache: defineTable({
+    queryKey: v.string(),
+    found: v.boolean(),
+    setId: v.optional(v.string()),
+    brandName: v.optional(v.string()),
+    genericName: v.optional(v.string()),
+    manufacturer: v.optional(v.string()),
+    effectiveTime: v.optional(v.string()),
+    dosageForms: v.array(v.string()),
+    routes: v.array(v.string()),
+    sections: v.record(v.string(), v.string()),
+    absentSections: v.array(v.string()),
+    fetchedAt: v.number(),
+  }).index("by_queryKey", ["queryKey"]),
+});
