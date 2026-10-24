@@ -13,7 +13,8 @@ Started 05:52 PDT (H0). Updated after every task. Broken things first.
 |---|---|---|
 | A1 pill-flow bugs | ad83cc8 | Done, tests only (`convex/pillflow.test.ts`) |
 | A2 red-team fixes | 17b8bd9 | Done, tests only (`convex/redteam.test.ts`, `convex/community.test.ts`) |
-| A3 corpus source check | (next commit) | Done; `convex/corpus.test.ts` |
+| A3 corpus source check | 771bc43 | Done; `convex/corpus.test.ts` |
+| A4 cut features out of the agent | (next commit) | Done (code read + tsc/tests) |
 
 ## Decisions to check
 
@@ -36,6 +37,8 @@ Started 05:52 PDT (H0). Updated after every task. Broken things first.
 - A2 catalog: `canonicalize.run` no longer creates a pill that has no FDA label (returns `itemId: null`, path `unlisted`). Logs of such a name stay private ("could not identify the item"); the swaps form refuses it. **Prod cleanup:** the polluted item already on prod can be removed with `npx convex run --prod canonicalize:removeItem '{"canonicalName":"zorblatrin (immediate-release)"}'` (check the exact name in the dashboard first).
 - A2 sports drinks: seeded and canonicalized as `isotonic` (+ `simpleSugar`, `lowSodium`); the canonicalizer prompt says so; `aga-sbs#fluids-hypertonic` lost its `sports-drink` tag and `pd-2017#sports-drinks` lost `hypertonic`. The swap check still treats any sugary drink as a conflict with `aga-sbs#fluids-hypertonic` ("a sugary drink").
 - A2 swap source: a `community` swap with no retrieved swap group is relabeled `guideline` (and removed if it has no `[G:]` citation).
+
+- A4: `browse_options` is gone from the agent's tools and from `convex/community.ts` (`optionsFor` was only its back-end). The open-question and multilingual paragraphs are gone from `AGENT_SYSTEM`; it now says "plain everyday English". The agent's dead open-question branch is removed (`answers.start` already refuses those). The caregiver wording, tone line and server-side refusals are unchanged.
 
 ## Couldn't do
 
