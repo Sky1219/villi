@@ -10,7 +10,7 @@ import { AGENT_SYSTEM, VISION_SYSTEM } from "./lib/prompts";
 import { AnswerSchema, answerJsonSchema, type Answer } from "./lib/answerSchema";
 import { emptyRegistry, lintAnswer, type CitationRegistry } from "./lib/safety";
 import { scopeTagsFor, type Anatomy } from "./lib/anatomy";
-import type { LabelResult } from "./fda";
+import { coreName, type LabelResult } from "./fda";
 import type { ChunkView } from "./guidelines";
 import type { StratifiedCounts } from "./community";
 
@@ -128,9 +128,20 @@ class Agent {
     return this.ctx.runMutation(internal.answers.appendTrace, { answerId: this.answerId, tool, summary, ok });
   }
 
+  // [L:] citations name a section, not a product, so only the checked item's
+  // own label may back them. Other products' labels are never citable.
+  primaryCore: string | null = null;
+
   async fetchLabel(name: string): Promise<LabelResult> {
     const label: LabelResult = await this.ctx.runAction(internal.fda.fetchLabel, { name });
-    registerLabel(this.reg, label);
+    const core = coreName(name);
+    this.primaryCore ??= core;
+    const sameItem = core.split(" ").some((w) => w.length > 3 && this.primaryCore!.includes(w));
+    if (sameItem) registerLabel(this.reg, label);
+    else if (label.found) {
+      await this.trace("fetch_label", `${name}: a different product; not citable in this answer`, false);
+      return { ...label, sections: {}, flags: [], absentSections: [], error: "Different product from the one being checked. Villi is not an interaction checker; do not use this." };
+    }
     await this.trace("fetch_label", `${name}: ${labelTrace(label)}`, label.found);
     return label;
   }
@@ -313,7 +324,11 @@ export const run = internalAction({
         const url = await ctx.storage.getUrl(answer.input.photoId);
         const seen = url ? await readPhoto(url) : null;
         if (seen?.legible && seen.name) {
-          itemName = [seen.name, seen.releaseText, seen.strength].filter(Boolean).join(" ");
+          // The model often repeats release wording and strength inside the name.
+          itemName = [seen.name, seen.releaseText, seen.strength].reduce<string>((acc, part) => {
+            if (!part || acc.toLowerCase().replace(/\s+/g, "").includes(part.toLowerCase().replace(/\s+/g, ""))) return acc;
+            return `${acc} ${part}`.trim();
+          }, "");
           if (seen.kind !== "unknown") category = seen.kind;
           await agent.trace("read_photo", `read "${itemName}" (${seen.kind})`);
         } else {

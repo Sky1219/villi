@@ -244,7 +244,21 @@ export const finalize = internalMutation({
         attempts: review.attempts + 1,
       });
     }
+    const secs = review ? ((Date.now() - review.createdAt) / 1000).toFixed(0) : "?";
     await ctx.db.patch("answers", a._id, {
+      toolTrace: [
+        ...a.toolTrace,
+        {
+          step: a.toolTrace.length + 1,
+          tool: "reviewer",
+          summary:
+            args.status === "final"
+              ? `${args.edited ? "edited and approved" : "approved"} in ${secs}s${args.lint.length ? `; code checks removed ${args.lint.length} item(s)` : ""}`
+              : `blocked: ${args.blockedReasons.join("; ")}`.slice(0, 300),
+          ok: args.status === "final",
+          at: Date.now(),
+        },
+      ],
       status: args.status,
       final: args.status === "final" ? args.final : undefined,
       reviewSummary: {

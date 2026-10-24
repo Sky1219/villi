@@ -105,6 +105,12 @@ export function lintAnswer(input: Answer, reg: CitationRegistry): LintResult {
     if (!ok) issues.push(`removed care-team answer ${c.id}: not retrieved`);
     return ok;
   });
+  // Personal notes describe the user's own log only; community numbers belong in `community`.
+  answer.personal = answer.personal.filter((p) => {
+    const leaked = /\[(G|L|C|T):/.test(p);
+    if (leaked) issues.push("removed personal note that carried a citation");
+    return !leaked;
+  });
   if (!answer.unidentified && answer.why.length === 0) {
     blocking.push("no cited claims remain");
   }

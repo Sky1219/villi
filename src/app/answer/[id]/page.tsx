@@ -97,6 +97,10 @@ function Citations({ citation, final, titles }: { citation: string; final: Final
   );
 }
 
+const CITE_RE = /\s*\[(G|L|C|T):[^\]]+\]/g;
+const prose = (t: string) => t.replace(CITE_RE, "").trim();
+const inlineCites = (t: string) => (t.match(CITE_RE) ?? []).map((c) => c.trim()).join(" ");
+
 const STATE_STYLE = {
   flagged: { box: "bg-flag-soft border-flag", tag: "Flag to discuss", tagCls: "text-flag" },
   "nothing-found": { box: "bg-surface border-border", tag: "Nothing found in the sources I checked", tagCls: "text-muted" },
@@ -120,7 +124,8 @@ function AnswerCard({ final, answerId, anonId }: { final: FinalAnswer; answerId:
     <div className="space-y-4">
       <section className={`rounded-2xl border-2 p-4 ${style.box}`}>
         <p className={`mb-1 text-xs font-bold uppercase tracking-wide ${style.tagCls}`}>{style.tag}</p>
-        <p className="text-xl font-bold leading-snug">{final.verdict}</p>
+        <p className="text-xl font-bold leading-snug">{prose(final.verdict)}</p>
+        {inlineCites(final.verdict) && <Citations citation={inlineCites(final.verdict)} final={final} titles={titles} />}
       </section>
 
       {final.why.length > 0 && (
@@ -129,8 +134,8 @@ function AnswerCard({ final, answerId, anonId }: { final: FinalAnswer; answerId:
           <ul className="space-y-3">
             {final.why.map((w, i) => (
               <li key={i}>
-                <span className="block">{w.claim}</span>
-                <Citations citation={w.citation} final={final} titles={titles} />
+                <span className="block">{prose(w.claim)}</span>
+                <Citations citation={`${w.citation} ${inlineCites(w.claim)}`} final={final} titles={titles} />
               </li>
             ))}
           </ul>
@@ -140,7 +145,7 @@ function AnswerCard({ final, answerId, anonId }: { final: FinalAnswer; answerId:
       {final.swapToAskAbout && (
         <section className="rounded-2xl border border-border bg-ok-soft p-4">
           <h2 className="mb-1 font-bold">A swap to ask about</h2>
-          <p>{final.swapToAskAbout.text}</p>
+          <p>{prose(final.swapToAskAbout.text)}</p>
           <p className="mt-1 text-xs text-muted">
             From {final.swapToAskAbout.source === "community" ? "the community swaps board" : "the guidelines"}. Ask before changing anything.
           </p>
@@ -166,7 +171,7 @@ function AnswerCard({ final, answerId, anonId }: { final: FinalAnswer; answerId:
           <h2 className="mb-2 font-bold">Your own log</h2>
           <ul className="list-disc space-y-1 pl-5">
             {final.personal.map((p, i) => (
-              <li key={i}>{p}</li>
+              <li key={i}>{prose(p)}</li>
             ))}
           </ul>
         </section>
@@ -218,7 +223,7 @@ function QuestionCard({ ask, answerId, anonId }: { ask: string; answerId: Id<"an
   return (
     <section className="rounded-2xl border-2 border-accent bg-accent-soft p-4">
       <h2 className="mb-1 text-sm font-bold uppercase tracking-wide text-accent">Ask your pharmacist or doctor</h2>
-      <p className="text-lg font-bold leading-snug">{ask.replace(/^ASK:\s*/, "")}</p>
+      <p className="text-lg font-bold leading-snug">{prose(ask.replace(/^ASK:\s*/, ""))}</p>
       <button
         disabled={added}
         onClick={async () => {

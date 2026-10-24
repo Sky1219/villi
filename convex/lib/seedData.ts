@@ -51,7 +51,7 @@ export const FATHER: { anatomy: Anatomy; meds: { name: string; genericName: stri
   meds: [
     { name: "Metoprolol succinate ER 50 mg", genericName: "metoprolol succinate", dosageForm: "TABLET, FILM COATED, EXTENDED RELEASE" },
     { name: "Pantoprazole sodium DR 40 mg", genericName: "pantoprazole sodium", dosageForm: "TABLET, DELAYED RELEASE" },
-    { name: "Tylenol Extra Strength liquid", genericName: "acetaminophen", dosageForm: "SOLUTION" },
+    { name: "Tylenol Extra Strength liquid", genericName: "acetaminophen", dosageForm: "SUSPENSION" },
     { name: "Loperamide 2 mg", genericName: "loperamide hydrochloride", dosageForm: "CAPSULE" },
     { name: "Ondansetron 4 mg", genericName: "ondansetron hydrochloride", dosageForm: "TABLET, FILM COATED" },
   ],
