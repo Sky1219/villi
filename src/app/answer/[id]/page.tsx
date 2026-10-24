@@ -130,8 +130,9 @@ function AnswerCard({
   const hasLabel = JSON.stringify(final.why).includes("[L:");
   const style = STATE_STYLE[final.state] ?? STATE_STYLE["cant-tell"];
 
+  const lang = profile?.language ?? "en";
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" lang={lang} dir={lang === "ar" ? "rtl" : "ltr"}>
       <section className={`rounded-2xl border-2 p-4 ${style.box}`}>
         <p className={`mb-1 text-xs font-bold uppercase tracking-wide ${style.tagCls}`}>{style.tag}</p>
         <p className="text-xl font-bold leading-snug">{prose(final.verdict)}</p>
@@ -351,7 +352,7 @@ function AnswerView({ anonId, answerId }: { anonId: string; answerId: Id<"answer
           <p className="text-sm text-muted">Read from your photo.</p>
         )}
         {a.kind === "scan" && !a.isSaw && a.identified && (
-          <Link href={`/?fix=1`} className="text-sm font-bold text-accent underline">
+          <Link href={`/?q=${encodeURIComponent(a.identified)}`} className="text-sm font-bold text-accent underline">
             Not right? Type the name instead
           </Link>
         )}

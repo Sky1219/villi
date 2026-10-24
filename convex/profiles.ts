@@ -9,6 +9,7 @@ import {
 } from "./_generated/server";
 import { anatomyValidator, roleValidator } from "./schema";
 import { internal } from "./_generated/api";
+import { applyPooledTransition } from "./community";
 import { SEGMENTS, anatomyKeyOf, defaultDiagram, describeAnatomy, type DiagramState, type SegmentId } from "./lib/anatomy";
 import type { Doc } from "./_generated/dataModel";
 
@@ -159,6 +160,50 @@ export const cloneDemo = mutation({
       await ctx.scheduler.runAfter(0, internal.meds.enrich, { medId });
     }
     return null;
+  },
+});
+
+// "Delete my data": everything tied to this device's profile, including its
+// contribution to community counts. Bounded batches; the client calls again until done.
+export const deleteMine = mutation({
+  args: { anonId: v.string() },
+  handler: async (ctx, args) => {
+    const p = await findProfile(ctx, args.anonId);
+    if (!p) return { done: true };
+    const BATCH = 200;
+    const logs = await ctx.db.query("log_entries").withIndex("by_profileId", (q) => q.eq("profileId", p._id)).take(BATCH);
+    for (const l of logs) {
+      if (l.pooled === true && l.itemId) {
+        await applyPooledTransition(ctx, { itemId: l.itemId, anatomyKey: l.anatomyKey, outcome: l.outcome, synthetic: l.synthetic }, -1);
+      }
+      await ctx.db.delete("log_entries", l._id);
+    }
+    const answers = await ctx.db.query("answers").withIndex("by_profileId", (q) => q.eq("profileId", p._id)).take(50);
+    for (const a of answers) {
+      const reviews = await ctx.db.query("answer_reviews").withIndex("by_answerId", (q) => q.eq("answerId", a._id)).take(10);
+      for (const r of reviews) await ctx.db.delete("answer_reviews", r._id);
+      if (a.input.photoId) await ctx.storage.delete(a.input.photoId);
+      await ctx.db.delete("answers", a._id);
+    }
+    const votes = await ctx.db.query("swap_votes").withIndex("by_profileId", (q) => q.eq("profileId", p._id)).take(BATCH);
+    for (const vote of votes) {
+      const s = await ctx.db.get("swaps", vote.swapId);
+      if (s) await ctx.db.patch("swaps", s._id, { upvotes: Math.max(0, s.upvotes - 1) });
+      await ctx.db.delete("swap_votes", vote._id);
+    }
+    const swaps = await ctx.db.query("swaps").withIndex("by_profileId", (q) => q.eq("profileId", p._id)).take(BATCH);
+    for (const s of swaps) await ctx.db.delete("swaps", s._id);
+    const care = await ctx.db.query("care_team_answers").withIndex("by_profileId", (q) => q.eq("profileId", p._id)).take(BATCH);
+    for (const c of care) await ctx.db.delete("care_team_answers", c._id);
+    const questions = await ctx.db.query("questions").withIndex("by_profileId", (q) => q.eq("profileId", p._id)).take(BATCH);
+    for (const q of questions) await ctx.db.delete("questions", q._id);
+    const meds = await ctx.db.query("meds").withIndex("by_profileId", (q) => q.eq("profileId", p._id)).take(50);
+    for (const m of meds) await ctx.db.delete("meds", m._id);
+
+    const more = logs.length === BATCH || answers.length === 50 || votes.length === BATCH || swaps.length === BATCH || care.length === BATCH || questions.length === BATCH;
+    if (more) return { done: false };
+    await ctx.db.delete("profiles", p._id);
+    return { done: true };
   },
 });
 

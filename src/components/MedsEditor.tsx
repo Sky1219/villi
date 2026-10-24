@@ -1,5 +1,6 @@
 "use client";
 
+import { friendlyError } from "@/lib/errors";
 import { useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
@@ -33,7 +34,7 @@ export function MedsEditor({ anonId, meds, checkable = false }: { anonId: string
       const { storageId } = (await res.json()) as { storageId: Id<"_storage"> };
       await addFromPhoto({ anonId, photoId: storageId });
     } catch (e) {
-      setError((e as Error).message);
+      setError(friendlyError(e));
     } finally {
       // The new med appears through the live query once the photo is read.
       setTimeout(() => setReading(false), 4000);
@@ -82,7 +83,7 @@ export function MedsEditor({ anonId, meds, checkable = false }: { anonId: string
             await add({ anonId, name });
             setName("");
           } catch (err) {
-            setError((err as Error).message);
+            setError(friendlyError(err));
           } finally {
             setBusy(false);
           }

@@ -1,5 +1,6 @@
 "use client";
 
+import { friendlyError } from "@/lib/errors";
 import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 import { api } from "@convex/_generated/api";
@@ -30,7 +31,7 @@ export function QuickLog({ anonId }: { anonId: string }) {
       setItem("");
       setNote("");
     } catch (e) {
-      setError((e as Error).message);
+      setError(friendlyError(e));
     }
   }
 
@@ -70,13 +71,23 @@ export function QuickLog({ anonId }: { anonId: string }) {
 
       {mine && mine.length > 0 && (
         <ul className="mt-4 space-y-2 border-t border-border pt-3">
-          {mine.slice(0, 6).map((l) => (
+          {mine.slice(0, 3).map((l) => (
             <li key={l._id}>
-              <p className="text-sm">
-                <span className="font-bold">{l.item}</span>: {OUTCOMES.find((o) => o.value === l.outcome)?.label.toLowerCase()}
-                {l.note && <span className="text-muted"> · {l.note}</span>}
+              <p className="flex items-baseline gap-2 text-sm">
+                <span className="min-w-0 flex-1">
+                  <span className="font-bold">{l.item}</span>: {OUTCOMES.find((o) => o.value === l.outcome)?.label.toLowerCase()}
+                  {l.note && <span className="text-muted"> · {l.note}</span>}
+                </span>
+                <span
+                  className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-bold ${
+                    l.status === "shared" ? "bg-ok-soft text-ok" : "bg-surface-2 text-muted"
+                  }`}
+                >
+                  {l.status === "shared" ? "shared" : l.status === "checking" ? "checking…" : "private"}
+                </span>
               </p>
-              <LogStatus status={l.status} nudge={l.nudge} />
+              {/* A private entry always explains why. */}
+              {l.status === "private" && <LogStatus status={l.status} nudge={l.nudge} />}
             </li>
           ))}
         </ul>

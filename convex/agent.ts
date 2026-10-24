@@ -72,6 +72,16 @@ const TOOLS: Anthropic.Tool[] = [
     input_schema: { type: "object", properties: {}, required: [] },
   },
   {
+    name: "browse_options",
+    description:
+      "For open questions like 'what can I have that's sweet?': catalog items matching keywords or attributes (e.g. ['sweet'], ['salty','snack'], ['drink']), each with this anatomy's tolerance counts, guideline-checked swaps other users posted to it, and care-team reports. Evidence only.",
+    input_schema: {
+      type: "object",
+      properties: { keywords: { type: "array", items: { type: "string" } } },
+      required: ["keywords"],
+    },
+  },
+  {
     name: "lookup_ors",
     description:
       "Oral rehydration solution composition: the WHO reduced-osmolarity formula and the sodium range cited for short bowel syndrome, as guideline chunks.",
@@ -319,6 +329,44 @@ class Agent {
             answers: rows,
           });
         }
+        case "browse_options": {
+          const a = z.object({ keywords: z.array(z.string().max(40)).min(1).max(6) }).safeParse(block.input);
+          if (!a.success) return err("keywords are required");
+          const options: {
+            item: string;
+            yourAnatomy: { helped: number; neutral: number; hurt: number; total: number };
+            includesSynthetic: boolean;
+            swapsInto: { postedByYourAnatomy: number; clinicianEndorsed: number; insteadOf: Record<string, number>; guidelineChunkIds: string[] };
+            careTeam: { id: string; professionalType: string; report: string; reporterAnatomy: string; synthetic: boolean }[];
+          }[] = await this.ctx.runQuery(internal.community.optionsFor, {
+            keywords: a.data.keywords,
+            anatomyKey: this.profile.anatomyKey,
+          });
+          for (const o of options) {
+            if (o.yourAnatomy.total > 0 && !this.reg.communityTotals.includes(o.yourAnatomy.total)) this.reg.communityTotals.push(o.yourAnatomy.total);
+            for (const c of o.careTeam) {
+              if (!this.reg.careTeamIds.includes(c.id)) this.reg.careTeamIds.push(c.id);
+              this.reg.evidence[`T:${c.id}`] = c.report;
+            }
+          }
+          const chunkIds = Array.from(new Set(options.flatMap((o) => o.swapsInto.guidelineChunkIds)));
+          const chunks: ChunkView[] = chunkIds.length ? await this.ctx.runQuery(internal.guidelines.byChunkIds, { chunkIds }) : [];
+          const scope = scopeTagsFor(this.profile.anatomy);
+          this.registerChunks(chunks.filter((c) => c.anatomyScope.some((t) => scope.includes(t))));
+          await this.trace(
+            "browse_options",
+            `${options.length} option(s) for "${a.data.keywords.join(", ")}": ${options
+              .slice(0, 4)
+              .map((o) => `${o.item} ${o.yourAnatomy.helped}/${o.yourAnatomy.total} helped`)
+              .join("; ")}`,
+          );
+          return ok({
+            userAnatomy: this.profile.anatomyText,
+            options,
+            guidelineChunks: chunks.map((c) => ({ chunkId: c.chunkId, text: c.text })),
+            note: "Counts are self-reported by people with this anatomy (cite [C:<n>/<total>, <anatomy>]). Care-team reports are other users' (cite [T:<id>]). Guidelines still win.",
+          });
+        }
         case "lookup_ors": {
           const chunks: ChunkView[] = await this.ctx.runQuery(internal.guidelines.byChunkIds, {
             chunkIds: ["who-ors#reduced-osmolarity-composition", "pd-2017#ors-sodium", "who-ors#purpose", "aga-sbs#fluids-ors"],
@@ -387,6 +435,7 @@ export const run = internalAction({
       if (!profile) throw new Error("profile missing");
 
       const agent = new Agent(ctx, args.answerId, answer.profileId, profile);
+      agent.reg.language = profile.language;
       await agent.trace("get_profile", `${profile.anatomyText}; ${profile.meds.length} meds on file; language ${profile.language}`);
 
       // "I saw something": closed-set match against this user's own meds.
@@ -484,7 +533,14 @@ export const run = internalAction({
       agent.itemName = itemName;
 
       // canonicalize_item: one catalog entry per thing, in any language, never merged across release forms.
-      if (!saw) try {
+      // An open question ("what can I have that's sweet?") is not a catalog item.
+      const openQuestion =
+        !saw && answer.kind === "scan" && /\?\s*$|^(what|which|can i|could i|is there|are there|qu[eé]|cu[aá]l)\b/i.test(itemName.trim());
+      if (openQuestion) {
+        category = "action";
+        await ctx.runMutation(internal.answers.setIdentified, { answerId: args.answerId, identified: itemName, clearPhoto: false });
+      }
+      if (!saw && !openQuestion) try {
         const canon: Canonical = await ctx.runAction(internal.canonicalize.run, {
           text: itemName,
           categoryHint: answer.input.category ?? (answer.input.photoId ? category : undefined),
@@ -533,7 +589,9 @@ export const run = internalAction({
             ? { question: answer.input.text, previousAnswer: parent?.final ?? null }
             : null,
       };
-      const userText = saw
+      const userText = openQuestion
+        ? `Open question from the user: "${itemName}". Answer with the safest version of what they want for this anatomy.`
+        : saw
         ? `The user saw what looked like an intact tablet, capsule or shell in their output. Explain what that can and cannot mean for this anatomy, which of their own medicines it could possibly be (from sawSomething.possibleMatches only, as a possible match, never an identification), and end with a question for the pharmacist.`
         : answer.kind === "followup"
           ? `Follow-up question about ${itemName}: "${answer.input.text}". Answer it under the same rules, re-reading the label sections and guidelines.`
@@ -585,9 +643,12 @@ export const run = internalAction({
       }
       throw new Error("agent did not finish");
     } catch (e) {
+      const raw = (e as Error).message;
+      // Upstream outages read as a busy service, not a stack trace.
+      const busy = /^(429|5\d\d)\b|overloaded|rate.?limit|ECONN|fetch failed|timed? ?out/i.test(raw);
       await ctx.runMutation(internal.answers.fail, {
         answerId: args.answerId,
-        error: (e as Error).message,
+        error: busy ? "The AI service is busy right now. Please try again in a minute." : raw,
       });
       return null;
     }

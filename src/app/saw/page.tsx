@@ -1,5 +1,6 @@
 "use client";
 
+import { friendlyError } from "@/lib/errors";
 import Link from "next/link";
 import { useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
@@ -61,7 +62,7 @@ function Saw({ anonId }: { anonId: string }) {
       const id = await start({ anonId, photoId, saw: { shape, color, size, imprint: imprint.trim() || null } });
       router.push(`/answer/${id}`);
     } catch (e) {
-      setError((e as Error).message);
+      setError(friendlyError(e));
       setBusy(false);
     }
   }

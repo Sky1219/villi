@@ -6,6 +6,7 @@ import { useState } from "react";
 import { api } from "@convex/_generated/api";
 import { ANATOMY_KEYS, ANATOMY_LABELS } from "@convex/lib/anatomy";
 import { useAnonId } from "@/lib/anon";
+import { friendlyError } from "@/lib/errors";
 import { citationLabel, humanizeCitations, sectionOf } from "@/lib/citations";
 import { AnatomyBadge } from "@/components/AnatomyBadge";
 
@@ -62,7 +63,7 @@ function SwapForm({ anonId }: { anonId: string }) {
           setUse("");
           setNote("");
         } catch (err) {
-          setError((err as Error).message.replace(/^.*ConvexError: /, "").split("\n")[0]);
+          setError(friendlyError(err));
         } finally {
           setBusy(false);
         }

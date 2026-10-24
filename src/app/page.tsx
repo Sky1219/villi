@@ -7,6 +7,7 @@ import { useAnonId } from "@/lib/anon";
 import { GutDiagram } from "@/components/GutDiagram";
 import { MedsEditor } from "@/components/MedsEditor";
 import { QuickLog } from "@/components/QuickLog";
+import { DeleteMyData } from "@/components/DeleteMyData";
 import { ScanBox } from "@/components/ScanBox";
 
 function Header() {
@@ -54,6 +55,8 @@ function Home({ anonId }: { anonId: string }) {
   const answers = useQuery(api.answers.listMine, profile ? { anonId } : "skip");
   const questions = useQuery(api.questions.listMine, profile ? { anonId } : "skip");
 
+  // "Not right? Type the name instead" lands here with the read name to correct.
+  const prefill = typeof window === "undefined" ? "" : (new URLSearchParams(window.location.search).get("q") ?? "");
   if (profile === undefined) return <p className="pt-10 text-center text-muted">Loading…</p>;
   if (profile === null) return <Welcome />;
 
@@ -80,11 +83,11 @@ function Home({ anonId }: { anonId: string }) {
           Community
         </Link>
         <Link href="/sheet" className="flex min-h-12 items-center justify-center rounded-xl border border-border bg-surface font-bold">
-          Appointment sheet{questions && questions.filter((q) => !q.resolved).length ? ` (${questions.filter((q) => !q.resolved).length})` : ""}
+          Your sheet{questions && questions.filter((q) => !q.resolved).length ? ` (${questions.filter((q) => !q.resolved).length})` : ""}
         </Link>
       </nav>
 
-      <ScanBox anonId={anonId} />
+      <ScanBox anonId={anonId} initialText={prefill} />
 
       <Link href="/saw" className="flex min-h-12 items-center justify-center rounded-xl border border-border bg-surface font-bold">
         I saw something (a tablet came through)
@@ -113,11 +116,25 @@ function Home({ anonId }: { anonId: string }) {
         </section>
       )}
 
-      <p className="pt-4 text-xs text-muted">
-        Villi flags, cites, and writes the question. It never tells you to start, stop, or change a medicine. Not an
-        interaction checker. If you feel dizzy, very thirsty, or your output suddenly rises, contact your care team or
-        emergency services.
-      </p>
+      <section className="rounded-2xl border-2 border-flag bg-flag-soft p-4 text-sm">
+        <h2 className="font-bold text-flag">Get help now if</h2>
+        <p>
+          you feel dizzy or faint, are very thirsty, are passing much less or darker urine, or your output suddenly rises.
+          Contact your care team, or emergency services if it&apos;s severe.
+        </p>
+      </section>
+
+      <footer className="space-y-2 pt-2 text-xs text-muted">
+        <p>
+          Villi flags, cites, and writes the question. It never tells you to start, stop, or change a medicine, and it
+          is not an interaction checker.
+        </p>
+        <p>
+          Privacy: no names, birthdays or medical history. Your setup lives under a random id on this device; anything
+          shared is anonymous, by anatomy only, and screened first. Photos are deleted after reading.
+        </p>
+        <DeleteMyData anonId={anonId} />
+      </footer>
     </main>
   );
 }

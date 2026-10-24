@@ -13,6 +13,7 @@ export type CitationRegistry = {
   // Fixed diagram payloads of retrieved guideline chunks. When present, a
   // diagram is only shown if it cites one of these, and is replaced by it.
   diagrams?: Record<string, { segmentIds: string[]; mode: "absorbs-here" | "releases-here" | "missing"; label: string }>;
+  language?: string;
 };
 
 export const emptyRegistry = (): CitationRegistry => ({
@@ -153,13 +154,16 @@ export function lintAnswer(input: Answer, reg: CitationRegistry): LintResult {
   if (!ask.startsWith("ASK:")) blocking.push("missing ASK line");
   const allText = [...userFacingTexts(answer), ask].join("\n");
   if ((allText.match(/ASK:/g) ?? []).length !== 1) blocking.push("must have exactly one ASK line");
-  if ((ask.match(/\?/g) ?? []).length !== 1) blocking.push("ASK must be exactly one question");
+  // Latin, full-width (Chinese) and Arabic question marks.
+  if ((ask.match(/[?？؟]/g) ?? []).length !== 1) blocking.push("ASK must be exactly one question");
 
   // 4. Silence is not reassurance.
   if (!answer.unidentified && answer.sourcesChecked.length === 0) {
     blocking.push("sources checked are not listed");
   }
-  if (answer.state === "nothing-found" && !/nothing in the sources i checked/i.test(answer.verdict)) {
+  // The exact wording is checked in English; the reviewer checks its meaning in other languages.
+  const english = !reg.language || reg.language.startsWith("en");
+  if (english && answer.state === "nothing-found" && !/nothing in the sources i checked/i.test(answer.verdict)) {
     blocking.push('a no-concern verdict must say "nothing in the sources I checked"');
   }
   if (answer.unidentified && answer.state !== "cant-tell") blocking.push("unidentified items must be cant-tell");

@@ -1,5 +1,6 @@
 "use client";
 
+import { friendlyError } from "@/lib/errors";
 import { useMutation } from "convex/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
@@ -20,7 +21,7 @@ function DemoClone() {
     started.current = true;
     clone({ anonId, as })
       .then(() => router.replace("/"))
-      .catch((e: Error) => setError(e.message));
+      .catch((e: unknown) => setError(friendlyError(e)));
   }, [anonId, as, clone, router]);
 
   return (

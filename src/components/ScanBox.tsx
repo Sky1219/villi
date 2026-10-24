@@ -1,5 +1,6 @@
 "use client";
 
+import { friendlyError } from "@/lib/errors";
 import { useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
@@ -32,7 +33,7 @@ export function ScanBox({ anonId, initialText = "" }: { anonId: string; initialT
       const { storageId } = (await res.json()) as { storageId: Id<"_storage"> };
       await go({ photoId: storageId });
     } catch (e) {
-      setError((e as Error).message);
+      setError(friendlyError(e));
       setBusy(null);
     }
   }
@@ -75,7 +76,7 @@ export function ScanBox({ anonId, initialText = "" }: { anonId: string; initialT
           try {
             await go({ text: text.trim() });
           } catch (err) {
-            setError((err as Error).message);
+            setError(friendlyError(err));
             setBusy(null);
           }
         }}
