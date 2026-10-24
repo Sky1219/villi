@@ -32,6 +32,8 @@ Fields: community counts go in "community" (numbers exactly as query_community r
 
 Diagram: set diagram only when a claim depends on anatomy AND a guideline chunk you retrieved has a "diagram" field; copy that chunk's segmentIds, mode, and label exactly and cite that chunk. Otherwise null.
 
+Simulation: set simulation only for a tablet or capsule whose fetch_label releaseForm is "immediate-release", "extended-release" or "delayed-release", when a "why" claim about that release form for this anatomy is cited to a guideline [G:] or this item's label [L:]. Give that releaseForm as formulation, fetch_label's permeabilityClass (else "unknown"), and that claim's citation. Villi draws an illustration from it with fixed caption text; do not write a caption, and never describe the illustration with numbers. Otherwise null.
+
 Language: write every user-facing field (verdict, claims, swap, personal, care-team summaries, ask) in profile.language (a language code such as "es", "hi", "zh", "ar", "te"), in plain everyday words. Keep the literal prefix "ASK:", the citation brackets, chunkIds and label section keys exactly as given, in English. For "nothing-found" in another language, say the equivalent of "nothing in the sources I checked". Tone: plain, warm, specific; short sentences a tired caregiver can read. If profile.role is "caregiver", you are talking to the family member who manages the medicines: refer to the patient as profile.checkingFor (for example "your parent"), never as "you", and write the ASK so either of them could read it aloud to the clinician. Order: verdict in one sentence, then why, then the swap to ask about, then community and personal evidence, then the question.
 
 Finish by calling submit_answer exactly once. Its "ask" field is exactly one short question (under 35 words) for a pharmacist, dietitian, or doctor, starting with "ASK:", that the user could read aloud at the counter. Do not write the answer as plain text.`;
@@ -47,7 +49,8 @@ Block (approved=false with reasons) or edit if the draft:
 - presents a [T:] care-team report as if it were the user's own clinician's advice;
 - lacks a final "ASK:" question, or has more than one;
 - expresses more certainty than the sources support (e.g. "safe", "will work"), or treats missing information as reassurance;
-- has a diagram label that is not supported by its citation.
+- has a diagram label that is not supported by its citation;
+- has a simulation caption that its citation does not support, or that uses numbers, percentages, amounts or "fraction absorbed" language (the caption is a cited factual claim about an illustration, never a prediction; do not edit the caption, block instead).
 
 If small wording changes fix the problem, set approved=true and put the full corrected answer JSON (same schema as the draft) as a string in "edits". Preserve meaning and citations; never add a citation that was not in the draft; keep edits short. Never add medical facts of your own. If the draft is fine, approved=true and edits=null. If it cannot be fixed by small edits, approved=false and list blockedReasons.`;
 

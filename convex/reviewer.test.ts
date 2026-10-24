@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { reviewDraft, type CitationRegistry } from "./lib/safety";
 import type { Answer, ReviewerDecision } from "./lib/answerSchema";
+import { CAPTIONS } from "./lib/cat";
+import { COLON } from "./lib/anatomy";
 
 const registry: CitationRegistry = {
   guidelineIds: ["aga-sbs#medications-release-forms", "pg139#time-release"],
@@ -126,5 +128,58 @@ describe("reviewer", () => {
     const edit = vi.fn(async (): Promise<ReviewerDecision> => ({ approved: false, edits: JSON.stringify(good), blockedReasons: ["unsupported claim"] }));
     const out = await reviewDraft(good, registry, edit);
     expect(out.status).toBe("blocked");
+  });
+});
+
+describe("illustration caption", () => {
+  const endJejunostomy = { removed: ["ileum", ...COLON], stomaAfter: "jejunum" as const };
+  const simReg: CitationRegistry = {
+    ...registry,
+    simulation: { diagram: endJejunostomy, releaseForm: "extended-release", permeabilityClass: "unknown" },
+  };
+  const withSim = (sim: Partial<NonNullable<Answer["simulation"]>> = {}): Answer => ({
+    ...good,
+    simulation: {
+      formulation: "extended-release",
+      permeabilityClass: "high",
+      citation: "[G:aga-sbs#medications-release-forms]",
+      ...sim,
+    },
+  });
+
+  it("fills the fixed caption by rule and keeps the permeability class code owns", async () => {
+    const out = await reviewDraft(withSim(), simReg, approve);
+    expect(out.status).toBe("final");
+    if (out.status === "final") {
+      expect(out.final.simulation?.caption).toBe(CAPTIONS["extended-release:no-colon"]);
+      expect(out.final.simulation?.permeabilityClass).toBe("unknown");
+    }
+  });
+
+  it("blocks a planted numeric caption even when the LLM reviewer would approve", async () => {
+    const out = await reviewDraft(
+      withSim({ caption: "Illustration: about 70% of this tablet leaves through your stoma unreleased." }),
+      simReg,
+      approve,
+    );
+    expect(out.status).toBe("blocked");
+    if (out.status === "blocked") expect(out.blockedReasons.join(" ")).toMatch(/numeric language/);
+  });
+
+  it("blocks a caption that is not the rule's fixed text", async () => {
+    const out = await reviewDraft(withSim({ caption: "Illustration: this tablet will not work for you." }), simReg, approve);
+    expect(out.status).toBe("blocked");
+  });
+
+  it("drops the illustration without a guideline or label citation, or when the label's release form differs", async () => {
+    for (const [draft, reg] of [
+      [withSim({ citation: "[C:14/19, end-jejunostomy]" }), simReg],
+      [withSim(), { ...simReg, simulation: { ...simReg.simulation!, releaseForm: "immediate-release" } }],
+      [withSim(), { ...simReg, language: "es" }],
+    ] as const) {
+      const out = await reviewDraft(draft, reg, approve);
+      expect(out.status).toBe("final");
+      if (out.status === "final") expect(out.final.simulation).toBeNull();
+    }
   });
 });

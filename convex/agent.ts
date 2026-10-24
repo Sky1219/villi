@@ -10,7 +10,7 @@ import { readPhoto, readTablet, joinPhotoName } from "./lib/vision";
 import type { PillMatch } from "./lib/pillMatch";
 import { AnswerSchema, OPEN_QUESTION_RE, answerJsonSchema, type Answer } from "./lib/answerSchema";
 import { emptyRegistry, lintAnswer, otherMedWords, type CitationRegistry } from "./lib/safety";
-import { scopeTagsFor, type Anatomy } from "./lib/anatomy";
+import { scopeTagsFor, type Anatomy, type DiagramState } from "./lib/anatomy";
 import { personFor, type CaresFor } from "./lib/careFor";
 import { coreName, type LabelResult } from "./fda";
 import type { ChunkView } from "./guidelines";
@@ -25,6 +25,7 @@ type Profile = {
   anatomy: Anatomy;
   anatomyKey: string;
   anatomyText: string;
+  diagram: DiagramState;
   language: string;
   caresFor: CaresFor | null;
   meds: { name: string; dosageForm: string | null }[];
@@ -117,6 +118,7 @@ function labelForModel(l: LabelResult) {
     ...(l.tableFacts ? { tableFacts: l.tableFacts } : {}),
     dosageForm: l.dosageForms.join("; ") || "not listed in NDC",
     releaseForm: l.releaseForm,
+    permeabilityClass: l.permeabilityClass ?? "unknown",
     otherReleaseFormsOnMarket: l.otherReleaseFormsOnMarket,
     deterministicFlags: l.flags,
     sections: l.sections,
@@ -195,7 +197,14 @@ class Agent {
     const core = coreName(name);
     this.primaryCore ??= core;
     const sameItem = core.split(" ").some((w) => w.length > 3 && this.primaryCore!.includes(w));
-    if (sameItem) registerLabel(this.reg, label);
+    if (sameItem) {
+      registerLabel(this.reg, label);
+      // The checked item's own release form decides which illustration may be shown.
+      if (label.found && this.reg.simulation && this.reg.simulation.releaseForm === null) {
+        this.reg.simulation.releaseForm = label.releaseForm;
+        this.reg.simulation.permeabilityClass = label.permeabilityClass ?? "unknown";
+      }
+    }
     else if (label.found) {
       await this.trace("fetch_label", `${name}: a different product, so it isn't used in this answer`, false);
       return { ...label, sections: {}, flags: [], absentSections: [], error: "Different product from the one being checked. Villi is not an interaction checker; do not use this." };
@@ -467,6 +476,7 @@ export const run = internalAction({
 
       const agent = new Agent(ctx, args.answerId, answer.profileId, profile);
       agent.reg.language = profile.language;
+      agent.reg.simulation = { diagram: profile.diagram, releaseForm: null, permeabilityClass: "unknown" };
       await agent.trace("get_profile", `${profile.anatomyText}; ${profile.meds.length} medicine${profile.meds.length === 1 ? "" : "s"} on file`);
 
       // "I saw something": closed-set match against this user's own meds.

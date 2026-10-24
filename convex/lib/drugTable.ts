@@ -39,6 +39,8 @@ export type DrugRecord = {
   label: { splId: string; setId: string | null; manufacturer: string | null; effectiveTime: string | null };
   absentSections: string[];
   spotCheck: boolean;
+  // Coarse permeability for the illustrative CAT model; not yet populated by build-drugs, so absent means "unknown".
+  permeabilityClass?: "high" | "medium" | "low" | null;
 };
 
 export type DrugTable = {

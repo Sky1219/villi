@@ -5,6 +5,7 @@ import type { Doc } from "./_generated/dataModel";
 import { coreName, hintFromName, labelKeyFor, releaseFormOf, type ReleaseForm } from "./lib/labelNames";
 import { FACT_FIELDS, lookupDrug, recordReleaseForm, type DrugRecord, type DrugTable, type TableMatch } from "./lib/drugTable";
 import type { Canonical } from "./canonicalize";
+import type { PermeabilityClass } from "./lib/cat";
 import drugsJson from "../data/drugs.json";
 
 // Reviewed formulation facts for the top ~300 drugs (scripts/build-drugs.ts).
@@ -52,6 +53,8 @@ export type LabelResult = {
   source: "table" | "cache" | "live" | "none";
   tableMatch?: TableMatch;
   tableFacts?: TableFacts;
+  // From the drug table when it has one; drives only the illustrative CAT animation.
+  permeabilityClass?: PermeabilityClass;
   error: string | null;
 };
 
@@ -326,6 +329,7 @@ function fromTable(name: string, rec: DrugRecord, match: TableMatch): LabelResul
     effectiveTime: rec.label.effectiveTime,
     dosageForms: [rec.dosageForm],
     releaseForm,
+    permeabilityClass: rec.permeabilityClass ?? "unknown",
     otherReleaseFormsOnMarket: Array.from(new Set(siblings)).filter((f) => f !== releaseForm && f !== "unknown"),
     sections,
     absentSections: rec.absentSections,
