@@ -139,6 +139,14 @@ npm run dev
 
 Open http://localhost:3000 and tap **See it as my dad**. Every key name is listed in `.env.example`; Convex secrets are set with `npx convex env set` (and again with `--prod`).
 
+### Deploy
+
+The Convex backend and the Next.js front end deploy separately:
+
+- **Convex prod** is `energized-lion-632`. Run `npm run deploy:convex` after backend changes, and `npx convex run --prod seed:run` once (never during a demo).
+- **Vercel** hosts only the front end. It needs one environment variable, `NEXT_PUBLIC_CONVEX_URL=https://energized-lion-632.convex.cloud`. Redeploy Vercel after changing it, because the URL is inlined at build time.
+- **Order matters:** if you change Convex function signatures, deploy Convex before (or with) the front end.
+
 Tests (`npm test`):
 - the reviewer blocks dose changes and uncited claims (fixtures)
 - moderation classifies 10 fixture entries correctly

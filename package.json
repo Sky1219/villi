@@ -10,7 +10,8 @@
     "convex": "convex dev",
     "seed": "convex run seed:run",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit -p . && tsc --noEmit -p convex"
+    "typecheck": "tsc --noEmit -p . && tsc --noEmit -p convex",
+    "deploy:convex": "convex deploy -y"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.3.0",
