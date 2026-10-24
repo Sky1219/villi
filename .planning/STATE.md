@@ -101,4 +101,5 @@ Resume file: .planning/phases/01-foundation/01-CONTEXT.md
 |----|------|------|---------|
 | 261024-718 | 2026-10-24 | Judging-prep fixes (demo script, citation lint, swap integrity, moderation) | .planning/quick/261024-718-judging-prep-fixes/SUMMARY.md |
 | 261024-ask | 2026-10-24 | ASK loop, impact view, caregiver role, cuts | .planning/quick/261024-ask-loop-impact-caregiver/SUMMARY.md |
+| 261024-eval | 2026-10-24 | Safety eval harness (baseline only; held-out not run) | .planning/quick/261024-eval-harness/SUMMARY.md |
 | 261024-aqc | 2026-10-24 | Drug formulation table (data/drugs.json) wired into fetch_label | .planning/quick/261024-aqc-drugs-table/SUMMARY.md |

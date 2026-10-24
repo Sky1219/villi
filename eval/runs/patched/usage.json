@@ -1,0 +1,25 @@
+{
+  "segments": [
+    {
+      "at": "2026-10-24T16:27:39.477Z",
+      "cases": 377,
+      "wallMs": 1069353,
+      "usage": {
+        "claude-haiku-5-5": {
+          "calls": 163,
+          "input": 303417,
+          "output": 47580,
+          "cacheRead": 0,
+          "cacheWrite": 0
+        },
+        "claude-opus-5-5": {
+          "calls": 554,
+          "input": 1379506,
+          "output": 609602,
+          "cacheRead": 2045406,
+          "cacheWrite": 27345
+        }
+      }
+    }
+  ]
+}

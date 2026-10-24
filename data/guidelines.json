@@ -93,7 +93,7 @@
       "diagram": {
         "segmentIds": ["jejunum", "ileum"],
         "mode": "absorbs-here",
-        "label": "Fluid and salt balance is set in the small bowel"
+        "label": "Sugary drinks pull water into the gut and can raise output"
       }
     },
     {
@@ -105,7 +105,7 @@
       "diagram": {
         "segmentIds": ["jejunum", "ileum"],
         "mode": "absorbs-here",
-        "label": "Salt and glucose together help the small bowel absorb water"
+        "label": "Oral rehydration solution is the preferred drink to replace fluid and salt"
       }
     },
     {
@@ -250,7 +250,7 @@
       "diagram": {
         "segmentIds": ["jejunum"],
         "mode": "absorbs-here",
-        "label": "Without a colon, the remaining jejunum sets your fluid balance"
+        "label": "With an end-jejunostomy, low-salt drinks can raise output"
       }
     },
     {
