@@ -14,6 +14,7 @@ import { GutDiagram } from "@/components/GutDiagram";
 import { CommunityCounts } from "@/components/CommunityCounts";
 import { LogCard } from "@/components/LogCard";
 import type { SegmentId } from "@convex/lib/anatomy";
+import { personFor } from "@convex/lib/careFor";
 
 type FinalAnswer = Answer & { evidence?: Record<string, { kind: string; text: string }>; communitySynthetic?: boolean };
 type Trace = { step: number; tool: string; summary: string; ok: boolean; at: number };
@@ -441,6 +442,7 @@ function FollowUp({ anonId, parentId }: { anonId: string; parentId: Id<"answers"
 
 function AnswerView({ anonId, answerId }: { anonId: string; answerId: Id<"answers"> }) {
   const a = useQuery(api.answers.get, { anonId, answerId });
+  const profile = useQuery(api.profiles.me, { anonId });
   const start = useMutation(api.answers.start);
   const router = useRouter();
   const [retryError, setRetryError] = useState<string | null>(null);
@@ -450,6 +452,7 @@ function AnswerView({ anonId, answerId }: { anonId: string; answerId: Id<"answer
   const retryText = a.identified ?? a.inputText;
   const done = !!final && a.status === "final";
   const itemName = a.identified ?? a.inputText;
+  const person = profile ? personFor(profile.role, profile.caresFor) : "you";
   const statusLine = done
     ? `Answer ready: ${(STATE_STYLE[final.state] ?? STATE_STYLE["cant-tell"]).tag}.`
     : a.status === "reviewing"
@@ -528,7 +531,7 @@ function AnswerView({ anonId, answerId }: { anonId: string; answerId: Id<"answer
         <div className="space-y-3 pt-4">
           <Useful anonId={anonId} answerId={a._id} value={a.useful} />
           <FollowUp anonId={anonId} parentId={a.kind === "followup" && a.parentId ? a.parentId : a._id} />
-          {a.itemId && itemName && <LogCard anonId={anonId} answerId={a._id} itemName={itemName} />}
+          {a.itemId && itemName && <LogCard anonId={anonId} answerId={a._id} itemName={itemName} person={person} />}
         </div>
       )}
 

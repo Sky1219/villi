@@ -9,6 +9,7 @@ import { retrier } from "./lib/retrier";
 import { anthropicClient, fastModel } from "./lib/llm";
 import { SWAP_MODERATION_SYSTEM, SwapModerationSchema, prefilter, type SwapModerationDecision } from "./lib/moderation";
 import { checkSwap } from "./lib/swapCheck";
+import { scanWarningSigns } from "./lib/warningSigns";
 import { ANATOMY_KEYS, ANATOMY_LABELS, scopeTagsFor, type Anatomy, type AnatomyKey } from "./lib/anatomy";
 import type { Canonical } from "./canonicalize";
 import type { ChunkView } from "./guidelines";
@@ -167,8 +168,16 @@ export const moderate = internalAction({
       });
       return null;
     }
-    // 2. Rules on the free text.
-    const pre = prefilter(text);
+    // 2. Rules on the free text. A note describing warning signs is never shown to others.
+    const pre =
+      prefilter(text) ??
+      (scanWarningSigns(swap.note).level
+        ? {
+            pooled: false,
+            reason: "describes possible warning signs",
+            nudgeUser: "Thanks for sharing. This one stays with you because it mentions how someone is feeling; if it's happening now, please contact the care team.",
+          }
+        : null);
     if (pre) {
       await ctx.runMutation(internal.swaps.applyModeration, {
         swapId: swap._id,

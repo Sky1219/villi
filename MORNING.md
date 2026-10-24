@@ -16,7 +16,8 @@ Started 05:52 PDT (H0). Updated after every task. Broken things first.
 | A3 corpus source check | 771bc43 | Done; `convex/corpus.test.ts` |
 | A4 cut features out of the agent | 6cccf84 | Done (code read + tsc/tests) |
 | A5 end-to-end pipeline test | a3d0261 | Done; `convex/pipeline.test.ts` (3 tests) |
-| B1 medicine list review | (next commit) | Done, tests only; UI not opened in a browser |
+| B1 medicine list review | 00ee2d2 | Done, tests only; UI not opened in a browser |
+| B2 warning-sign escalation | (next commit) | Done, tests only; UI not opened in a browser |
 
 ## Decisions to check
 
@@ -48,6 +49,8 @@ Started 05:52 PDT (H0). Updated after every task. Broken things first.
 - B1: `meds.enrich` is already scheduled on every add (typed, photo, demo clone). It now retries up to 3 times on an openFDA error instead of writing "no FDA label found". The "swallow whole" label regex now also matches "Swallow tablets whole".
 - B1: the "Add a question to the sheet" text is a fixed template: "With <anatomy>, is <medicine name without its strength> the best form for absorption, or is there another form we should discuss?"
 - `convex codegen` can't run here, so I added the two lines for `convex/lib/medReview.ts` to `convex/_generated/api.d.ts` by hand, exactly as codegen writes them. Your next `npx convex dev` or deploy regenerates the file.
+
+- B2: `convex/lib/warningSigns.ts` scans a log note for dehydration signs (thirst, dark or less urine, dizziness or lightheadedness, much higher output, dry mouth) and emergency phrases (fainting/passing out, confusion, chest pain, blood/bleeding, but not "blood pressure/sugar/test"). Negations count as matches. Emergency outranks dehydration. The card shows on the client the moment the entry is saved (Quick log on home, and the log card on an answer), and stays until "Got it" (`logs.ackWarning`). A "worse" drink with no signs gets the softer card (no "today/now"); on Quick log that one appears once moderation has identified the item as a drink, a few seconds later, because the client doesn't know the category. The cards cite `uoaa-2025#dehydration-signs` (see the corpus note about Takeda sponsorship). The sheet, print and Markdown get "Warning signs logged": date + signs, never the note. Log notes are never shown to other users anyway; emergency words are now in the shared-entry prefilter, and a swap note with any warning sign stays private.
 
 ## Couldn't do
 

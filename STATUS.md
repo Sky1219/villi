@@ -10,3 +10,4 @@ Works / Partial / Broken / Cut, how it was verified, and where it lives. "Tests"
 | Cut features out of the agent (A4) | Works | tsc, tests, code read | `convex/agent.ts`, `convex/lib/prompts.ts` |
 | Answer pipeline end to end (A5) | Works | `convex/pipeline.test.ts` | `convex/answers.ts`, `convex/agent.ts`, `convex/reviewer.ts` |
 | Medicine list review (B1) | Works (UI not opened in a browser) | `convex/medReview.test.ts` | `convex/lib/medReview.ts`, `convex/meds.ts`, `convex/questions.ts`, `src/components/MedReview.tsx` |
+| Warning-sign escalation (B2) | Works (UI not opened in a browser) | `convex/warningSigns.test.ts` | `convex/lib/warningSigns.ts`, `convex/logs.ts`, `src/components/WarningCard.tsx`, `src/components/QuickLog.tsx`, `src/components/LogCard.tsx`, `convex/sheet.ts` |

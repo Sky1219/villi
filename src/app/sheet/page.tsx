@@ -8,7 +8,7 @@ import type { Id } from "@convex/_generated/dataModel";
 import { useAnonId } from "@/lib/anon";
 import { friendlyError } from "@/lib/errors";
 import { LogStatus } from "@/components/LogCard";
-import { CHANGE_CHOICES, CHANGE_SHORT, patternSentence, sheetMarkdown, type ResultingChange } from "@/lib/sheet";
+import { CHANGE_CHOICES, CHANGE_SHORT, patternSentence, sheetMarkdown, warningSentence, type ResultingChange } from "@/lib/sheet";
 import { personFor, preparedBy } from "@convex/lib/careFor";
 import { MedReview } from "@/components/MedReview";
 
@@ -259,6 +259,20 @@ function Sheet({ anonId }: { anonId: string }) {
           ))}
         </ul>
       </section>
+
+      {d.warnings.length > 0 && (
+        <section className="space-y-2">
+          <h2 className="font-bold">Warning signs logged</h2>
+          <p className="text-xs text-muted">Dates and the signs named in the patient&apos;s log notes, for the clinician. The notes themselves aren&apos;t shown.</p>
+          <ul className="space-y-2">
+            {d.warnings.map((w) => (
+              <li key={w.at} className="rounded-xl border border-flag bg-flag-soft px-4 py-3 text-sm">
+                {warningSentence(w, d.language)}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {d.meds.length > 0 ? (
         <MedReview anonId={anonId} person={personFor(d.role, d.caresFor)} />

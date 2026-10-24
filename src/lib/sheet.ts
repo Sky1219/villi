@@ -29,6 +29,11 @@ export function citeText(c: string | null): string {
   return ` (${citationLabel(kind, rest.join(":"))})`;
 }
 
+// "Warning signs logged": the date and which signs, never the note itself.
+export function warningSentence(w: SheetData["warnings"][number], locale?: string): string {
+  return `${new Date(w.at).toLocaleDateString(locale)}: ${w.signs.join(", ")}${w.level === "emergency" ? " (emergency signs)" : ""}`;
+}
+
 // Patterns are hypotheses from the user's own log, never conclusions.
 export function patternSentence(p: SheetData["patterns"][number]): string {
   const top = (["hurt", "helped", "neutral"] as const).reduce((a, b) => (p[b] > p[a] ? b : a));
@@ -52,6 +57,10 @@ export function sheetMarkdown(d: SheetData, date: string): string {
   lines.push(``, `## Patterns in the patient's log (to discuss, not conclusions)`, ``);
   if (d.patterns.length === 0) lines.push(`- Not enough entries yet.`);
   d.patterns.forEach((p) => lines.push(`- ${patternSentence(p)}`));
+  if (d.warnings.length) {
+    lines.push(``, `## Warning signs logged`, ``);
+    d.warnings.forEach((w) => lines.push(`- ${warningSentence(w, d.language)}`));
+  }
   lines.push(``, `## Medicines and what the labels say`, ``);
   if (d.meds.length === 0) lines.push(`- (no medicines on file)`);
   for (const m of d.meds) {

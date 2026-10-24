@@ -33,6 +33,7 @@ import type * as lib_safety from "../lib/safety.js";
 import type * as lib_seedData from "../lib/seedData.js";
 import type * as lib_swapCheck from "../lib/swapCheck.js";
 import type * as lib_vision from "../lib/vision.js";
+import type * as lib_warningSigns from "../lib/warningSigns.js";
 import type * as logs from "../logs.js";
 import type * as meds from "../meds.js";
 import type * as moderation from "../moderation.js";
@@ -75,6 +76,7 @@ declare const fullApi: ApiFromModules<{
   "lib/seedData": typeof lib_seedData;
   "lib/swapCheck": typeof lib_swapCheck;
   "lib/vision": typeof lib_vision;
+  "lib/warningSigns": typeof lib_warningSigns;
   logs: typeof logs;
   meds: typeof meds;
   moderation: typeof moderation;

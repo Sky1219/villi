@@ -5,6 +5,9 @@ import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 import { api } from "@convex/_generated/api";
 import { LogStatus } from "@/components/LogCard";
+import { WarningCard } from "@/components/WarningCard";
+import type { Id } from "@convex/_generated/dataModel";
+import { cardFor, scanWarningSigns, type WarningCard as Card } from "@convex/lib/warningSigns";
 
 const OUTCOMES = [
   { value: "helped", label: "Helped" },
@@ -19,6 +22,11 @@ export function QuickLog({ anonId, person = "you" }: { anonId: string; person?: 
   const [item, setItem] = useState("");
   const [note, setNote] = useState("");
   const [error, setError] = useState<string | null>(null);
+  // Shown right away from the note, before the server answers; then from the saved entry.
+  const [local, setLocal] = useState<{ card: Exclude<Card, null>; logId: Id<"log_entries"> | null } | null>(null);
+  const [dismissed, setDismissed] = useState<string | null>(null);
+  const saved = mine?.find((l) => l.card && l._id !== dismissed);
+  const shown = local ?? (saved?.card ? { card: saved.card, logId: saved._id } : null);
 
   async function log(outcome: (typeof OUTCOMES)[number]["value"]) {
     if (!item.trim()) {
@@ -26,11 +34,15 @@ export function QuickLog({ anonId, person = "you" }: { anonId: string; person?: 
       return;
     }
     setError(null);
+    const card = cardFor(scanWarningSigns(note), outcome, null);
+    if (card) setLocal({ card, logId: null });
     try {
-      await create({ anonId, outcome, itemText: item.trim(), note: note.trim() || undefined });
+      const logId = await create({ anonId, outcome, itemText: item.trim(), note: note.trim() || undefined });
+      if (card) setLocal({ card, logId });
       setItem("");
       setNote("");
     } catch (e) {
+      setLocal(null);
       setError(friendlyError(e));
     }
   }
@@ -75,6 +87,18 @@ export function QuickLog({ anonId, person = "you" }: { anonId: string; person?: 
         <p role="alert" className="mt-2 text-sm text-flag">
           {error}
         </p>
+      )}
+      {shown && (
+        <WarningCard
+          anonId={anonId}
+          card={shown.card}
+          person={person}
+          logId={shown.logId}
+          onDone={() => {
+            setDismissed(shown.logId);
+            setLocal(null);
+          }}
+        />
       )}
 
       {mine && mine.length > 0 && (

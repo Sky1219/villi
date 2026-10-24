@@ -41,7 +41,7 @@ const RULES: { re: RegExp; reason: string; nudge: string }[] = [
     nudge: "Thanks for logging this. We kept it private because it looked like it had contact or identifying details.",
   },
   {
-    re: /\b(?:no (?:fluids|water|drinks)|stop(?:ped)? drinking|fast(?:ed|ing)? for \d|bleach|chest pain|fainted|passed out|blood in)\b/i,
+    re: /\b(?:no (?:fluids|water|drinks)|stop(?:ped)? drinking|fast(?:ed|ing)? for \d|bleach|chest pain|faint(?:ed|ing)?|passed out|blood in|bleeding|confus(?:ed|ion))\b/i,
     reason: "describes something a care team should hear first",
     nudge: "Thanks for logging this. It stays private; if this is happening now, please contact your care team or emergency services.",
   },

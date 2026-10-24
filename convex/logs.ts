@@ -4,6 +4,7 @@ import { internal } from "./_generated/api";
 import { outcomeValidator } from "./schema";
 import { requireProfile } from "./profiles";
 import { retrier } from "./lib/retrier";
+import { cardFor, scanWarningSigns } from "./lib/warningSigns";
 
 // Lands with pooled: null; only the scheduled moderation pass can make it
 // visible to others. The client can never set pooled, synthetic or itemId.
@@ -35,6 +36,8 @@ export const create = mutation({
       throw new ConvexError("That's a lot of entries in a minute. Try again shortly.");
     }
 
+    const note = args.note?.trim().slice(0, 280) || undefined;
+    const scan = scanWarningSigns(note);
     const logId = await ctx.db.insert("log_entries", {
       profileId: profile._id,
       anatomySnapshot: profile.anatomy,
@@ -43,7 +46,8 @@ export const create = mutation({
       itemText,
       answerId: args.answerId,
       outcome: args.outcome,
-      note: args.note?.trim().slice(0, 280) || undefined,
+      note,
+      warning: scan.level ? { level: scan.level, signs: scan.signs } : undefined,
       pooled: null,
       synthetic: false,
       createdAt: Date.now(),
@@ -53,6 +57,18 @@ export const create = mutation({
     });
     await ctx.db.patch("log_entries", logId, { moderationRunId: runId });
     return logId;
+  },
+});
+
+// "Got it" on a warning card. The card stays until this is tapped.
+export const ackWarning = mutation({
+  args: { anonId: v.string(), logId: v.id("log_entries") },
+  handler: async (ctx, args) => {
+    const profile = await requireProfile(ctx, args.anonId);
+    const log = await ctx.db.get("log_entries", args.logId);
+    if (!log || log.profileId !== profile._id) throw new ConvexError("Entry not found");
+    if (!log.warningAckAt) await ctx.db.patch("log_entries", log._id, { warningAckAt: Date.now() });
+    return null;
   },
 });
 
@@ -68,9 +84,12 @@ export const listMine = query({
     const out = [];
     for (const r of rows) {
       const item = r.itemId ? await ctx.db.get("items", r.itemId) : null;
+      const card = cardFor(r.warning ?? scanWarningSigns(r.note), r.outcome, item?.category ?? null);
       out.push({
         _id: r._id,
         answerId: r.answerId ?? null,
+        // The warning card this entry shows until its author taps "Got it".
+        card: card && !r.warningAckAt ? card : null,
         item: item?.canonicalName ?? r.itemText ?? "item",
         outcome: r.outcome,
         note: r.note ?? null,

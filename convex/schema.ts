@@ -171,6 +171,10 @@ export default defineSchema({
     moderationReason: v.optional(v.string()),
     nudgeUser: v.optional(v.string()),
     moderationRunId: v.optional(v.string()),
+    // Warning signs found in the note when it was saved (no text, just which signs).
+    warning: v.optional(v.object({ level: v.union(v.literal("emergency"), v.literal("dehydration")), signs: v.array(v.string()) })),
+    // When the author tapped "Got it" on the warning card.
+    warningAckAt: v.optional(v.number()),
     synthetic: v.boolean(),
     createdAt: v.number(),
   })

@@ -5,6 +5,8 @@ import { useState } from "react";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { friendlyError } from "@/lib/errors";
+import { WarningCard } from "@/components/WarningCard";
+import { cardFor, scanWarningSigns, type WarningCard as Card } from "@convex/lib/warningSigns";
 
 const OUTCOMES = [
   { value: "helped", label: "Helped" },
@@ -19,13 +21,27 @@ export function LogStatus({ status, nudge }: { status: string; nudge: string | n
 }
 
 // One tap logs; the note is optional. Moderation runs on the scheduler.
-export function LogCard({ anonId, answerId, itemName }: { anonId: string; answerId: Id<"answers">; itemName: string }) {
+export function LogCard({
+  anonId,
+  answerId,
+  itemName,
+  person = "you",
+}: {
+  anonId: string;
+  answerId: Id<"answers">;
+  itemName: string;
+  person?: string;
+}) {
   const create = useMutation(api.logs.create);
   const mine = useQuery(api.logs.listMine, { anonId });
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const logged = mine?.find((l) => l.answerId === answerId);
+  // Shown from the note the moment it is saved, then from the saved entry until "Got it".
+  const [local, setLocal] = useState<Exclude<Card, null> | null>(null);
+  const [done, setDone] = useState(false);
+  const card = done ? null : (logged?.card ?? local);
 
   if (logged) {
     return (
@@ -34,6 +50,7 @@ export function LogCard({ anonId, answerId, itemName }: { anonId: string; answer
           You logged {itemName}: {OUTCOMES.find((o) => o.value === logged.outcome)?.label.toLowerCase()}
         </p>
         <LogStatus status={logged.status} nudge={logged.nudge} />
+        {card && <WarningCard anonId={anonId} card={card} person={person} logId={logged._id} onDone={() => setDone(true)} />}
       </section>
     );
   }
@@ -63,6 +80,7 @@ export function LogCard({ anonId, answerId, itemName }: { anonId: string; answer
             onClick={async () => {
               setBusy(true);
               setError(null);
+              setLocal(cardFor(scanWarningSigns(note), o.value, null));
               try {
                 await create({ anonId, answerId, outcome: o.value, note: note || undefined });
               } catch (e) {

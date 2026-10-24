@@ -5,6 +5,7 @@ import { requireProfile } from "./profiles";
 import { statusOf } from "./questions";
 import { describeAnatomy } from "./lib/anatomy";
 import { medReviewRows } from "./meds";
+import { scanWarningSigns } from "./lib/warningSigns";
 
 // Everything the appointment sheet shows, in one reactive query.
 export const get = query({
@@ -37,6 +38,13 @@ export const get = query({
       c[l.outcome]++;
       byItem.set(l.itemId, c);
     }
+    // Warning signs logged: date and which signs, never the note itself.
+    const warnings = logs
+      .map((l) => ({ at: l.createdAt, ...(l.warning ?? scanWarningSigns(l.note)) }))
+      .filter((w) => w.level)
+      .slice(0, 20)
+      .map((w) => ({ at: w.at, level: w.level!, signs: w.signs }));
+
     const patterns = [];
     for (const [itemId, c] of byItem) {
       const total = c.helped + c.neutral + c.hurt;
@@ -88,6 +96,7 @@ export const get = query({
           };
         }),
       patterns,
+      warnings,
       meds: medRows,
     };
   },

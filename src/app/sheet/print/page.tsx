@@ -3,7 +3,7 @@
 import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { useAnonId } from "@/lib/anon";
-import { CHANGE_SHORT, citeText, patternSentence } from "@/lib/sheet";
+import { CHANGE_SHORT, citeText, patternSentence, warningSentence } from "@/lib/sheet";
 import { preparedBy } from "@convex/lib/careFor";
 
 // Print / Save as PDF: plain layout, selectable text, correct fonts for every script.
@@ -52,6 +52,16 @@ function Print({ anonId }: { anonId: string }) {
           {d.patterns.length === 0 && <li>Not enough entries yet.</li>}
         </ul>
       </section>
+      {d.warnings.length > 0 && (
+        <section>
+          <h2 className="mb-1 text-lg font-bold">Warning signs logged</h2>
+          <ul className="list-disc space-y-1 pl-6">
+            {d.warnings.map((w) => (
+              <li key={w.at}>{warningSentence(w, d.language)}</li>
+            ))}
+          </ul>
+        </section>
+      )}
       <section>
         <h2 className="mb-1 text-lg font-bold">Medicines and what the labels say</h2>
         <ul className="list-disc space-y-1 pl-6">
