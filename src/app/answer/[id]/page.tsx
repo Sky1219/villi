@@ -9,6 +9,8 @@ import type { Id } from "@convex/_generated/dataModel";
 import type { Answer } from "@convex/lib/answerSchema";
 import { useAnonId } from "@/lib/anon";
 import { GutDiagram } from "@/components/GutDiagram";
+import { CommunityCounts } from "@/components/CommunityCounts";
+import { LogCard } from "@/components/LogCard";
 import type { SegmentId } from "@convex/lib/anatomy";
 
 type FinalAnswer = Answer & { evidence?: Record<string, { kind: string; text: string }> };
@@ -21,6 +23,10 @@ const TOOL_LABEL: Record<string, string> = {
   search_guidelines: "Clinical guidelines",
   query_community: "Community logs",
   query_my_log: "Your own log",
+  canonicalize_item: "Identified as",
+  query_swaps: "Safe-swaps board",
+  query_care_team_answers: "Care-team answers",
+  lookup_ors: "ORS reference",
   safety_lint: "Safety check",
   submit_answer: "Drafted answer",
   reviewer: "Second reviewer",
@@ -109,7 +115,19 @@ const STATE_STYLE = {
   "cant-tell": { box: "bg-surface-2 border-border", tag: "Can't tell yet", tagCls: "text-muted" },
 } as const;
 
-function AnswerCard({ final, answerId, anonId }: { final: FinalAnswer; answerId: Id<"answers">; anonId: string }) {
+function AnswerCard({
+  final,
+  answerId,
+  anonId,
+  itemId,
+  itemName,
+}: {
+  final: FinalAnswer;
+  answerId: Id<"answers">;
+  anonId: string;
+  itemId: Id<"items"> | null;
+  itemName: string | null;
+}) {
   const gIds = Array.from(
     new Set(
       [...final.why.map((w) => w.citation), final.swapToAskAbout?.citation ?? "", final.diagram?.citation ?? ""].flatMap((c) =>
@@ -172,16 +190,38 @@ function AnswerCard({ final, answerId, anonId }: { final: FinalAnswer; answerId:
         </section>
       )}
 
-      {final.community && final.community.matchingAnatomy.helped + final.community.matchingAnatomy.neutral + final.community.matchingAnatomy.hurt > 0 && (
+      {itemId ? (
+        <CommunityCounts anonId={anonId} itemId={itemId} />
+      ) : (
+        final.community &&
+        final.community.matchingAnatomy.helped + final.community.matchingAnatomy.neutral + final.community.matchingAnatomy.hurt > 0 && (
+          <section className="rounded-2xl border border-border bg-surface p-4">
+            <h2 className="mb-2 flex items-center gap-2 font-bold">
+              People with your anatomy
+              {final.community.includesSynthetic && (
+                <span className="rounded-full bg-surface-2 px-2 py-0.5 text-xs font-bold text-muted">demo data</span>
+              )}
+            </h2>
+            <Counts c={final.community.matchingAnatomy} />
+            <p className="mt-2 text-xs text-muted">Self-reported by other users, not a trial. Evidence, not a recommendation.</p>
+          </section>
+        )
+      )}
+
+      {final.careTeamAnswers.length > 0 && (
         <section className="rounded-2xl border border-border bg-surface p-4">
-          <h2 className="mb-2 flex items-center gap-2 font-bold">
-            People with your anatomy
-            {final.community.includesSynthetic && (
-              <span className="rounded-full bg-surface-2 px-2 py-0.5 text-xs font-bold text-muted">demo data</span>
-            )}
-          </h2>
-          <Counts c={final.community.matchingAnatomy} />
-          <p className="mt-2 text-xs text-muted">Self-reported by other users, not a trial. Evidence, not a recommendation.</p>
+          <h2 className="mb-1 font-bold">What other people&apos;s care teams told them</h2>
+          <p className="mb-3 text-xs text-muted">
+            Reported by other users from their own care team. Not advice from yours.
+          </p>
+          <ul className="space-y-3">
+            {final.careTeamAnswers.map((c) => (
+              <li key={c.id} className="border-l-4 border-border pl-3">
+                <p className="text-xs font-bold uppercase tracking-wide text-muted">{c.professionalType}</p>
+                <p>{prose(c.summary)}</p>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
 
@@ -197,6 +237,8 @@ function AnswerCard({ final, answerId, anonId }: { final: FinalAnswer; answerId:
       )}
 
       <QuestionCard ask={final.ask} answerId={answerId} anonId={anonId} />
+
+      {itemId && itemName && <LogCard anonId={anonId} answerId={answerId} itemName={itemName} />}
 
       {final.sourcesChecked.length > 0 && (
         <details className="rounded-2xl border border-border bg-surface p-4 text-sm">
@@ -269,7 +311,7 @@ function FollowUp({ anonId, parentId }: { anonId: string; parentId: Id<"answers"
         e.preventDefault();
         if (!text.trim()) return;
         setBusy(true);
-        const id = await start({ anonId, text: text.trim(), parentId, category: "pill" });
+        const id = await start({ anonId, text: text.trim(), parentId });
         router.push(`/answer/${id}`);
       }}
     >
@@ -328,7 +370,9 @@ function AnswerView({ anonId, answerId }: { anonId: string; answerId: Id<"answer
 
       <TraceList trace={a.toolTrace} status={a.status} />
 
-      {final && a.status === "final" && <AnswerCard final={final} answerId={a._id} anonId={anonId} />}
+      {final && a.status === "final" && (
+        <AnswerCard final={final} answerId={a._id} anonId={anonId} itemId={a.itemId} itemName={a.identified ?? a.inputText} />
+      )}
       {final && a.reviewSummary?.edited && (
         <p className="text-xs text-muted">The second reviewer edited this answer before you saw it.</p>
       )}
@@ -340,7 +384,7 @@ function AnswerView({ anonId, answerId }: { anonId: string; answerId: Id<"answer
           {retryText && (
             <button
               onClick={async () => {
-                const id = await start({ anonId, text: retryText, category: "pill" });
+                const id = await start({ anonId, text: retryText });
                 router.push(`/answer/${id}`);
               }}
               className="mt-3 min-h-12 w-full rounded-xl border border-accent px-4 font-bold text-accent"

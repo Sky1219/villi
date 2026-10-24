@@ -141,3 +141,11 @@ export function describeDiagram(d: DiagramState): string {
     d.stomaAfter ? `Stoma at the end of the ${SEGMENT_LABELS[d.stomaAfter]}.` : "No stoma.",
   ].join(" ");
 }
+
+// A representative anatomy per stratification group, for small badges.
+export const ANATOMY_KEY_EXAMPLE: Record<AnatomyKey, Anatomy> = {
+  "end-jejunostomy": { stomaType: "jejunostomy", colonInContinuity: false, bowelLengthBand: "<100cm" },
+  "colon-in-continuity": { stomaType: "none", colonInContinuity: true, bowelLengthBand: "100-200cm" },
+  ileostomy: { stomaType: "ileostomy", colonInContinuity: false, bowelLengthBand: ">200cm" },
+  colostomy: { stomaType: "colostomy", colonInContinuity: true, bowelLengthBand: ">200cm" },
+};

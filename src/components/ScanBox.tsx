@@ -17,7 +17,7 @@ export function ScanBox({ anonId, initialText = "" }: { anonId: string; initialT
   const fileRef = useRef<HTMLInputElement>(null);
 
   async function go(args: { text?: string; photoId?: Id<"_storage"> }) {
-    const answerId = await start({ anonId, category: "pill", ...args });
+    const answerId = await start({ anonId, ...args });
     router.push(`/answer/${answerId}`);
   }
 
@@ -39,8 +39,8 @@ export function ScanBox({ anonId, initialText = "" }: { anonId: string; initialT
 
   return (
     <section className="rounded-2xl border border-border bg-surface p-4 shadow-sm">
-      <h2 className="text-lg font-bold">Check a medicine</h2>
-      <p className="mb-3 text-sm text-muted">Photograph the bottle label, or type the name exactly as it&apos;s printed.</p>
+      <h2 className="text-lg font-bold">Check a medicine, drink or food</h2>
+      <p className="mb-3 text-sm text-muted">Photograph the label, or type the name as it&apos;s printed.</p>
       <button
         type="button"
         onClick={() => fileRef.current?.click()}
@@ -81,13 +81,13 @@ export function ScanBox({ anonId, initialText = "" }: { anonId: string; initialT
         }}
       >
         <label className="sr-only" htmlFor="scan-text">
-          Medicine name
+          Item name
         </label>
         <input
           id="scan-text"
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="e.g. Metoprolol succinate ER 50 mg"
+          placeholder="e.g. Gatorade, or Metoprolol ER 50 mg"
           className="min-h-12 flex-1 rounded-xl border border-border bg-background px-3 text-base"
           autoComplete="off"
         />

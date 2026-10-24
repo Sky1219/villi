@@ -6,6 +6,7 @@ import { api } from "@convex/_generated/api";
 import { useAnonId } from "@/lib/anon";
 import { GutDiagram } from "@/components/GutDiagram";
 import { MedsEditor } from "@/components/MedsEditor";
+import { QuickLog } from "@/components/QuickLog";
 import { ScanBox } from "@/components/ScanBox";
 
 function Header() {
@@ -75,6 +76,8 @@ function Home({ anonId }: { anonId: string }) {
       </section>
 
       <ScanBox anonId={anonId} />
+
+      <QuickLog anonId={anonId} />
 
       <section>
         <h2 className="mb-2 font-bold">Medicines on file</h2>

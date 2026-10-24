@@ -1,5 +1,6 @@
 import { v } from "convex/values";
-import { internalQuery, type MutationCtx, type QueryCtx } from "./_generated/server";
+import { internalQuery, query, type MutationCtx, type QueryCtx } from "./_generated/server";
+import { requireProfile } from "./profiles";
 import type { Id } from "./_generated/dataModel";
 import { ANATOMY_KEYS, ANATOMY_LABELS, type AnatomyKey } from "./lib/anatomy";
 
@@ -144,5 +145,89 @@ export const myLogForItem = internalQuery({
       for (const r of rows) out.push({ item: item.canonicalName, outcome: r.outcome, when: r.createdAt });
     }
     return out;
+  },
+});
+
+// query_swaps: structured fields only. Other users' free-text notes never reach the agent.
+export const swapsForItem = internalQuery({
+  args: { itemId: v.id("items"), anatomyKey: v.string() },
+  handler: async (ctx, args) => {
+    const rows = await ctx.db
+      .query("swaps")
+      .withIndex("by_insteadOfItemId", (q) => q.eq("insteadOfItemId", args.itemId))
+      .take(100);
+    const pooled = rows.filter((r) => r.pooled === true && r.guidelineCheck?.passed);
+    // Group by the item swapped to: counts are the evidence, not any one person's note.
+    const groups = new Map<string, { useItemId: Id<"items">; sameAnatomy: number; total: number; clinicianEndorsed: number; upvotes: number; synthetic: boolean; citations: Set<string> }>();
+    for (const r of pooled) {
+      const g = groups.get(r.useItemId) ?? { useItemId: r.useItemId, sameAnatomy: 0, total: 0, clinicianEndorsed: 0, upvotes: 0, synthetic: false, citations: new Set<string>() };
+      g.total++;
+      if (r.anatomyKey === args.anatomyKey) g.sameAnatomy++;
+      if (r.clinicianEndorsements.length) g.clinicianEndorsed++;
+      g.upvotes += r.upvotes;
+      g.synthetic ||= r.synthetic;
+      r.guidelineCheck!.citations.forEach((c) => g.citations.add(c.replace(/^G:/, "")));
+      groups.set(r.useItemId, g);
+    }
+    const out = [];
+    for (const g of groups.values()) {
+      const use = await ctx.db.get("items", g.useItemId);
+      if (!use) continue;
+      out.push({
+        use: use.canonicalName,
+        postedByYourAnatomy: g.sameAnatomy,
+        postedTotal: g.total,
+        clinicianEndorsed: g.clinicianEndorsed,
+        upvotes: g.upvotes,
+        includesSynthetic: g.synthetic,
+        guidelineChunkIds: Array.from(g.citations),
+      });
+    }
+    return out.sort((a, b) => b.postedByYourAnatomy - a.postedByYourAnatomy || b.clinicianEndorsed - a.clinicianEndorsed || b.upvotes - a.upvotes).slice(0, 5);
+  },
+});
+
+// query_care_team_answers: moderated reports only, same anatomy first.
+export const careTeamForItem = internalQuery({
+  args: { itemId: v.id("items"), anatomyKey: v.string() },
+  handler: async (ctx, args) => {
+    const rows = await ctx.db
+      .query("care_team_answers")
+      .withIndex("by_itemId", (q) => q.eq("itemId", args.itemId))
+      .take(50);
+    return rows
+      .filter((r) => r.pooled === true)
+      .sort((a, b) => Number(b.anatomyKey === args.anatomyKey) - Number(a.anatomyKey === args.anatomyKey) || b.clinicianEndorsements.length - a.clinicianEndorsements.length)
+      .slice(0, 4)
+      .map((r) => ({
+        id: r._id as string,
+        professionalType: r.professionalType,
+        question: r.questionText,
+        report: r.answerText,
+        reporterAnatomy: ANATOMY_LABELS[r.anatomyKey as AnatomyKey] ?? r.anatomyKey,
+        sameAnatomy: r.anatomyKey === args.anatomyKey,
+        clinicianEndorsed: r.clinicianEndorsements.length > 0,
+        synthetic: r.synthetic,
+      }));
+  },
+});
+
+export const countsByItemId = internalQuery({
+  args: { itemId: v.id("items"), anatomyKey: v.string() },
+  handler: async (ctx, args) => {
+    const item = await ctx.db.get("items", args.itemId);
+    if (!item) return null;
+    return { item: { canonicalName: item.canonicalName, category: item.category }, counts: await stratifiedCounts(ctx, item._id, args.anatomyKey) };
+  },
+});
+
+// Live on the answer card: a log from another device updates these counts in place.
+export const liveCounts = query({
+  args: { anonId: v.string(), itemId: v.id("items") },
+  handler: async (ctx, args) => {
+    const profile = await requireProfile(ctx, args.anonId);
+    const item = await ctx.db.get("items", args.itemId);
+    if (!item) return null;
+    return { canonicalName: item.canonicalName, ...(await stratifiedCounts(ctx, item._id, profile.anatomyKey)) };
   },
 });

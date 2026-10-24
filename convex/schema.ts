@@ -133,18 +133,23 @@ export default defineSchema({
     profileId: v.id("profiles"),
     anatomySnapshot: anatomyValidator,
     anatomyKey: v.string(),
-    itemId: v.id("items"),
+    // Free-text entries are canonicalized by the moderation action before pooling.
+    itemId: v.optional(v.id("items")),
+    itemText: v.optional(v.string()),
+    answerId: v.optional(v.id("answers")),
     outcome: outcomeValidator,
     note: v.optional(v.string()),
     photoId: v.optional(v.id("_storage")),
     pooled,
     moderationReason: v.optional(v.string()),
     nudgeUser: v.optional(v.string()),
+    moderationRunId: v.optional(v.string()),
     synthetic: v.boolean(),
     createdAt: v.number(),
   })
     .index("by_profileId", ["profileId"])
     .index("by_profileId_and_itemId", ["profileId", "itemId"])
+    .index("by_moderationRunId", ["moderationRunId"])
     .index("by_synthetic", ["synthetic"]),
 
   swaps: defineTable({
@@ -251,6 +256,8 @@ export default defineSchema({
     status: answerStatusValidator,
     // What the agent identified, shown as correctable before the answer lands.
     identified: v.optional(v.string()),
+    // Canonical item, so the answer can show live community counts and log against it.
+    itemId: v.optional(v.id("items")),
     toolTrace: v.array(traceStepValidator),
     // Reviewed answer JSON (see lib/answerSchema.ts). Only answers.finalize writes it.
     final: v.optional(v.any()),

@@ -1,16 +1,11 @@
 import { ConvexError, v } from "convex/values";
-import { ActionRetrier, runIdValidator, runResultValidator } from "@convex-dev/action-retrier";
+import { runIdValidator, runResultValidator } from "@convex-dev/action-retrier";
 import { internalMutation, internalQuery, mutation, query } from "./_generated/server";
-import { components, internal } from "./_generated/api";
+import { internal } from "./_generated/api";
+import { retrier } from "./lib/retrier";
 import type { Doc } from "./_generated/dataModel";
 import { categoryValidator } from "./schema";
 import { requireProfile } from "./profiles";
-
-const retrier = new ActionRetrier(components.actionRetrier, {
-  initialBackoffMs: 1000,
-  base: 2,
-  maxFailures: 3,
-});
 
 const MAX_TRACE = 40;
 const STUCK_MS = 5 * 60_000;
@@ -26,6 +21,7 @@ function publicAnswer(a: Doc<"answers">) {
     inputText: a.input.text ?? null,
     hadPhoto: !!a.input.photoId,
     identified: a.identified ?? null,
+    itemId: a.itemId ?? null,
     toolTrace: a.toolTrace,
     final: done ? a.final : null,
     reviewSummary: a.reviewSummary ?? null,
@@ -157,6 +153,14 @@ export const setIdentified = internalMutation({
       return null;
     }
     await ctx.db.patch("answers", a._id, { identified: args.identified.slice(0, 200) });
+    return null;
+  },
+});
+
+export const setItem = internalMutation({
+  args: { answerId: v.id("answers"), itemId: v.id("items") },
+  handler: async (ctx, args) => {
+    await ctx.db.patch("answers", args.answerId, { itemId: args.itemId });
     return null;
   },
 });

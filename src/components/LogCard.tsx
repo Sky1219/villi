@@ -1,0 +1,75 @@
+"use client";
+
+import { useMutation, useQuery } from "convex/react";
+import { useState } from "react";
+import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
+
+const OUTCOMES = [
+  { value: "helped", label: "Helped" },
+  { value: "neutral", label: "No change" },
+  { value: "hurt", label: "Made it worse" },
+] as const;
+
+export function LogStatus({ status, nudge }: { status: string; nudge: string | null }) {
+  if (status === "checking") return <p className="text-sm text-muted">Checking before it&apos;s shared…</p>;
+  if (status === "shared") return <p className="text-sm text-ok">Shared anonymously with people who have the same anatomy.</p>;
+  return <p className="text-sm text-muted">{nudge ?? "Kept private to you."}</p>;
+}
+
+// One tap logs; the note is optional. Moderation runs on the scheduler.
+export function LogCard({ anonId, answerId, itemName }: { anonId: string; answerId: Id<"answers">; itemName: string }) {
+  const create = useMutation(api.logs.create);
+  const mine = useQuery(api.logs.listMine, { anonId });
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const logged = mine?.find((l) => l.answerId === answerId);
+
+  if (logged) {
+    return (
+      <section className="rounded-2xl border border-border bg-surface p-4">
+        <p className="font-bold">
+          You logged {itemName}: {OUTCOMES.find((o) => o.value === logged.outcome)?.label.toLowerCase()}
+        </p>
+        <LogStatus status={logged.status} nudge={logged.nudge} />
+      </section>
+    );
+  }
+
+  return (
+    <section className="rounded-2xl border border-border bg-surface p-4">
+      <h2 className="mb-2 font-bold">Had it? How did it go?</h2>
+      <div className="grid grid-cols-3 gap-2">
+        {OUTCOMES.map((o) => (
+          <button
+            key={o.value}
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              try {
+                await create({ anonId, answerId, outcome: o.value, note: note || undefined });
+              } finally {
+                setBusy(false);
+              }
+            }}
+            className="min-h-12 rounded-xl border border-border bg-background px-2 font-bold disabled:opacity-60"
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+      <label htmlFor="log-note" className="sr-only">
+        Optional note
+      </label>
+      <input
+        id="log-note"
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        maxLength={280}
+        placeholder="Optional note, e.g. output went up after"
+        className="mt-2 min-h-11 w-full rounded-xl border border-border bg-background px-3 text-sm"
+      />
+      <p className="mt-2 text-xs text-muted">Shared anonymously, by anatomy only, after a safety check. No names.</p>
+    </section>
+  );
+}
