@@ -4,10 +4,10 @@ current_phase: 1
 current_phase_name: Foundation
 status: planning
 stopped_at: Phase 1 context gathered
-last_updated: "2026-10-24T06:50:47.358Z"
+last_updated: "2026-10-24T16:34:49.672Z"
 last_activity: 2026-10-23
 last_activity_desc: Roadmap created (7 phases, 52/52 v1 requirements mapped)
-state_head: d44dc200c10000597d3a0c9f0ca09e44db5700a0
+state_head: a4ed24d2758fc1c550477165344dcb099ca577d3
 progress:
   total_phases: 7
   completed_phases: 0
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-10-23)
 Phase: 1 of 7 (Foundation)
 Plan: 0 of TBD in current phase
 Status: Ready to plan
-Last activity: 2026-10-23 — Roadmap created (7 phases, 52/52 v1 requirements mapped)
+Last activity: 2026-10-24 - Completed quick task 261024-cvf: Illustrative CAT absorption model animated on the gut diagram
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -97,7 +97,10 @@ Resume file: .planning/phases/01-foundation/01-CONTEXT.md
 
 ## Quick Tasks Completed
 
-| ID | Date | Task | Summary |
-|----|------|------|---------|
-| 261024-718 | 2026-10-24 | Judging-prep fixes (demo script, citation lint, swap integrity, moderation) | .planning/quick/261024-718-judging-prep-fixes/SUMMARY.md |
-| 261024-ask | 2026-10-24 | ASK loop, impact view, caregiver role, cuts | .planning/quick/261024-ask-loop-impact-caregiver/SUMMARY.md |
+| # | Description | Date | Commit | Status | Directory |
+| --- | ------------- | ------ | -------- | -------- | ----------- |
+| 261024-718 | Judging-prep fixes (demo script, citation lint, swap integrity, moderation) · .planning/quick/261024-718-judging-prep-fixes/SUMMARY.md | 2026-10-24 | — | — | — |
+| 261024-ask | ASK loop, impact view, caregiver role, cuts · .planning/quick/261024-ask-loop-impact-caregiver/SUMMARY.md | 2026-10-24 | — | — | — |
+| 261024-eval | Safety eval harness (baseline only; held-out not run) · .planning/quick/261024-eval-harness/SUMMARY.md | 2026-10-24 | — | — | — |
+| 261024-aqc | Drug formulation table (data/drugs.json) wired into fetch_label · .planning/quick/261024-aqc-drugs-table/SUMMARY.md | 2026-10-24 | — | — | — |
+| 261024-cvf | Illustrative CAT absorption model animated on the gut diagram | 2026-10-24 | a4ed24d | — | [261024-cvf-cat-absorption-model](./quick/261024-cvf-cat-absorption-model/) |

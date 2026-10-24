@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { FORMULATIONS, PERMEABILITY_CLASSES } from "./cat";
 
 export const SEGMENT_IDS = [
   "stomach",
@@ -59,6 +60,17 @@ export const AnswerSchema = z.object({
       citation: z.string(),
     })
     .nullable(),
+  // Illustrative CAT animation (lib/cat.ts). The agent names the formulation and a
+  // [G:]/[L:] citation; code owns permeabilityClass and the fixed caption.
+  simulation: z
+    .object({
+      formulation: z.enum(FORMULATIONS),
+      permeabilityClass: z.enum(PERMEABILITY_CLASSES),
+      citation: z.string(),
+      caption: z.string().optional(),
+    })
+    .nullable()
+    .optional(),
   sourcesChecked: z.array(z.string()),
   ask: z.string().min(1),
   confidence: z.enum(["high", "medium", "low"]),
@@ -169,6 +181,23 @@ export const answerJsonSchema = {
         { type: "null" },
       ],
     },
+    simulation: {
+      description:
+        "Illustration of release along this anatomy. Set only for a tablet or capsule whose fetch_label releaseForm is immediate-, extended- or delayed-release, citing the [G:] or [L:] source of the release-form concern. Otherwise null.",
+      anyOf: [
+        {
+          type: "object",
+          properties: {
+            formulation: { type: "string", enum: [...FORMULATIONS] },
+            permeabilityClass: { type: "string", enum: [...PERMEABILITY_CLASSES] },
+            citation: { type: "string", description: "[G:<chunkId>] or [L:<section>]" },
+          },
+          required: ["formulation", "permeabilityClass", "citation"],
+          additionalProperties: false,
+        },
+        { type: "null" },
+      ],
+    },
     sourcesChecked: {
       type: "array",
       items: { type: "string" },
@@ -190,6 +219,7 @@ export const answerJsonSchema = {
     "careTeamAnswers",
     "personal",
     "diagram",
+    "simulation",
     "sourcesChecked",
     "ask",
     "confidence",

@@ -359,6 +359,7 @@ export const getById = internalQuery({
       anatomy: p.anatomy,
       anatomyKey: p.anatomyKey,
       anatomyText: describeAnatomy(p.anatomy),
+      diagram: diagramOf(p),
       language: p.language,
       caresFor: p.role === "caregiver" ? (p.caresFor ?? null) : null,
       meds: meds.map((m) => ({ name: m.name, dosageForm: m.dosageForm ?? null })),

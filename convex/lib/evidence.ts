@@ -30,6 +30,7 @@ export function attachEvidence(answer: Answer, evidence: Record<string, string>)
     ...answer.why.map((w) => [w.citation, w.claim] as [string, string]),
     ...(answer.diagram ? [[answer.diagram.citation, answer.diagram.label] as [string, string]] : []),
     ...(answer.swapToAskAbout ? [[answer.swapToAskAbout.citation, answer.swapToAskAbout.text] as [string, string]] : []),
+    ...(answer.simulation?.caption ? [[answer.simulation.citation, answer.simulation.caption] as [string, string]] : []),
   ];
   for (const [citation, claim] of pairs) {
     for (const { kind, ref } of extractCitations(citation)) {

@@ -1,6 +1,8 @@
 // Deterministic safety checks that run before (and regardless of) the Claude
 // reviewer. Pure functions: unit-testable with no API key, and they fail closed.
 import { AnswerSchema, type Answer, type ReviewerDecision } from "./answerSchema";
+import { captionFor, type PermeabilityClass } from "./cat";
+import type { DiagramState } from "./anatomy";
 
 // Everything the agent actually retrieved during this run. Citations must point here.
 export type CitationRegistry = {
@@ -25,6 +27,9 @@ export type CitationRegistry = {
   // Every count cell retrieved in this run, so a [C:n/total, anatomy] citation's
   // numerator and denominator both have to match one cell for that anatomy.
   communityCells?: CommunityCell[];
+  // Inputs to the illustrative CAT animation, set by code: the user's drawn anatomy,
+  // the checked item's deterministic release form, and its permeability class.
+  simulation?: { diagram: DiagramState; releaseForm: string | null; permeabilityClass: PermeabilityClass };
 };
 
 // `key` is an anatomy key, or "other" for the pooled other-anatomies cell.
@@ -120,6 +125,7 @@ function userFacingTexts(a: Answer): string[] {
     ...a.personal,
     ...a.careTeamAnswers.map((c) => c.summary),
     a.diagram?.label ?? "",
+    a.simulation?.caption ?? "",
   ];
 }
 
@@ -169,6 +175,34 @@ export function lintAnswer(input: Answer, reg: CitationRegistry): LintResult {
     if (!extractCitations(answer.swapToAskAbout.citation).some((c) => c.kind === "G")) {
       issues.push("removed swap: a guideline swap needs a guideline citation");
       answer.swapToAskAbout = null;
+    }
+  }
+  // The illustration's caption is a factual claim: fixed text chosen by rule, cited
+  // to a guideline or this item's label, and never a number.
+  const english = !reg.language || reg.language.startsWith("en");
+  if (answer.simulation) {
+    const sim = answer.simulation;
+    const kinds = extractCitations(sim.citation).map((c) => c.kind);
+    const bad =
+      checkCitation(sim.citation, reg) ??
+      (kinds.every((k) => k === "G" || k === "L") ? null : "needs a guideline or label citation");
+    const ctx = reg.simulation;
+    const expected = ctx && english ? captionFor(sim.formulation, ctx.diagram) : null;
+    if (sim.caption !== undefined && /\d|percent|fraction absorbed/i.test(sim.caption)) {
+      blocking.push(`numeric language in the illustration caption: "${sim.caption}"`);
+    } else if (sim.caption !== undefined && sim.caption !== expected) {
+      blocking.push("illustration caption is not the fixed caption for this formulation and anatomy");
+    } else if (bad) {
+      issues.push(`removed illustration: ${bad}`);
+      answer.simulation = null;
+    } else if (!ctx || ctx.releaseForm !== sim.formulation) {
+      issues.push("removed illustration: formulation does not match the label's release form");
+      answer.simulation = null;
+    } else if (!expected) {
+      issues.push("removed illustration: nothing to illustrate for this anatomy or language");
+      answer.simulation = null;
+    } else {
+      answer.simulation = { ...sim, permeabilityClass: ctx.permeabilityClass, caption: expected };
     }
   }
   if (answer.swapToAskAbout) {
@@ -235,7 +269,6 @@ export function lintAnswer(input: Answer, reg: CitationRegistry): LintResult {
     blocking.push("sources checked are not listed");
   }
   // The exact wording is repaired in English; the reviewer checks its meaning in other languages.
-  const english = !reg.language || reg.language.startsWith("en");
   if (english && answer.state === "nothing-found" && !/nothing in the sources i checked/i.test(answer.verdict)) {
     answer.verdict = `${NOTHING_FOUND_PREFIX}${answer.verdict}`;
     issues.push('added "nothing in the sources I checked" to a no-concern verdict');
@@ -250,6 +283,7 @@ function citationSet(a: Answer): Set<string> {
     ...a.why.map((w) => w.citation),
     a.diagram?.citation ?? "",
     a.swapToAskAbout?.citation ?? "",
+    a.simulation?.citation ?? "",
   ];
   return new Set(texts.flatMap((t) => extractCitations(t).map((c) => `${c.kind}:${c.ref}`)));
 }

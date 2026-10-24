@@ -44,3 +44,6 @@ next-env.d.ts
 
 .vercel
 .env*
+
+# openFDA raw label and extraction cache for npm run build:drugs (hundreds of MB)
+/data/labels_raw/
