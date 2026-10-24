@@ -80,6 +80,10 @@ export default defineSchema({
     language: v.string(),
     clinicianDemoVerified: v.boolean(),
     synthetic: v.boolean(),
+    // What the user tapped on the gut diagram (coarse, non-identifying).
+    diagram: v.optional(
+      v.object({ removed: v.array(v.string()), stomaAfter: v.union(v.string(), v.null()) }),
+    ),
     // "father" | "peer" for demo templates that /demo clones.
     templateKey: v.optional(v.string()),
     createdAt: v.number(),

@@ -8,6 +8,8 @@ import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import type { Answer } from "@convex/lib/answerSchema";
 import { useAnonId } from "@/lib/anon";
+import { GutDiagram } from "@/components/GutDiagram";
+import type { SegmentId } from "@convex/lib/anatomy";
 
 type FinalAnswer = Answer & { evidence?: Record<string, { kind: string; text: string }> };
 type Trace = { step: number; tool: string; summary: string; ok: boolean; at: number };
@@ -110,12 +112,13 @@ const STATE_STYLE = {
 function AnswerCard({ final, answerId, anonId }: { final: FinalAnswer; answerId: Id<"answers">; anonId: string }) {
   const gIds = Array.from(
     new Set(
-      [...final.why.map((w) => w.citation), final.swapToAskAbout?.citation ?? ""].flatMap((c) =>
+      [...final.why.map((w) => w.citation), final.swapToAskAbout?.citation ?? "", final.diagram?.citation ?? ""].flatMap((c) =>
         Array.from(c.matchAll(/\[G:([^\]]+)\]/g), (m) => m[1].trim()),
       ),
     ),
   );
   const chunks = useQuery(api.questions.citationsFor, { anonId, chunkIds: gIds });
+  const profile = useQuery(api.profiles.me, { anonId });
   const titles: Record<string, string> = Object.fromEntries((chunks ?? []).map((c) => [`G:${c.chunkId}`, c.sourceTitle]));
   const hasLabel = JSON.stringify(final.why).includes("[L:");
   const style = STATE_STYLE[final.state] ?? STATE_STYLE["cant-tell"];
@@ -127,6 +130,22 @@ function AnswerCard({ final, answerId, anonId }: { final: FinalAnswer; answerId:
         <p className="text-xl font-bold leading-snug">{prose(final.verdict)}</p>
         {inlineCites(final.verdict) && <Citations citation={inlineCites(final.verdict)} final={final} titles={titles} />}
       </section>
+
+      {profile && (
+        <section className="rounded-2xl border border-border bg-surface p-4">
+          <h2 className="mb-2 font-bold">{final.diagram ? "Where this matters in your gut" : "Your anatomy"}</h2>
+          <GutDiagram
+            removed={profile.diagram.removed}
+            stoma={profile.diagram.stomaAfter ? { afterSegment: profile.diagram.stomaAfter } : null}
+            highlight={
+              final.diagram
+                ? { segmentIds: final.diagram.segmentIds as SegmentId[], mode: final.diagram.mode, label: final.diagram.label }
+                : null
+            }
+          />
+          {final.diagram && <Citations citation={final.diagram.citation} final={final} titles={titles} />}
+        </section>
+      )}
 
       {final.why.length > 0 && (
         <section className="rounded-2xl border border-border bg-surface p-4">
@@ -284,9 +303,16 @@ function AnswerView({ anonId, answerId }: { anonId: string; answerId: Id<"answer
 
   return (
     <main className="space-y-4 pt-4">
-      <Link href="/" className="inline-block min-h-11 py-2 text-sm font-bold text-accent">
-        ← Home
-      </Link>
+      <div className="flex gap-4">
+        <Link href="/" className="inline-block min-h-11 py-2 text-sm font-bold text-accent">
+          ← Home
+        </Link>
+        {a.parentId && (
+          <Link href={`/answer/${a.parentId}`} className="inline-block min-h-11 py-2 text-sm font-bold text-accent">
+            Back to the first answer
+          </Link>
+        )}
+      </div>
       <section>
         <p className="text-sm text-muted">{a.kind === "followup" ? "Follow-up" : "Checking"}</p>
         <h1 className="text-2xl font-bold">{a.kind === "followup" ? a.inputText : (a.identified ?? a.inputText ?? "Your photo")}</h1>

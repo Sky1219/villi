@@ -66,6 +66,7 @@ function hintFromName(name: string): ReleaseForm | null {
 export function coreName(name: string): string {
   return name
     .toLowerCase()
+    .replace(/-/g, " ")
     .replace(/\d+(\.\d+)?\s*(mg|mcg|g|ml|%|units?)(\s*\/\s*\d*\s*(ml|l))?/g, " ")
     .replace(
       /\b(er|xl|xr|sr|cr|la|dr|ec|extended|sustained|controlled|delayed|enteric|release|coated|tablets?|caps?|capsules?|oral|solution|liquid|syrup|suspension|elixir|hr|24)\b/g,
@@ -133,7 +134,7 @@ function rank(
 ): OpenFdaLabel[] {
   // No release wording in the name: prefer the plain immediate-release product.
   const desired = hint ?? "immediate-release";
-  const strengths = Array.from(name.toUpperCase().matchAll(/(\d+(?:\.\d+)?)\s?(MG|MCG|G)/g), (m) => `${m[1]} ${m[2]}`);
+  const strengths = Array.from(name.toUpperCase().matchAll(/(\d+(?:\.\d+)?)\s?(MG|MCG|G)\b/g), (m) => `${m[1]} ${m[2]}`);
   const wantsChild = /child|infant|pediatric/i.test(name);
   const hintWords: Record<string, RegExp> = {
     "extended-release": /EXTENDED[- ]RELEASE|SUSTAINED|\bER\b|\bXL\b/,

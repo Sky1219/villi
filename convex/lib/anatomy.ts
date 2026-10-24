@@ -49,7 +49,7 @@ export function scopeTagsFor(a: Anatomy): string[] {
   if (a.bowelLengthBand === "unknown" && a.stomaType !== "colostomy") {
     tags.push("short-bowel");
   }
-  if (!a.colonInContinuity) tags.push("no-colon");
+  if (!a.colonInContinuity && a.stomaType !== "colostomy") tags.push("no-colon");
   else tags.push("colon");
   return Array.from(new Set(tags));
 }
@@ -64,4 +64,80 @@ export function describeAnatomy(a: Anatomy): string {
   return `${ANATOMY_LABELS[anatomyKeyOf(a)]}, ${len}, colon ${
     a.colonInContinuity ? "in continuity" : "not in continuity"
   }`;
+}
+
+// ---- Gut diagram segments (shared by GutDiagram, onboarding and answers)
+
+export const SEGMENTS = [
+  "stomach",
+  "duodenum",
+  "jejunum",
+  "ileum",
+  "cecum",
+  "ascending-colon",
+  "transverse-colon",
+  "descending-sigmoid",
+] as const;
+export type SegmentId = (typeof SEGMENTS)[number];
+
+export const SEGMENT_LABELS: Record<SegmentId, string> = {
+  stomach: "stomach",
+  duodenum: "duodenum",
+  jejunum: "jejunum (upper small bowel)",
+  ileum: "ileum (lower small bowel)",
+  cecum: "cecum",
+  "ascending-colon": "ascending colon",
+  "transverse-colon": "transverse colon",
+  "descending-sigmoid": "descending and sigmoid colon",
+};
+
+export const COLON: SegmentId[] = ["cecum", "ascending-colon", "transverse-colon", "descending-sigmoid"];
+
+export type DiagramState = { removed: SegmentId[]; stomaAfter: SegmentId | null };
+
+export function stomaTypeFor(after: SegmentId | null): StomaType {
+  if (!after) return "none";
+  if (after === "jejunum" || after === "duodenum") return "jejunostomy";
+  if (after === "ileum") return "ileostomy";
+  return COLON.includes(after) ? "colostomy" : "none";
+}
+
+// Coarse fields from the tapped diagram. Length can't be measured from taps, so
+// "from-diagram" is the user's "I don't know, roughly this much".
+export function deriveAnatomy(d: DiagramState, length: BowelLengthBand | "from-diagram"): Anatomy {
+  const stomaType = stomaTypeFor(d.stomaAfter);
+  const colonLeft = COLON.some((s) => !d.removed.includes(s));
+  const colonInContinuity = colonLeft && (stomaType === "none" || stomaType === "colostomy");
+  let bowelLengthBand: BowelLengthBand;
+  if (length !== "from-diagram") bowelLengthBand = length;
+  else if (d.removed.includes("jejunum")) bowelLengthBand = "<100cm";
+  else if (d.removed.includes("ileum") || stomaType === "jejunostomy") bowelLengthBand = "<100cm";
+  else bowelLengthBand = ">200cm";
+  return { stomaType, colonInContinuity, bowelLengthBand };
+}
+
+// A plausible drawing for profiles created without the diagram (dropdown, demo).
+export function defaultDiagram(a: Anatomy): DiagramState {
+  switch (a.stomaType) {
+    case "jejunostomy":
+      return { removed: ["ileum", ...COLON], stomaAfter: "jejunum" };
+    case "ileostomy":
+      return { removed: [...COLON], stomaAfter: "ileum" };
+    case "colostomy":
+      return { removed: ["descending-sigmoid"], stomaAfter: "transverse-colon" };
+    default:
+      return a.colonInContinuity
+        ? { removed: a.bowelLengthBand === "<100cm" || a.bowelLengthBand === "100-200cm" ? ["ileum", "cecum"] : [], stomaAfter: null }
+        : { removed: [...COLON], stomaAfter: null };
+  }
+}
+
+export function describeDiagram(d: DiagramState): string {
+  const kept = SEGMENTS.filter((s) => !d.removed.includes(s)).map((s) => SEGMENT_LABELS[s]);
+  const gone = d.removed.map((s) => SEGMENT_LABELS[s]);
+  return [
+    gone.length ? `Removed: ${gone.join(", ")}.` : "Nothing marked as removed.",
+    `Still there: ${kept.join(", ") || "none"}.`,
+    d.stomaAfter ? `Stoma at the end of the ${SEGMENT_LABELS[d.stomaAfter]}.` : "No stoma.",
+  ].join(" ");
 }

@@ -84,7 +84,7 @@ export const SYNTHETIC_GROUPS: { key: AnatomyKey; count: number; anatomies: Anat
   {
     key: "colostomy",
     count: 12,
-    anatomies: [{ colonInContinuity: false, stomaType: "colostomy", bowelLengthBand: ">200cm" }, { colonInContinuity: false, stomaType: "colostomy", bowelLengthBand: "unknown" }],
+    anatomies: [{ colonInContinuity: true, stomaType: "colostomy", bowelLengthBand: ">200cm" }, { colonInContinuity: true, stomaType: "colostomy", bowelLengthBand: "unknown" }],
   },
 ];
 

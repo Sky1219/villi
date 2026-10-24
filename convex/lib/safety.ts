@@ -10,6 +10,9 @@ export type CitationRegistry = {
   careTeamIds: string[];
   // Strengths that identify the product itself (e.g. "50 mg" in "metoprolol succinate ER 50 mg").
   allowedStrengths: string[];
+  // Fixed diagram payloads of retrieved guideline chunks. When present, a
+  // diagram is only shown if it cites one of these, and is replaced by it.
+  diagrams?: Record<string, { segmentIds: string[]; mode: "absorbs-here" | "releases-here" | "missing"; label: string }>;
 };
 
 export const emptyRegistry = (): CitationRegistry => ({
@@ -88,9 +91,22 @@ export function lintAnswer(input: Answer, reg: CitationRegistry): LintResult {
   });
   if (answer.diagram) {
     const bad = checkCitation(answer.diagram.citation, reg);
+    const g = extractCitations(answer.diagram.citation).find((c) => c.kind === "G");
+    const fixed = g && reg.diagrams ? reg.diagrams[g.ref] : undefined;
     if (bad) {
       issues.push(`removed diagram: ${bad}`);
       answer.diagram = null;
+    } else if (reg.diagrams && !fixed) {
+      // The diagram illustrates a cited claim; it never adds one of its own.
+      issues.push("removed diagram: cited chunk has no diagram payload");
+      answer.diagram = null;
+    } else if (fixed && g) {
+      answer.diagram = {
+        segmentIds: fixed.segmentIds as NonNullable<Answer["diagram"]>["segmentIds"],
+        mode: fixed.mode,
+        label: fixed.label,
+        citation: `[G:${g.ref}]`,
+      };
     }
   }
   if (answer.swapToAskAbout) {

@@ -8,7 +8,7 @@ import {
   type QueryCtx,
 } from "./_generated/server";
 import { anatomyValidator, roleValidator } from "./schema";
-import { anatomyKeyOf, describeAnatomy } from "./lib/anatomy";
+import { SEGMENTS, anatomyKeyOf, defaultDiagram, describeAnatomy, type DiagramState, type SegmentId } from "./lib/anatomy";
 import type { Doc } from "./_generated/dataModel";
 
 // The anonId (random UUID in localStorage) is the capability secret. It is
@@ -30,8 +30,18 @@ async function findProfile(ctx: QueryCtx | MutationCtx, anonId: string) {
     .unique();
 }
 
+export function diagramOf(p: Doc<"profiles">): DiagramState {
+  if (!p.diagram) return defaultDiagram(p.anatomy);
+  const valid = (s: string): s is SegmentId => (SEGMENTS as readonly string[]).includes(s);
+  return {
+    removed: p.diagram.removed.filter(valid),
+    stomaAfter: p.diagram.stomaAfter && valid(p.diagram.stomaAfter) ? p.diagram.stomaAfter : null,
+  };
+}
+
 function publicProfile(p: Doc<"profiles">) {
   return {
+    diagram: diagramOf(p),
     _id: p._id,
     role: p.role,
     anatomy: p.anatomy,
@@ -65,11 +75,18 @@ export const upsert = mutation({
     role: roleValidator,
     anatomy: anatomyValidator,
     language: v.string(),
+    diagram: v.optional(v.object({ removed: v.array(v.string()), stomaAfter: v.union(v.string(), v.null()) })),
   },
   handler: async (ctx, args) => {
     if (args.anonId.length < 20) throw new ConvexError("bad device id");
     const existing = await findProfile(ctx, args.anonId);
+    const valid = (s: string) => (SEGMENTS as readonly string[]).includes(s);
+    if (args.diagram && (!args.diagram.removed.every(valid) || (args.diagram.stomaAfter && !valid(args.diagram.stomaAfter)))) {
+      throw new ConvexError("unknown segment");
+    }
     const fields = {
+      // Dropdown edits clear an old drawing so the two never disagree.
+      diagram: args.diagram,
       role: args.role,
       anatomy: args.anatomy,
       anatomyKey: anatomyKeyOf(args.anatomy),
@@ -115,6 +132,7 @@ export const cloneDemo = mutation({
         anatomy: template.anatomy,
         anatomyKey: template.anatomyKey,
         language: template.language,
+        diagram: template.diagram,
         clinicianDemoVerified: false,
       });
     }
@@ -126,6 +144,7 @@ export const cloneDemo = mutation({
         anatomy: template.anatomy,
         anatomyKey: template.anatomyKey,
         language: template.language,
+        diagram: template.diagram,
         clinicianDemoVerified: false,
         synthetic: false,
         createdAt: Date.now(),

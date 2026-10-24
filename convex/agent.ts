@@ -1,12 +1,12 @@
 import { v } from "convex/values";
 import type Anthropic from "@anthropic-ai/sdk";
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 import { env, internalAction, type ActionCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import { anthropicClient, fastModel, mainModel } from "./lib/llm";
-import { AGENT_SYSTEM, VISION_SYSTEM } from "./lib/prompts";
+import { anthropicClient, mainModel } from "./lib/llm";
+import { AGENT_SYSTEM } from "./lib/prompts";
+import { readPhoto, joinPhotoName } from "./lib/vision";
 import { AnswerSchema, answerJsonSchema, type Answer } from "./lib/answerSchema";
 import { emptyRegistry, lintAnswer, type CitationRegistry } from "./lib/safety";
 import { scopeTagsFor, type Anatomy } from "./lib/anatomy";
@@ -28,13 +28,6 @@ type Profile = {
 
 type Registry = CitationRegistry & { evidence: Record<string, string> };
 
-const VisionSchema = z.object({
-  kind: z.enum(["pill", "drink", "food", "unknown"]),
-  name: z.string().nullable(),
-  strength: z.string().nullable(),
-  releaseText: z.string().nullable(),
-  legible: z.boolean(),
-});
 
 const TOOLS: Anthropic.Tool[] = [
   {
@@ -113,7 +106,7 @@ function registerLabel(reg: Registry, l: LabelResult) {
 }
 
 class Agent {
-  reg: Registry = { ...emptyRegistry(), evidence: {} };
+  reg: Registry = { ...emptyRegistry(), evidence: {}, diagrams: {} };
   submitted: Answer | null = null;
   lintRetries = 0;
 
@@ -170,6 +163,7 @@ class Agent {
           for (const c of res.chunks) {
             if (!this.reg.guidelineIds.includes(c.chunkId)) this.reg.guidelineIds.push(c.chunkId);
             this.reg.evidence[`G:${c.chunkId}`] = c.text;
+            if (c.diagram) this.reg.diagrams![c.chunkId] = c.diagram;
           }
           await this.trace(
             "search_guidelines",
@@ -258,29 +252,6 @@ class Agent {
   }
 }
 
-async function readPhoto(url: string) {
-  const client = anthropicClient(env);
-  const res = await client.messages.parse({
-    model: fastModel(env),
-    max_tokens: 2000,
-    system: VISION_SYSTEM,
-    output_config: { effort: "low", format: zodOutputFormat(VisionSchema) },
-    messages: [
-      {
-        role: "user",
-        content: [
-          { type: "image", source: { type: "url", url } },
-          {
-            type: "text",
-            text: "What product is this? Give the printed product name (brand or generic), the printed strength, and any printed release wording (ER, XL, SR, DR, EC, extended-release, delayed-release, oral solution). Set legible=false if you cannot read a product name.",
-          },
-        ],
-      },
-    ],
-  });
-  return res.parsed_output;
-}
-
 function unidentifiedDraft(reason: string): Answer {
   return {
     state: "cant-tell",
@@ -322,13 +293,9 @@ export const run = internalAction({
       let category = answer.input.category ?? "pill";
       if (answer.kind === "scan" && answer.input.photoId) {
         const url = await ctx.storage.getUrl(answer.input.photoId);
-        const seen = url ? await readPhoto(url) : null;
+        const seen = url ? await readPhoto(env, url) : null;
         if (seen?.legible && seen.name) {
-          // The model often repeats release wording and strength inside the name.
-          itemName = [seen.name, seen.releaseText, seen.strength].reduce<string>((acc, part) => {
-            if (!part || acc.toLowerCase().replace(/\s+/g, "").includes(part.toLowerCase().replace(/\s+/g, ""))) return acc;
-            return `${acc} ${part}`.trim();
-          }, "");
+          itemName = joinPhotoName(seen);
           if (seen.kind !== "unknown") category = seen.kind;
           await agent.trace("read_photo", `read "${itemName}" (${seen.kind})`);
         } else {

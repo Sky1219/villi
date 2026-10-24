@@ -1,12 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useMutation, useQuery } from "convex/react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { useAnonId } from "@/lib/anon";
-import { QuickProfileForm } from "@/components/QuickProfileForm";
+import { GutDiagram } from "@/components/GutDiagram";
+import { MedsEditor } from "@/components/MedsEditor";
 import { ScanBox } from "@/components/ScanBox";
 
 function Header() {
@@ -18,7 +17,7 @@ function Header() {
   );
 }
 
-function Welcome({ anonId }: { anonId: string }) {
+function Welcome() {
   return (
     <main className="space-y-6">
       <Header />
@@ -38,71 +37,49 @@ function Welcome({ anonId }: { anonId: string }) {
           <span className="text-sm text-muted">Small bowel joined to colon, 100 to 200 cm</span>
         </Link>
       </section>
-      <section className="rounded-2xl border border-border bg-surface p-4">
-        <h2 className="mb-3 text-lg font-bold">Or set up your own</h2>
-        <QuickProfileForm anonId={anonId} />
-      </section>
+      <Link
+        href="/onboarding"
+        className="flex min-h-14 items-center justify-center rounded-2xl border-2 border-accent px-5 py-3 text-lg font-bold text-accent"
+      >
+        Set up your own (about a minute)
+      </Link>
+      <p className="text-sm text-muted">No name, no birthday, no medical history. Only coarse anatomy, tied to a random id on this device.</p>
     </main>
   );
 }
 
 function Home({ anonId }: { anonId: string }) {
-  const router = useRouter();
   const profile = useQuery(api.profiles.me, { anonId });
   const answers = useQuery(api.answers.listMine, profile ? { anonId } : "skip");
   const questions = useQuery(api.questions.listMine, profile ? { anonId } : "skip");
-  const start = useMutation(api.answers.start);
-  const [editing, setEditing] = useState(false);
 
   if (profile === undefined) return <p className="pt-10 text-center text-muted">Loading…</p>;
-  if (profile === null) return <Welcome anonId={anonId} />;
+  if (profile === null) return <Welcome />;
 
   return (
     <main className="space-y-5">
       <Header />
-      <section className="rounded-2xl bg-surface-2 p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-sm text-muted">{profile.role === "caregiver" ? "Checking for someone you care for" : "Your anatomy"}</p>
-            <p className="font-bold">{profile.anatomyText}</p>
-          </div>
-          <button onClick={() => setEditing((e) => !e)} className="min-h-11 shrink-0 text-sm font-bold text-accent underline">
-            {editing ? "Close" : "Change"}
-          </button>
+      <section className="flex items-center gap-3 rounded-2xl bg-surface-2 p-4">
+        <GutDiagram
+          size="badge"
+          removed={profile.diagram.removed}
+          stoma={profile.diagram.stomaAfter ? { afterSegment: profile.diagram.stomaAfter } : null}
+        />
+        <div className="min-w-0 flex-1">
+          <p className="text-sm text-muted">{profile.role === "caregiver" ? "Checking for someone you care for" : "Your anatomy"}</p>
+          <p className="font-bold">{profile.anatomyText}</p>
         </div>
-        {editing && (
-          <div className="mt-4">
-            <QuickProfileForm anonId={anonId} onDone={() => setEditing(false)} />
-          </div>
-        )}
+        <Link href="/onboarding" className="flex min-h-11 shrink-0 items-center text-sm font-bold text-accent underline">
+          Change
+        </Link>
       </section>
 
       <ScanBox anonId={anonId} />
 
-      {profile.meds.length > 0 && (
-        <section>
-          <h2 className="mb-2 font-bold">Medicines on file</h2>
-          <ul className="space-y-2">
-            {profile.meds.map((m) => (
-              <li key={m._id}>
-                <button
-                  onClick={async () => {
-                    const id = await start({ anonId, text: m.name, category: "pill" });
-                    router.push(`/answer/${id}`);
-                  }}
-                  className="flex min-h-12 w-full items-center justify-between rounded-xl border border-border bg-surface px-4 py-2 text-left"
-                >
-                  <span>
-                    <span className="block font-bold">{m.name}</span>
-                    {m.dosageForm && <span className="block text-xs text-muted">{m.dosageForm.toLowerCase()}</span>}
-                  </span>
-                  <span className="text-sm font-bold text-accent">Check</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      <section>
+        <h2 className="mb-2 font-bold">Medicines on file</h2>
+        <MedsEditor anonId={anonId} meds={profile.meds} checkable />
+      </section>
 
       {answers && answers.length > 0 && (
         <section>

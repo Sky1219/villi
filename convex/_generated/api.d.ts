@@ -21,6 +21,8 @@ import type * as lib_llm from "../lib/llm.js";
 import type * as lib_prompts from "../lib/prompts.js";
 import type * as lib_safety from "../lib/safety.js";
 import type * as lib_seedData from "../lib/seedData.js";
+import type * as lib_vision from "../lib/vision.js";
+import type * as meds from "../meds.js";
 import type * as profiles from "../profiles.js";
 import type * as questions from "../questions.js";
 import type * as reviewer from "../reviewer.js";
@@ -46,6 +48,8 @@ declare const fullApi: ApiFromModules<{
   "lib/prompts": typeof lib_prompts;
   "lib/safety": typeof lib_safety;
   "lib/seedData": typeof lib_seedData;
+  "lib/vision": typeof lib_vision;
+  meds: typeof meds;
   profiles: typeof profiles;
   questions: typeof questions;
   reviewer: typeof reviewer;

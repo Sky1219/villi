@@ -17,6 +17,8 @@
   --info-soft: #e3ebf3;
   --info: #2c5a85;
   --removed: #c9bdb0;
+  --segment: #e9a48c;
+  --focus: #2c5a85;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -37,6 +39,8 @@
     --info-soft: #1f2c39;
     --info: #9cc3ea;
     --removed: #5a5048;
+    --segment: #b9705a;
+    --focus: #9cc3ea;
   }
 }
 
@@ -57,6 +61,8 @@
   --color-info: var(--info);
   --color-info-soft: var(--info-soft);
   --color-removed: var(--removed);
+  --color-segment: var(--segment);
+  --color-focus: var(--focus);
   --font-sans: var(--font-atkinson);
 }
 
