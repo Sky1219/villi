@@ -9,9 +9,14 @@
     "lint": "eslint",
     "convex": "convex dev",
     "seed": "convex run seed:run",
+    "build:drugs": "tsx scripts/build-drugs.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit -p . && tsc --noEmit -p convex",
-    "deploy:convex": "convex deploy -y"
+    "deploy:convex": "convex deploy -y",
+    "eval": "tsx eval/run.ts",
+    "eval:generate": "tsx eval/generate.ts",
+    "eval:grade": "tsx eval/grade.ts",
+    "eval:report": "tsx eval/report.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.3.0",

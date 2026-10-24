@@ -112,6 +112,9 @@ function labelForModel(l: LabelResult) {
   return {
     found: true,
     labelUsed: `${l.brandName ?? l.genericName} (${l.manufacturer ?? "unknown manufacturer"}, effective ${l.effectiveTime ?? "?"})`,
+    source: SOURCE_WORDS[l.source],
+    // Reviewed facts from Villi's drug table; each backed by the quote in sections[labelSectionCitations[field]].
+    ...(l.tableFacts ? { tableFacts: l.tableFacts } : {}),
     dosageForm: l.dosageForms.join("; ") || "not listed in NDC",
     releaseForm: l.releaseForm,
     otherReleaseFormsOnMarket: l.otherReleaseFormsOnMarket,
@@ -124,7 +127,23 @@ function labelForModel(l: LabelResult) {
 // Trace lines are shown to patients, so they use plain words, not field names or ids.
 const plain = (s: string) => s.replace(/[_-]+/g, " ").toLowerCase();
 
+const SOURCE_WORDS: Record<LabelResult["source"], string> = {
+  table: "Villi's checked drug table",
+  cache: "saved copy of the FDA label",
+  live: "FDA label, fetched live",
+  none: "FDA label search",
+};
+const MATCH_WORDS = { exact: "exact name", alias: "brand or other name", fuzzy: "closest known name" } as const;
+
+function labelPath(l: LabelResult): string {
+  return l.source === "table" && l.tableMatch ? `${SOURCE_WORDS.table} (${MATCH_WORDS[l.tableMatch]})` : SOURCE_WORDS[l.source];
+}
+
 function labelTrace(l: LabelResult): string {
+  return `${labelPath(l)}: ${labelSummary(l)}`;
+}
+
+function labelSummary(l: LabelResult): string {
   if (!l.found) return "no FDA label found for this name";
   const who = l.manufacturer ? ` from ${l.manufacturer}` : "";
   const form = l.dosageForms[0] ? `: ${plain(l.dosageForms[0])}` : "";

@@ -1,7 +1,14 @@
 import { v } from "convex/values";
-import { env, internalAction, internalMutation, internalQuery } from "./_generated/server";
+import { env, internalAction, internalMutation, internalQuery, type ActionCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
+import { coreName, hintFromName, labelKeyFor, releaseFormOf, type ReleaseForm } from "./lib/labelNames";
+import { FACT_FIELDS, lookupDrug, recordReleaseForm, type DrugRecord, type DrugTable, type TableMatch } from "./lib/drugTable";
+import type { Canonical } from "./canonicalize";
+import drugsJson from "../data/drugs.json";
+
+// Reviewed formulation facts for the top ~300 drugs (scripts/build-drugs.ts).
+const DRUG_TABLE = drugsJson as unknown as DrugTable;
 
 // Sections probed in order. Modern PLR labels lack inactive_ingredient and
 // warnings; older OTC labels lack the PLR keys. Absence is reported, never hidden.
@@ -25,7 +32,7 @@ const SECTION_CAP = 4000;
 const FOUND_TTL = 30 * 86_400_000;
 const MISSING_TTL = 86_400_000;
 
-export type ReleaseForm = "extended-release" | "delayed-release" | "liquid" | "immediate-release" | "unknown";
+export { coreName, labelKeyFor, releaseFormOf, type ReleaseForm };
 
 export type LabelResult = {
   found: boolean;
@@ -41,45 +48,14 @@ export type LabelResult = {
   absentSections: string[];
   flags: { flag: string; section: string; evidence: string }[];
   fromCache: boolean;
+  // Which path answered: Villi's reviewed drug table, the saved openFDA copy, or live openFDA.
+  source: "table" | "cache" | "live" | "none";
+  tableMatch?: TableMatch;
+  tableFacts?: TableFacts;
   error: string | null;
 };
 
-export function releaseFormOf(dosageForm: string): ReleaseForm {
-  const f = dosageForm.toUpperCase();
-  if (/EXTENDED RELEASE|EXTENDED-RELEASE|SUSTAINED|CONTROLLED/.test(f)) return "extended-release";
-  if (/DELAYED RELEASE|DELAYED-RELEASE|ENTERIC/.test(f)) return "delayed-release";
-  if (/^(TABLET|CAPSULE)/.test(f)) return "immediate-release";
-  if (/SOLUTION|SUSPENSION|SYRUP|ELIXIR|LIQUID|DROPS/.test(f)) return "liquid";
-  if (/POWDER|GRANULE/.test(f)) return "immediate-release";
-  return "unknown";
-}
-
-function hintFromName(name: string): ReleaseForm | null {
-  const n = ` ${name.toLowerCase()} `;
-  if (/\b(er|xl|xr|sr|cr|la|extended|sustained|controlled|24 ?hr?)\b/.test(n)) return "extended-release";
-  if (/\b(dr|ec|delayed|enteric)\b/.test(n)) return "delayed-release";
-  if (/\b(solution|liquid|syrup|suspension|elixir|oral solution)\b/.test(n)) return "liquid";
-  return null;
-}
-
-// "Metoprolol succinate ER 50 mg tablets" -> "metoprolol succinate"
-export function labelKeyFor(name: string): string {
-  return `${coreName(name)}|${hintFromName(name) ?? "any"}`;
-}
-
-export function coreName(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/-/g, " ")
-    .replace(/\d+(\.\d+)?\s*(mg|mcg|g|ml|%|units?)(\s*\/\s*\d*\s*(ml|l))?/g, " ")
-    .replace(
-      /\b(er|xl|xr|sr|cr|la|dr|ec|extended|sustained|controlled|delayed|enteric|release|coated|tablets?|caps?|capsules?|oral|solution|liquid|syrup|suspension|elixir|hr|24)\b/g,
-      " ",
-    )
-    .replace(/[^a-z0-9\- ]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
+export type TableFacts = Pick<DrugRecord, (typeof FACT_FIELDS)[number]> & { recordId: string; tableGeneratedAt: string };
 
 export function computeFlags(sections: Record<string, string>, releaseForm: ReleaseForm) {
   const flags: LabelResult["flags"] = [];
@@ -168,7 +144,7 @@ function rank(
   return [...labels].sort((a, b) => score(b) - score(a));
 }
 
-async function fetchFromOpenFda(name: string): Promise<Omit<LabelResult, "fromCache" | "queryKey">> {
+async function fetchFromOpenFda(name: string): Promise<Omit<LabelResult, "fromCache" | "queryKey" | "source">> {
   const core = coreName(name);
   const hint = hintFromName(name);
   const empty = {
@@ -272,6 +248,7 @@ function fromRow(row: Doc<"fda_label_cache">): LabelResult {
     absentSections: row.absentSections,
     flags: computeFlags(sections, releaseForm),
     fromCache: true,
+    source: "cache",
     error: null,
   };
 }
@@ -318,34 +295,114 @@ export const clearCache = internalMutation({
   },
 });
 
+// Table records cite their own short label quotes as [L:<section>]; statements keep the full label sentence.
+function fromTable(name: string, rec: DrugRecord, match: TableMatch): LabelResult {
+  const releaseForm = recordReleaseForm(rec);
+  const sections: Record<string, string> = { dosage_form: rec.dosageForm };
+  for (const f of FACT_FIELDS) {
+    const e = rec.evidence[f];
+    if (!e || rec[f] === null || e.section === "dosage_form") continue;
+    const text = typeof rec[f] === "string" ? (rec[f] as string) : e.quote;
+    if (!sections[e.section]?.includes(text)) sections[e.section] = sections[e.section] ? `${sections[e.section]} … ${text}` : text;
+  }
+  const flags: LabelResult["flags"] = [];
+  if (releaseForm === "extended-release" || releaseForm === "delayed-release") {
+    flags.push({ flag: releaseForm, section: "dosage_form", evidence: "NDC dosage form" });
+  }
+  if (rec.containsSorbitol) flags.push({ flag: "sugar-alcohol", section: rec.evidence.containsSorbitol.section, evidence: "sorbitol" });
+  else if (rec.otherSugarAlcohols?.length) {
+    flags.push({ flag: "sugar-alcohol", section: rec.evidence.otherSugarAlcohols.section, evidence: rec.otherSugarAlcohols[0] });
+  }
+  if (rec.doNotCrushStatement) {
+    flags.push({ flag: "swallow-whole", section: rec.evidence.doNotCrushStatement.section, evidence: rec.doNotCrushStatement.slice(0, 240) });
+  }
+  const siblings = DRUG_TABLE.records.filter((r) => r.genericName === rec.genericName).map(recordReleaseForm);
+  return {
+    found: true,
+    queryKey: labelKeyFor(name),
+    brandName: rec.brandNames[0] ?? null,
+    genericName: rec.genericName,
+    manufacturer: rec.label.manufacturer,
+    effectiveTime: rec.label.effectiveTime,
+    dosageForms: [rec.dosageForm],
+    releaseForm,
+    otherReleaseFormsOnMarket: Array.from(new Set(siblings)).filter((f) => f !== releaseForm && f !== "unknown"),
+    sections,
+    absentSections: rec.absentSections,
+    flags,
+    fromCache: true,
+    source: "table",
+    tableMatch: match,
+    tableFacts: {
+      recordId: rec.id,
+      tableGeneratedAt: DRUG_TABLE.generatedAt,
+      releaseMechanism: rec.releaseMechanism,
+      entericCoated: rec.entericCoated,
+      containsSorbitol: rec.containsSorbitol,
+      otherSugarAlcohols: rec.otherSugarAlcohols,
+      doNotCrushStatement: rec.doNotCrushStatement,
+      absorptionSiteStatement: rec.absorptionSiteStatement,
+      bioavailabilityNote: rec.bioavailabilityNote,
+    },
+    error: null,
+  };
+}
+
+// Exact generic name, then brand/alias. Pure and in-memory, so no network on a hit.
+export function lookupTable(name: string, hint: ReleaseForm | null = hintFromName(name)) {
+  return lookupDrug(DRUG_TABLE.records, name, hint);
+}
+
+async function cachedOrLive(ctx: ActionCtx, name: string, queryKey: string): Promise<LabelResult> {
+  const cached: Doc<"fda_label_cache"> | null = await ctx.runQuery(internal.fda.getCached, { queryKey });
+  if (cached && Date.now() - cached.fetchedAt < (cached.found ? FOUND_TTL : MISSING_TTL)) {
+    return fromRow(cached);
+  }
+  let fresh: Omit<LabelResult, "fromCache" | "queryKey" | "source">;
+  try {
+    fresh = await fetchFromOpenFda(name);
+  } catch (e) {
+    return { ...(cached ? fromRow(cached) : emptyResult(queryKey)), error: `openFDA unreachable: ${(e as Error).message}` };
+  }
+  if (fresh.error) return { ...fresh, queryKey, fromCache: false, source: "live" };
+  await ctx.runMutation(internal.fda.putCache, {
+    queryKey,
+    found: fresh.found,
+    brandName: fresh.brandName ?? undefined,
+    genericName: fresh.genericName ?? undefined,
+    manufacturer: fresh.manufacturer ?? undefined,
+    effectiveTime: fresh.effectiveTime ?? undefined,
+    dosageForms: fresh.dosageForms,
+    routes: ["ORAL"],
+    sections: { ...fresh.sections, release_form: fresh.releaseForm, other_forms: fresh.otherReleaseFormsOnMarket.join(",") },
+    absentSections: fresh.absentSections,
+  });
+  return { ...fresh, queryKey, fromCache: false, source: "live" };
+}
+
+// fetch_label: Villi's reviewed drug table first (exact, alias, then fuzzy via
+// canonicalize_item); the saved or live openFDA label only on a miss.
+// needFullText skips the table for callers that read appearance prose (match_pill).
 export const fetchLabel = internalAction({
-  args: { name: v.string() },
+  args: { name: v.string(), needFullText: v.optional(v.boolean()) },
   handler: async (ctx, args): Promise<LabelResult> => {
     const queryKey = labelKeyFor(args.name);
-    const cached: Doc<"fda_label_cache"> | null = await ctx.runQuery(internal.fda.getCached, { queryKey });
-    if (cached && Date.now() - cached.fetchedAt < (cached.found ? FOUND_TTL : MISSING_TTL)) {
-      return fromRow(cached);
+    let hit: { record: DrugRecord; match: TableMatch } | null = lookupTable(args.name);
+    if (!hit && !args.needFullText && coreName(args.name)) {
+      try {
+        const canon: Canonical = await ctx.runAction(internal.canonicalize.run, { text: args.name, categoryHint: "pill" });
+        // The typed release wording wins over whatever the canonical name says.
+        const hint = hintFromName(args.name) ?? hintFromName(canon.canonicalName);
+        const fuzzy = canon.category === "pill" ? lookupTable(canon.canonicalName, hint) : null;
+        if (fuzzy) hit = { record: fuzzy.record, match: "fuzzy" };
+      } catch {
+        // canonicalize_item unavailable: go to openFDA
+      }
     }
-    let fresh: Omit<LabelResult, "fromCache" | "queryKey">;
-    try {
-      fresh = await fetchFromOpenFda(args.name);
-    } catch (e) {
-      return { ...(cached ? fromRow(cached) : emptyResult(queryKey)), error: `openFDA unreachable: ${(e as Error).message}` };
-    }
-    if (fresh.error) return { ...fresh, queryKey, fromCache: false };
-    await ctx.runMutation(internal.fda.putCache, {
-      queryKey,
-      found: fresh.found,
-      brandName: fresh.brandName ?? undefined,
-      genericName: fresh.genericName ?? undefined,
-      manufacturer: fresh.manufacturer ?? undefined,
-      effectiveTime: fresh.effectiveTime ?? undefined,
-      dosageForms: fresh.dosageForms,
-      routes: ["ORAL"],
-      sections: { ...fresh.sections, release_form: fresh.releaseForm, other_forms: fresh.otherReleaseFormsOnMarket.join(",") },
-      absentSections: fresh.absentSections,
-    });
-    return { ...fresh, queryKey, fromCache: false };
+    if (hit && !args.needFullText) return fromTable(args.name, hit.record, hit.match);
+    const label = await cachedOrLive(ctx, args.name, queryKey);
+    if (hit && !label.found) return fromTable(args.name, hit.record, hit.match);
+    return label;
   },
 });
 
@@ -364,6 +421,7 @@ function emptyResult(queryKey: string): LabelResult {
     absentSections: [...LABEL_SECTIONS],
     flags: [],
     fromCache: false,
+    source: "none",
     error: null,
   };
 }

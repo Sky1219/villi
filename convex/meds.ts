@@ -132,7 +132,7 @@ export const matchPill = internalAction({
     const labels: Record<string, LabelResult> = {};
     const forMatch: MedForMatch[] = await Promise.all(
       meds.map(async (m) => {
-        const label: LabelResult = await ctx.runAction(internal.fda.fetchLabel, { name: m.name });
+        const label: LabelResult = await ctx.runAction(internal.fda.fetchLabel, { name: m.name, needFullText: true });
         labels[m.name] = label;
         const s = label.sections;
         return {

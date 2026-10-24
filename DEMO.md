@@ -6,7 +6,7 @@ One check runs live. Everything else was run beforehand on the same profile and 
 - Run `npx convex env list --prod` and confirm `ANTHROPIC_API_KEY`, `OPENFDA_API_KEY` and `VOYAGE_API_KEY` are set. Without the Voyage key, guideline search quietly falls back to keywords and the trace says "(keyword search)". An openFDA rate limit looks like "I couldn't identify this", not an error.
 - Deploy the backend (`npm run deploy:convex`), then seed with `npx convex run --prod seed:run`. Re-seeding replaces the old synthetic rows, which removes the swap that failed the guideline check. Never seed during the demo: it competes with live traffic for scheduled jobs.
 - **Phone:** open the app and tap **See it as my dad**. The profile is a caregiver checking for a parent, so the home screen says "Checking for your parent". Then run these checks and wait for each to finish:
-  1. Type **Metoprolol succinate ER 50 mg** (this also warms the FDA label cache for the live run).
+  1. Type **Metoprolol succinate ER 50 mg** (its label facts come from Villi's checked drug table, so the live run works even if openFDA is down).
   2. On that answer, ask the follow-up **Can I crush it?** Leave this answer open in a **second browser tab**: follow-ups don't appear in Recent checks.
   3. Type **Gatorade**.
   4. **I saw something** → yellow, oval.
