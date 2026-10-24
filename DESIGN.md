@@ -17,8 +17,9 @@ colors:
   sage-wash: "#e4efe3"
   harbor-blue: "#2c5a85"
   harbor-wash: "#e3ebf3"
-  removed-gray: "#c9bdb0"
-  living-segment: "#e9a48c"
+  removed-gray: "#8f8275"
+  living-segment: "#c8704f"
+  control-line: "#9a8c7e"
 typography:
   display:
     fontFamily: "Atkinson Hyperlegible, ui-sans-serif, system-ui, sans-serif"
@@ -163,13 +164,14 @@ A warm, low-saturation palette of paper and roasted ink, with one rust accent an
 - **Linen** (`linen`): context panels (the anatomy summary at the top of home), the "Can't tell yet" state, error panels, demo-data pills.
 - **Roasted Ink** (`roasted-ink`): body text and headings. 14.2:1 on Oat Paper.
 - **Driftwood** (`driftwood`): secondary text, captions, privacy and disclaimer copy. 5.5:1 on Oat Paper.
-- **Sandstone Line** (`sandstone-line`): hairline borders on every card, input and chip.
+- **Sandstone Line** (`sandstone-line`): hairline borders on cards and panels, which are decorative and need no contrast minimum.
+- **Control Line** (`control-line`): borders on inputs, selects, text areas and unselected toggle chips. 3:1 or better against the page and cards (WCAG 1.4.11), applied by an unlayered rule in `globals.css`.
 
 ### Signal (semantic, never decorative)
 - **Flag Red** (`flag-red`) / **Flag Wash** (`flag-wash`): the "Flag to discuss" state, the "Get help now if" panel, error text, the "hurt" share of community bars, and "missing" diagram highlights.
 - **Sage** (`sage-ok`) / **Sage Wash** (`sage-wash`): "helped" counts, the "absorbs here" diagram highlight, the background of the swap-to-ask-about card, and successful tool-trace ticks. Never used for a verdict.
 - **Harbor Blue** (`harbor-blue`) / **Harbor Wash** (`harbor-wash`): citations and source quotes, the "releases here" diagram highlight, and focus.
-- **Removed Gray** (`removed-gray`) and **Living Segment** (`living-segment`): gut diagram strokes for removed bowel (dashed) and remaining bowel.
+- **Removed Gray** (`removed-gray`) and **Living Segment** (`living-segment`): gut diagram strokes for removed bowel (dashed) and remaining bowel. Both are tuned to 3:1 or better on Card White and Linen in both modes, so the anatomy reads at badge size.
 
 ### Named Rules
 **The No Green Light Rule.** No answer state uses Sage. "Nothing found in the sources I checked" is a plain white card with a Sandstone border, and "Can't tell yet" is Linen. Green appears only on evidence (the counts of people it helped, where the gut absorbs), never on a verdict.
@@ -272,7 +274,8 @@ Big, warm, and impossible to miss.
 ## Do's and Don'ts
 
 ### Do:
-- **Do** keep every interactive element at least 44px tall, and 48px for rows in lists and forms.
+- **Do** keep every interactive element at least 44px tall, and 48px for rows in lists and forms. A smaller visual mark, like a 32px citation pill, sits inside a 44px button.
+- **Do** rely on the global `:focus-visible` ring (3px Harbor Blue, 2px offset). Never remove it on HTML controls; the SVG diagram uses its own stroke focus.
 - **Do** pair every signal color with a word: the state tag, the count, the legend. Color is never the only carrier.
 - **Do** define every new token in both the light `:root` block and the `prefers-color-scheme: dark` block of `globals.css`, then map it through `@theme inline`.
 - **Do** wrap all looping motion in `motion-safe:` and keep it to opacity pulses.

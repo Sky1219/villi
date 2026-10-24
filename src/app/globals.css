@@ -7,6 +7,7 @@
   --foreground: #2b2420;
   --muted: #6e625a;
   --border: #e6dacb;
+  --control-border: #9a8c7e;
   --accent: #ac4126;
   --accent-ink: #ffffff;
   --accent-soft: #f6dfd6;
@@ -16,8 +17,8 @@
   --ok: #2f6b3a;
   --info-soft: #e3ebf3;
   --info: #2c5a85;
-  --removed: #c9bdb0;
-  --segment: #e9a48c;
+  --removed: #8f8275;
+  --segment: #c8704f;
   --focus: #2c5a85;
 }
 
@@ -29,6 +30,7 @@
     --foreground: #f3ebe2;
     --muted: #b3a597;
     --border: #3d342e;
+    --control-border: #7a6d62;
     --accent: #e07a5f;
     --accent-ink: #1b1714;
     --accent-soft: #3f2a22;
@@ -38,7 +40,7 @@
     --ok: #9fd3a3;
     --info-soft: #1f2c39;
     --info: #9cc3ea;
-    --removed: #5a5048;
+    --removed: #8a7d71;
     --segment: #b9705a;
     --focus: #9cc3ea;
   }
@@ -51,6 +53,7 @@
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-border: var(--border);
+  --color-control-border: var(--control-border);
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
   --color-accent-soft: var(--accent-soft);
@@ -69,6 +72,26 @@
 body {
   background: var(--background);
   color: var(--foreground);
+}
+
+/* Unlayered on purpose so they win over utility classes: every focus ring, form
+   control edge and placeholder meets WCAG 2.2 AA (3:1 non-text, 4.5:1 text). */
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+svg :focus-visible {
+  outline: none;
+}
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+select,
+textarea,
+button[aria-pressed="false"] {
+  border-color: var(--control-border);
+}
+::placeholder {
+  color: var(--muted);
+  opacity: 1;
 }
 
 @keyframes villi-pulse {

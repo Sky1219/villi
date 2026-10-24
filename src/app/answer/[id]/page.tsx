@@ -118,17 +118,21 @@ function Citations({ citation, final, titles }: { citation: string; final: Final
   const cites = Array.from(citation.matchAll(/\[(G|L|C|T):([^\]]+)\]/g), (m) => ({ kind: m[1], ref: m[2].trim() }));
   return (
     <span className="block">
-      <span className="mt-1 flex flex-wrap gap-1">
+      <span className="flex flex-wrap gap-x-1">
         {cites.map((c) => {
           const key = `${c.kind}:${c.ref}`;
+          // 44px tap area around a 32px pill; the label says it opens the source.
           return (
             <button
               key={key}
               onClick={() => setOpen(open === key ? null : key)}
               aria-expanded={open === key}
-              className="min-h-8 rounded-full bg-info-soft px-2.5 py-1 text-xs font-bold text-info"
+              aria-label={`Source: ${citationLabel(c.kind, c.ref)}`}
+              className="flex min-h-11 items-center"
             >
-              {citationLabel(c.kind, c.ref)}
+              <span className="inline-flex min-h-8 items-center rounded-full bg-info-soft px-2.5 text-xs font-bold text-info">
+                {citationLabel(c.kind, c.ref)}
+              </span>
             </button>
           );
         })}

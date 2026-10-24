@@ -138,7 +138,13 @@ function Swaps({ anonId, filter }: { anonId: string; filter: string }) {
                 aria-pressed={s.youVoted}
                 className={`min-h-11 rounded-xl border px-3 text-sm font-bold ${s.youVoted ? "border-accent bg-accent-soft" : "border-border"}`}
               >
-                ▲ {s.upvotes}
+                <span className="inline-flex items-center gap-1">
+                  <svg aria-hidden width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M6 15l6-6 6 6" />
+                  </svg>
+                  {s.upvotes}
+                  <span className="sr-only"> upvotes. Upvote this swap</span>
+                </span>
               </button>
               {data.canEndorse && (
                 <button
@@ -229,7 +235,7 @@ function Community({ anonId }: { anonId: string }) {
         Patients teaching each other what bodies like theirs tolerate. No messages, no comments, no profiles: just swaps
         and care-team answers, checked against the guidelines and screened before they appear.
       </p>
-      <div role="tablist" className="grid grid-cols-2 gap-2">
+      <div role="group" aria-label="Show" className="grid grid-cols-2 gap-2">
         {(
           [
             ["swaps", "Swaps to ask about"],
@@ -238,8 +244,7 @@ function Community({ anonId }: { anonId: string }) {
         ).map(([k, label]) => (
           <button
             key={k}
-            role="tab"
-            aria-selected={tab === k}
+            aria-pressed={tab === k}
             onClick={() => setTab(k)}
             className={`min-h-11 rounded-xl border font-bold ${tab === k ? "border-accent bg-accent-soft" : "border-border bg-surface"}`}
           >
@@ -253,7 +258,7 @@ function Community({ anonId }: { anonId: string }) {
             key={f.key}
             onClick={() => setFilter(f.key)}
             aria-pressed={filter === f.key}
-            className={`min-h-10 shrink-0 rounded-full border px-3 text-sm ${filter === f.key ? "border-accent bg-accent-soft font-bold" : "border-border bg-surface"}`}
+            className={`min-h-11 shrink-0 rounded-full border px-3 text-sm ${filter === f.key ? "border-accent bg-accent-soft font-bold" : "border-border bg-surface"}`}
           >
             {f.label}
           </button>

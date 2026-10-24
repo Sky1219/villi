@@ -208,7 +208,7 @@ function Onboarding({ anonId }: { anonId: string }) {
                   key={s}
                   onClick={() => toggle(s)}
                   aria-pressed={removed.includes(s)}
-                  className={`min-h-9 rounded-full border px-3 text-sm ${
+                  className={`min-h-11 rounded-full border px-3 text-sm ${
                     removed.includes(s) ? "border-border bg-surface-2 text-muted line-through" : "border-border bg-background"
                   }`}
                 >

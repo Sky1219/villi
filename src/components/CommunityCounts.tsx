@@ -35,7 +35,7 @@ export function CommunityCounts({ anonId, itemId }: { anonId: string; itemId: Id
       {rows.length === 0 && <p className="text-sm text-muted">No one has logged this yet. Your log would be the first.</p>}
       <ul className="space-y-3">
         {rows.map((r) => (
-          <li key={r.anatomyKey} className={`flex items-center gap-3 ${r.anatomyKey === c.anatomyKey ? "" : "opacity-80"}`}>
+          <li key={r.anatomyKey} className="flex items-center gap-3">
             <AnatomyBadge anatomyKey={r.anatomyKey} />
             <div className="min-w-0 flex-1">
               <p className="text-sm font-bold">

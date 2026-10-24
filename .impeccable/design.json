@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-24T10:49:34.540075+00:00",
+  "generatedAt": "2026-10-24T11:11:36.608440+00:00",
   "title": "Design System: Villi",
   "extensions": {
     "colorMeta": {
@@ -244,36 +244,52 @@
           "oklch(95% 0.014 248.0)"
         ]
       },
+      "control-line": {
+        "role": "neutral",
+        "displayName": "Control Line",
+        "canonical": "#9a8c7e",
+        "darkCanonical": "#7a6d62",
+        "tonalRamp": [
+          "oklch(15% 0.026 67.3)",
+          "oklch(27% 0.026 67.3)",
+          "oklch(39% 0.026 67.3)",
+          "oklch(51% 0.026 67.3)",
+          "oklch(63% 0.026 67.3)",
+          "oklch(75% 0.026 67.3)",
+          "oklch(85% 0.026 67.3)",
+          "oklch(95% 0.026 67.3)"
+        ]
+      },
       "removed-gray": {
         "role": "semantic",
         "displayName": "Removed Gray",
-        "canonical": "#c9bdb0",
-        "darkCanonical": "#5a5048",
+        "canonical": "#8f8275",
+        "darkCanonical": "#8a7d71",
         "tonalRamp": [
-          "oklch(15% 0.023 69.7)",
-          "oklch(27% 0.023 69.7)",
-          "oklch(39% 0.023 69.7)",
-          "oklch(51% 0.023 69.7)",
-          "oklch(63% 0.023 69.7)",
-          "oklch(75% 0.023 69.7)",
-          "oklch(85% 0.023 69.7)",
-          "oklch(95% 0.023 69.7)"
+          "oklch(15% 0.025 67.3)",
+          "oklch(27% 0.025 67.3)",
+          "oklch(39% 0.025 67.3)",
+          "oklch(51% 0.025 67.3)",
+          "oklch(63% 0.025 67.3)",
+          "oklch(75% 0.025 67.3)",
+          "oklch(85% 0.025 67.3)",
+          "oklch(95% 0.025 67.3)"
         ]
       },
       "living-segment": {
         "role": "semantic",
         "displayName": "Living Segment",
-        "canonical": "#e9a48c",
+        "canonical": "#c8704f",
         "darkCanonical": "#b9705a",
         "tonalRamp": [
-          "oklch(15% 0.089 40.0)",
-          "oklch(27% 0.089 40.0)",
-          "oklch(39% 0.089 40.0)",
-          "oklch(51% 0.089 40.0)",
-          "oklch(63% 0.089 40.0)",
-          "oklch(75% 0.089 40.0)",
-          "oklch(85% 0.089 40.0)",
-          "oklch(95% 0.089 40.0)"
+          "oklch(15% 0.121 41.0)",
+          "oklch(27% 0.121 41.0)",
+          "oklch(39% 0.121 41.0)",
+          "oklch(51% 0.121 41.0)",
+          "oklch(63% 0.121 41.0)",
+          "oklch(75% 0.121 41.0)",
+          "oklch(85% 0.121 41.0)",
+          "oklch(95% 0.121 41.0)"
         ]
       }
     },
@@ -462,7 +478,8 @@
       }
     ],
     "dos": [
-      "**Do** keep every interactive element at least 44px tall, and 48px for rows in lists and forms.",
+      "**Do** keep every interactive element at least 44px tall, and 48px for rows in lists and forms. A smaller visual mark, like a 32px citation pill, sits inside a 44px button.",
+      "**Do** rely on the global `:focus-visible` ring (3px Harbor Blue, 2px offset). Never remove it on HTML controls; the SVG diagram uses its own stroke focus.",
       "**Do** pair every signal color with a word: the state tag, the count, the legend. Color is never the only carrier.",
       "**Do** define every new token in both the light `:root` block and the `prefers-color-scheme: dark` block of `globals.css`, then map it through `@theme inline`.",
       "**Do** wrap all looping motion in `motion-safe:` and keep it to opacity pulses.",
