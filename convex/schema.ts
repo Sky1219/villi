@@ -45,6 +45,24 @@ export const professionalTypeValidator = v.union(
   v.literal("nurse"),
 );
 
+// What a caregiver profile's patient is to them. A relationship, never a name.
+export const caresForValidator = v.union(
+  v.literal("parent"),
+  v.literal("partner"),
+  v.literal("child"),
+  v.literal("other"),
+);
+
+export const questionStatusValidator = v.union(v.literal("open"), v.literal("asked"), v.literal("answered"));
+
+// What the care team's answer led to: Villi's primary impact metric, logged by the user.
+export const resultingChangeValidator = v.union(
+  v.literal("formulation_changed"),
+  v.literal("dose_monitored"),
+  v.literal("no_change"),
+  v.literal("pending"),
+);
+
 export const segmentModeValidator = v.union(
   v.literal("absorbs-here"),
   v.literal("releases-here"),
@@ -85,6 +103,8 @@ export default defineSchema({
     anatomy: anatomyValidator,
     anatomyKey: v.string(),
     language: v.string(),
+    // Set for caregivers: the profile holds the patient's anatomy and meds, run by the caregiver.
+    caresFor: v.optional(caresForValidator),
     clinicianDemoVerified: v.boolean(),
     synthetic: v.boolean(),
     // What the user tapped on the gut diagram (coarse, non-identifying).
@@ -201,6 +221,7 @@ export default defineSchema({
     itemId: v.optional(v.id("items")),
     professionalType: professionalTypeValidator,
     answerText: v.string(),
+    resultingChange: v.optional(resultingChangeValidator),
     pooled,
     moderationReason: v.optional(v.string()),
     nudgeUser: v.optional(v.string()),
@@ -228,7 +249,10 @@ export default defineSchema({
       itemName: v.optional(v.string()),
       citations: v.optional(v.array(v.string())),
     }),
+    // `resolved` is kept in step with status === "answered" for older rows.
     resolved: v.boolean(),
+    status: v.optional(questionStatusValidator),
+    askedAt: v.optional(v.number()),
     synthetic: v.boolean(),
     createdAt: v.number(),
   })
@@ -293,8 +317,12 @@ export default defineSchema({
       }),
     ),
     error: v.optional(v.string()),
+    // "Was this useful?" on the answer card.
+    useful: v.optional(v.boolean()),
     createdAt: v.number(),
-  }).index("by_profileId", ["profileId"]),
+  })
+    .index("by_profileId", ["profileId"])
+    .index("by_status", ["status"]),
 
   // Hidden from every public query: drafts must never reach the client.
   answer_reviews: defineTable({

@@ -41,7 +41,7 @@ export function ScanBox({ anonId, initialText = "" }: { anonId: string; initialT
   return (
     <section className="rounded-2xl border border-border bg-surface p-4 shadow-sm">
       <h2 className="text-lg font-bold">Check a medicine, drink or food</h2>
-      <p className="mb-3 text-sm text-muted">Photograph the label, or type the name as it&apos;s printed.</p>
+      <p className="mb-3 text-sm text-muted">Photograph a medicine or drink label, or type the name as it&apos;s printed.</p>
       <button
         type="button"
         onClick={() => fileRef.current?.click()}

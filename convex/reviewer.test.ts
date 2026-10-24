@@ -97,4 +97,34 @@ describe("reviewer", () => {
     const out = await reviewDraft(added, registry, edit);
     expect(out.status).toBe("blocked");
   });
+
+  it("removes a claim about another medicine on file even when it cites a retrieved label section", async () => {
+    const reg = { ...registry, otherMedWords: ["ondansetron"] };
+    const draft: Answer = {
+      ...good,
+      why: [...good.why, { claim: "Ondansetron's label warns it can prolong the QT interval.", citation: "[L:dosage_and_administration]" }],
+    };
+    const out = await reviewDraft(draft, reg, approve);
+    expect(out.status).toBe("final");
+    if (out.status === "final") expect(out.final.why.some((w) => /ondansetron/i.test(w.claim))).toBe(false);
+  });
+
+  it("blocks a verdict that brings in another medicine on file", async () => {
+    const reg = { ...registry, otherMedWords: ["ondansetron"] };
+    const out = await reviewDraft({ ...good, verdict: "Worth checking because ondansetron is also on the list." }, reg, approve);
+    expect(out.status).toBe("blocked");
+  });
+
+  it("blocks spelled-out doses and frequencies", async () => {
+    for (const text of ["Ask about taking half a tablet.", "Some people take it twice a day.", "Spacing it every 6 hours helps.", "Two capsules may be needed."]) {
+      const out = await reviewDraft({ ...good, swapToAskAbout: { ...good.swapToAskAbout!, text } }, registry, approve);
+      expect({ text, status: out.status }).toEqual({ text, status: "blocked" });
+    }
+  });
+
+  it("never applies an edit the reviewer did not approve", async () => {
+    const edit = vi.fn(async (): Promise<ReviewerDecision> => ({ approved: false, edits: JSON.stringify(good), blockedReasons: ["unsupported claim"] }));
+    const out = await reviewDraft(good, registry, edit);
+    expect(out.status).toBe("blocked");
+  });
 });

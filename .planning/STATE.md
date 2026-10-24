@@ -94,3 +94,10 @@ Items acknowledged and deferred at milestone close, most recent first:
 Last session: 2026-10-24T06:50:47.327Z
 Stopped at: Phase 1 context gathered
 Resume file: .planning/phases/01-foundation/01-CONTEXT.md
+
+## Quick Tasks Completed
+
+| ID | Date | Task | Summary |
+|----|------|------|---------|
+| 261024-718 | 2026-10-24 | Judging-prep fixes (demo script, citation lint, swap integrity, moderation) | .planning/quick/261024-718-judging-prep-fixes/SUMMARY.md |
+| 261024-ask | 2026-10-24 | ASK loop, impact view, caregiver role, cuts | .planning/quick/261024-ask-loop-impact-caregiver/SUMMARY.md |

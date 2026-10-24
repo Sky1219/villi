@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { query } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { requireProfile } from "./profiles";
+import { statusOf } from "./questions";
 import { computeFlags, labelKeyFor, releaseFormOf, type ReleaseForm } from "./fda";
 import { describeAnatomy, scopeTagsFor } from "./lib/anatomy";
 import corpus from "../data/guidelines.json";
@@ -86,20 +87,34 @@ export const get = query({
       });
     }
 
+    const view = (q: (typeof questions)[number]) => ({
+      _id: q._id,
+      text: q.text,
+      itemName: q.context.itemName ?? null,
+      status: statusOf(q),
+    });
     return {
       anatomyText: describeAnatomy(me.anatomy),
       role: me.role,
+      caresFor: me.caresFor ?? null,
       language: me.language,
-      open: questions.filter((q) => !q.resolved).map((q) => ({ _id: q._id, text: q.text, itemName: q.context.itemName ?? null })),
+      // Open and asked questions both still need an answer at the appointment.
+      open: questions.filter((q) => statusOf(q) !== "answered").map(view),
       answered: questions
-        .filter((q) => q.resolved)
+        .filter((q) => statusOf(q) === "answered")
         .map((q) => {
           const a = answerFor.get(q._id);
           return {
-            _id: q._id,
-            text: q.text,
-            itemName: q.context.itemName ?? null,
-            answer: a ? { professionalType: a.professionalType, text: a.answerText, status: a.pooled === null ? "checking" : a.pooled ? "shared" : "private" } : null,
+            ...view(q),
+            answer: a
+              ? {
+                  _id: a._id,
+                  professionalType: a.professionalType,
+                  text: a.answerText,
+                  resultingChange: a.resultingChange ?? null,
+                  status: a.pooled === null ? "checking" : a.pooled ? "shared" : "private",
+                }
+              : null,
           };
         }),
       patterns,

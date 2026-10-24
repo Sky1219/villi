@@ -54,7 +54,12 @@ export const run = internalAction({
       status: outcome.status,
       final:
         outcome.status === "final"
-          ? { ...outcome.final, evidence: attachEvidence(outcome.final, r.registry.evidence ?? {}) }
+          ? {
+              ...outcome.final,
+              evidence: attachEvidence(outcome.final, r.registry.evidence ?? {}),
+              // Set by code from what was retrieved, not by the model.
+              communitySynthetic: !!r.registry.communitySynthetic,
+            }
           : undefined,
       edited: outcome.status === "final" ? outcome.edited : false,
       blockedReasons: outcome.status === "blocked" ? outcome.blockedReasons : [],

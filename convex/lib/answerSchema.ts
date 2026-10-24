@@ -11,6 +11,11 @@ export const SEGMENT_IDS = [
   "descending-sigmoid",
 ] as const;
 
+// "What can I have that's sweet?" is an open question, not one named item. The
+// open-question flow is hidden in this build: Villi checks one named item at a time.
+export const OPEN_QUESTION_RE = /\?\s*$|^(what|which|can i|could i|is there|are there|qu[eé]|cu[aá]l)\b/i;
+export const OPEN_QUESTION_MESSAGE = "Villi checks one named item at a time. Type the name of a medicine, drink or food.";
+
 const counts = z.object({
   helped: z.number().int().min(0),
   neutral: z.number().int().min(0),

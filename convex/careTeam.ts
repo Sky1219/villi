@@ -3,7 +3,7 @@ import { runIdValidator, runResultValidator } from "@convex-dev/action-retrier";
 import { internalAction, internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import { professionalTypeValidator } from "./schema";
+import { professionalTypeValidator, resultingChangeValidator } from "./schema";
 import { requireProfile } from "./profiles";
 import { retrier } from "./lib/retrier";
 import { CARE_TEAM_MODERATION_SYSTEM, prefilter } from "./lib/moderation";
@@ -18,6 +18,7 @@ export const logAnswer = mutation({
     questionId: v.id("questions"),
     professionalType: professionalTypeValidator,
     answerText: v.string(),
+    resultingChange: resultingChangeValidator,
   },
   handler: async (ctx, args) => {
     const me = await requireProfile(ctx, args.anonId);
@@ -33,15 +34,28 @@ export const logAnswer = mutation({
       questionText: q.text,
       professionalType: args.professionalType,
       answerText,
+      resultingChange: args.resultingChange,
       pooled: null,
       clinicianEndorsements: [],
       synthetic: false,
       createdAt: Date.now(),
     });
-    await ctx.db.patch("questions", q._id, { resolved: true });
+    await ctx.db.patch("questions", q._id, { resolved: true, status: "answered", askedAt: q.askedAt ?? Date.now() });
     const runId = await retrier.run(ctx, internal.careTeam.moderate, { id }, { onComplete: internal.careTeam.onModerated });
     await ctx.db.patch("care_team_answers", id, { moderationRunId: runId });
     return id;
+  },
+});
+
+// "Not decided yet" is updated by the author when the team decides.
+export const setResultingChange = mutation({
+  args: { anonId: v.string(), id: v.id("care_team_answers"), resultingChange: resultingChangeValidator },
+  handler: async (ctx, args) => {
+    const me = await requireProfile(ctx, args.anonId);
+    const row = await ctx.db.get("care_team_answers", args.id);
+    if (!row || row.profileId !== me._id) throw new ConvexError("Answer not found");
+    await ctx.db.patch("care_team_answers", row._id, { resultingChange: args.resultingChange });
+    return null;
   },
 });
 
@@ -179,6 +193,7 @@ export const mineByQuestion = query({
       questionId: r.questionId ?? null,
       professionalType: r.professionalType,
       answer: r.answerText,
+      resultingChange: r.resultingChange ?? null,
       status: r.pooled === null ? "checking" : r.pooled ? "shared" : "private",
       nudge: r.nudgeUser ?? null,
     }));

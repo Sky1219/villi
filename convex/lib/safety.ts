@@ -14,7 +14,20 @@ export type CitationRegistry = {
   // diagram is only shown if it cites one of these, and is replaced by it.
   diagrams?: Record<string, { segmentIds: string[]; mode: "absorbs-here" | "releases-here" | "missing"; label: string }>;
   language?: string;
+  // Name words of the user's other medicines. Villi checks one item and is not an
+  // interaction checker, so no retrieved source can back a claim about these.
+  otherMedWords?: string[];
+  // Whether any community count retrieved in this run included synthetic rows.
+  communitySynthetic?: boolean;
 };
+
+// First distinctive word of each medicine on file that isn't the item being checked.
+export function otherMedWords(meds: string[], checked: string[]): string[] {
+  const seen = checked.join(" ").toLowerCase();
+  return meds
+    .map((m) => m.toLowerCase().match(/[a-z]{4,}/)?.[0])
+    .filter((w): w is string => !!w && !seen.includes(w));
+}
 
 export const emptyRegistry = (): CitationRegistry => ({
   guidelineIds: [],
@@ -51,7 +64,7 @@ export function checkCitation(citation: string, reg: CitationRegistry): string |
 }
 
 const QUANTITY_RE =
-  /\b\d+(?:[.,]\d+)?\s?(?:mg|mcg|µg|g|grams?|ml|mL|millilit(?:er|re)s?|lit(?:er|re)s?|L|tablets?|capsules?|pills?|cups?|glass(?:es)?|ounces?|oz|calories|kcal|servings?|times (?:a|per) day)\b/g;
+  /\b\d+(?:[.,]\d+)?\s?(?:mg|mcg|µg|g|grams?|milligrams?|micrograms?|ml|mL|millilit(?:er|re)s?|lit(?:er|re)s?|L|tablets?|capsules?|pills?|doses?|cups?|glass(?:es)?|ounces?|oz|teaspoons?|tablespoons?|tsp|tbsp|calories|kcal|servings?|times (?:a|per) day)\b|\b(?:one|two|three|four|five|six|half|a half|half (?:a|of (?:a|the|your|his|her)))\s+(?:tablets?|capsules?|pills?|doses?|cups?|glass(?:es)?|teaspoons?|tablespoons?|lit(?:er|re)s?|bottles?)\b|\b(?:twice|three times|four times)\s+(?:a|per|each)\s+day\b|\btwice daily\b|\bevery\s+\d+\s+hours?\b/gi;
 
 const DIRECTIVE_RES = [
   /\b(?:you should|you can|you could|you may|go ahead and|try to|try|just|it's (?:ok|okay|fine) to)\s+(?:safely\s+)?(?:stop|start|crush|split|skip|chew|double|halve|cut|switch|change|increase|decrease|lower|raise|discontinue|open)\b/i,
@@ -128,6 +141,18 @@ export function lintAnswer(input: Answer, reg: CitationRegistry): LintResult {
     if (leaked) issues.push("removed personal note that carried a citation");
     return !leaked;
   });
+  // A citation to this item's label section can't back a claim about a different medicine.
+  const others = reg.otherMedWords ?? [];
+  const namesOther = (t: string) => others.find((w) => new RegExp(`\\b${w}\\b`, "i").test(t));
+  answer.why = answer.why.filter((w) => {
+    const med = namesOther(w.claim);
+    if (med) issues.push(`removed claim about another medicine (${med}): not an interaction checker`);
+    return !med;
+  });
+  for (const text of [answer.verdict, answer.swapToAskAbout?.text ?? "", answer.ask]) {
+    const med = namesOther(text);
+    if (med) blocking.push(`mentions another medicine on file (${med}); this answer covers only the item being checked`);
+  }
   if (!answer.unidentified && answer.why.length === 0) {
     blocking.push("no cited claims remain");
   }
@@ -201,7 +226,8 @@ export async function reviewDraft(
   }
 
   const decision = await llmReview(first.answer);
-  if (decision.edits) {
+  // Edits only count when the reviewer also approved; an unapproved edit is a block.
+  if (decision.edits && decision.approved) {
     let revised: Answer;
     try {
       revised = AnswerSchema.parse(JSON.parse(decision.edits));

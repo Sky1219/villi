@@ -13,7 +13,7 @@ const OUTCOMES = [
 ] as const;
 
 // Item + outcome + optional note in under five seconds.
-export function QuickLog({ anonId }: { anonId: string }) {
+export function QuickLog({ anonId, person = "you" }: { anonId: string; person?: string }) {
   const create = useMutation(api.logs.create);
   const mine = useQuery(api.logs.listMine, { anonId });
   const [item, setItem] = useState("");
@@ -37,7 +37,7 @@ export function QuickLog({ anonId }: { anonId: string }) {
 
   return (
     <section className="rounded-2xl border border-border bg-surface p-4">
-      <h2 className="mb-2 text-lg font-bold">Log how something went</h2>
+      <h2 className="mb-2 text-lg font-bold">Log how something went{person === "you" ? "" : ` for ${person}`}</h2>
       <label htmlFor="quick-item" className="sr-only">
         What you had
       </label>
@@ -45,7 +45,7 @@ export function QuickLog({ anonId }: { anonId: string }) {
         id="quick-item"
         value={item}
         onChange={(e) => setItem(e.target.value)}
-        placeholder="What did you have? Any language is fine"
+        placeholder={person === "you" ? "What did you have?" : "What did they have?"}
         className="mb-2 min-h-12 w-full rounded-xl border border-border bg-background px-3"
         autoComplete="off"
       />

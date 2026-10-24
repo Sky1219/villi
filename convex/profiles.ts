@@ -7,7 +7,7 @@ import {
   type MutationCtx,
   type QueryCtx,
 } from "./_generated/server";
-import { anatomyValidator, roleValidator } from "./schema";
+import { anatomyValidator, caresForValidator, roleValidator } from "./schema";
 import { internal } from "./_generated/api";
 import { applyPooledTransition } from "./community";
 import { SEGMENTS, anatomyKeyOf, defaultDiagram, describeAnatomy, type DiagramState, type SegmentId } from "./lib/anatomy";
@@ -50,6 +50,7 @@ function publicProfile(p: Doc<"profiles">) {
     anatomyKey: p.anatomyKey,
     anatomyText: describeAnatomy(p.anatomy),
     language: p.language,
+    caresFor: p.role === "caregiver" ? (p.caresFor ?? null) : null,
     clinicianDemoVerified: p.clinicianDemoVerified,
     templateKey: p.templateKey ?? null,
   };
@@ -77,6 +78,7 @@ export const upsert = mutation({
     role: roleValidator,
     anatomy: anatomyValidator,
     language: v.string(),
+    caresFor: v.optional(caresForValidator),
     diagram: v.optional(v.object({ removed: v.array(v.string()), stomaAfter: v.union(v.string(), v.null()) })),
   },
   handler: async (ctx, args) => {
@@ -93,6 +95,7 @@ export const upsert = mutation({
       anatomy: args.anatomy,
       anatomyKey: anatomyKeyOf(args.anatomy),
       language: args.language.slice(0, 16),
+      caresFor: args.role === "caregiver" ? (args.caresFor ?? "other") : undefined,
       // Honor-system in the hackathon build, badged "demo verification".
       clinicianDemoVerified: args.role === "clinician",
     };
@@ -134,6 +137,7 @@ export const cloneDemo = mutation({
         anatomy: template.anatomy,
         anatomyKey: template.anatomyKey,
         language: template.language,
+        caresFor: template.caresFor,
         diagram: template.diagram,
         clinicianDemoVerified: false,
       });
@@ -146,6 +150,7 @@ export const cloneDemo = mutation({
         anatomy: template.anatomy,
         anatomyKey: template.anatomyKey,
         language: template.language,
+        caresFor: template.caresFor,
         diagram: template.diagram,
         clinicianDemoVerified: false,
         synthetic: false,
@@ -222,6 +227,7 @@ export const getById = internalQuery({
       anatomyKey: p.anatomyKey,
       anatomyText: describeAnatomy(p.anatomy),
       language: p.language,
+      caresFor: p.role === "caregiver" ? (p.caresFor ?? null) : null,
       meds: meds.map((m) => ({ name: m.name, dosageForm: m.dosageForm ?? null })),
     };
   },

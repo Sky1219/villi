@@ -7,7 +7,7 @@ import { MODERATION_FIXTURES as FIXTURES } from "./lib/moderationFixtures";
 const permissive = async (): Promise<ModerationDecision> => ({ pooled: true, reason: null, nudgeUser: null });
 
 describe("moderation", () => {
-  it("classifies the 10 fixture entries correctly (rules are an unconditional gate)", async () => {
+  it("classifies the 11 fixture entries correctly (rules are an unconditional gate)", async () => {
     for (const f of FIXTURES) {
       const d = await moderateText(f.text, permissive);
       expect({ text: f.text, pooled: d.pooled }).toEqual({ text: f.text, pooled: f.pooled });

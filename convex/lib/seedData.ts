@@ -169,7 +169,6 @@ export const SEED_SWAPS: SeedSwap[] = [
   { insteadOf: "metoprolol succinate er", use: "metoprolol tartrate", note: "Asked my pharmacist about the immediate-release version; they changed it after checking with my cardiologist.", anatomy: "end-jejunostomy", citations: ["G:aga-sbs#medications-release-forms", "G:pg139#extended-release-avoid"], endorsed: true },
   { insteadOf: "metoprolol succinate er", use: "metoprolol tartrate", note: "Raised the ER question at clinic; my team made the switch.", anatomy: "end-jejunostomy", citations: ["G:pg139#time-release"] },
   { insteadOf: "metoprolol succinate er", use: "metoprolol tartrate", note: "Pharmacist suggested asking the prescriber about IR. Worth asking.", anatomy: "ileostomy", citations: ["G:pg139#time-release"] },
-  { insteadOf: "pantoprazole dr", use: "omeprazole dr", note: "Asked about a form that opens and mixes; my GI decided.", anatomy: "end-jejunostomy", citations: ["G:pg139#enteric-coating"] },
   { insteadOf: "sports drink", use: "oral rehydration solution", note: "Our whole family keeps ORS in the fridge now.", anatomy: "colon-in-continuity", citations: ["G:pd-2017#sports-drinks"] },
   { insteadOf: "cola", use: "oral rehydration solution", note: "ORS ice pops in summer.", anatomy: "end-jejunostomy", citations: ["G:aga-sbs#fluids-hypertonic"] },
   { insteadOf: "orange juice", use: "banana", note: "Banana instead of juice at breakfast.", anatomy: "end-jejunostomy", citations: ["G:aga-sbs#fluids-hypertonic"] },
@@ -186,11 +185,13 @@ export type SeedCareTeam = {
   answer: string;
   anatomy: AnatomyKey;
   endorsed?: boolean;
+  // What the answer led to; defaults to pending for medicines and no_change otherwise.
+  change?: "formulation_changed" | "dose_monitored" | "no_change" | "pending";
 };
 
 export const SEED_CARE_TEAM: SeedCareTeam[] = [
   { item: "metoprolol succinate er", question: "Is my extended-release metoprolol being absorbed with my short bowel?", professional: "pharmacist", answer: "My pharmacist said extended-release tablets may not release fully with a short gut and asked my cardiologist to review the form.", anatomy: "end-jejunostomy", endorsed: true },
-  { item: "metoprolol succinate er", question: "Should my heart medicine be a different form?", professional: "doctor", answer: "My cardiologist checked my heart rate and blood pressure readings to see whether it was working before deciding.", anatomy: "end-jejunostomy" },
+  { item: "metoprolol succinate er", question: "Should my heart medicine be a different form?", professional: "doctor", answer: "My cardiologist checked my heart rate and blood pressure readings to see whether it was working before deciding.", anatomy: "end-jejunostomy", change: "dose_monitored" },
   { item: "metoprolol succinate er", question: "Can ER tablets work with an ileostomy?", professional: "pharmacist", answer: "Mine said it depends on how much small bowel is left and to watch whether the medicine seems to be working.", anatomy: "ileostomy" },
   { item: "pantoprazole dr", question: "I think I saw my pantoprazole in the bag. Is it working?", professional: "pharmacist", answer: "They said a shell can be empty or the tablet may not have dissolved, and suggested asking my GI about other forms.", anatomy: "end-jejunostomy", endorsed: true },
   { item: "pantoprazole dr", question: "Is there a form of my acid medicine that absorbs better?", professional: "doctor", answer: "My GI talked through granule and IV options for my situation.", anatomy: "end-jejunostomy" },

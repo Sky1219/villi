@@ -11,6 +11,7 @@ import { DeleteMyData } from "@/components/DeleteMyData";
 import { ScanBox } from "@/components/ScanBox";
 import { useState } from "react";
 import { stripCitations } from "@/lib/citations";
+import { personFor } from "@convex/lib/careFor";
 
 function Header() {
   return (
@@ -131,7 +132,7 @@ function Home({ anonId }: { anonId: string }) {
           stoma={profile.diagram.stomaAfter ? { afterSegment: profile.diagram.stomaAfter } : null}
         />
         <div className="min-w-0 flex-1">
-          <p className="text-sm text-muted">{profile.role === "caregiver" ? "Checking for someone you care for" : "Your anatomy"}</p>
+          <p className="text-sm text-muted">{profile.role === "caregiver" ? `Checking for ${personFor(profile.role, profile.caresFor)}` : "Your anatomy"}</p>
           <p className="font-bold">{profile.anatomyText}</p>
         </div>
         <Link href="/onboarding" className="flex min-h-11 shrink-0 items-center text-sm font-bold text-accent underline">
@@ -144,7 +145,10 @@ function Home({ anonId }: { anonId: string }) {
           Community
         </Link>
         <Link href="/sheet" className="flex min-h-12 items-center justify-center rounded-xl border border-border bg-surface font-bold">
-          Your sheet{questions && questions.filter((q) => !q.resolved).length ? ` (${questions.filter((q) => !q.resolved).length})` : ""}
+          Your sheet{questions && questions.filter((q) => q.status !== "answered").length ? ` (${questions.filter((q) => q.status !== "answered").length})` : ""}
+        </Link>
+        <Link href="/impact" className="col-span-2 flex min-h-12 items-center justify-center rounded-xl border border-border bg-surface font-bold">
+          Is Villi working?
         </Link>
       </nav>
 
@@ -156,7 +160,7 @@ function Home({ anonId }: { anonId: string }) {
 
       <HelpNow />
 
-      <QuickLog anonId={anonId} />
+      <QuickLog anonId={anonId} person={personFor(profile.role, profile.caresFor)} />
 
       <section>
         <h2 className="mb-2 font-bold">Medicines on file</h2>

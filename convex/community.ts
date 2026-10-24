@@ -3,6 +3,8 @@ import { internalQuery, query, type MutationCtx, type QueryCtx } from "./_genera
 import { requireProfile } from "./profiles";
 import type { Id } from "./_generated/dataModel";
 import { ANATOMY_KEYS, ANATOMY_LABELS, type AnatomyKey } from "./lib/anatomy";
+import { checkSwap } from "./lib/swapCheck";
+import { anatomyValidator } from "./schema";
 
 type Outcome = "helped" | "neutral" | "hurt";
 
@@ -150,8 +152,10 @@ export const myLogForItem = internalQuery({
 
 // query_swaps: structured fields only. Other users' free-text notes never reach the agent.
 export const swapsForItem = internalQuery({
-  args: { itemId: v.id("items"), anatomyKey: v.string() },
+  args: { itemId: v.id("items"), anatomyKey: v.string(), anatomy: anatomyValidator },
   handler: async (ctx, args) => {
+    const insteadOf = await ctx.db.get("items", args.itemId);
+    if (!insteadOf) return [];
     const rows = await ctx.db
       .query("swaps")
       .withIndex("by_insteadOfItemId", (q) => q.eq("insteadOfItemId", args.itemId))
@@ -173,6 +177,9 @@ export const swapsForItem = internalQuery({
     for (const g of groups.values()) {
       const use = await ctx.db.get("items", g.useItemId);
       if (!use) continue;
+      // The poster's check used the poster's anatomy; a swap that conflicts with a
+      // guideline for this reader's anatomy is never offered to them.
+      if (!checkSwap(insteadOf, use, args.anatomy).passed) continue;
       out.push({
         use: use.canonicalName,
         postedByYourAnatomy: g.sameAnatomy,

@@ -8,9 +8,10 @@ import { anthropicClient, mainModel } from "./lib/llm";
 import { AGENT_SYSTEM } from "./lib/prompts";
 import { readPhoto, readTablet, joinPhotoName } from "./lib/vision";
 import type { PillMatch } from "./lib/pillMatch";
-import { AnswerSchema, answerJsonSchema, type Answer } from "./lib/answerSchema";
-import { emptyRegistry, lintAnswer, type CitationRegistry } from "./lib/safety";
+import { AnswerSchema, OPEN_QUESTION_RE, answerJsonSchema, type Answer } from "./lib/answerSchema";
+import { emptyRegistry, lintAnswer, otherMedWords, type CitationRegistry } from "./lib/safety";
 import { scopeTagsFor, type Anatomy } from "./lib/anatomy";
+import { personFor, type CaresFor } from "./lib/careFor";
 import { coreName, type LabelResult } from "./fda";
 import type { ChunkView } from "./guidelines";
 import type { StratifiedCounts } from "./community";
@@ -25,6 +26,7 @@ type Profile = {
   anatomyKey: string;
   anatomyText: string;
   language: string;
+  caresFor: CaresFor | null;
   meds: { name: string; dosageForm: string | null }[];
 };
 
@@ -244,6 +246,7 @@ class Agent {
             return ok({ found: false, note: "No one has logged this item yet." });
           }
           const c = res.counts;
+          if (c.includesSynthetic) this.reg.communitySynthetic = true;
           for (const t of [c.matchingAnatomy.total, c.other.total, ...c.byAnatomy.map((b) => b.total)]) {
             if (t > 0 && !this.reg.communityTotals.includes(t)) this.reg.communityTotals.push(t);
           }
@@ -287,6 +290,7 @@ class Agent {
           }[] = await this.ctx.runQuery(internal.community.swapsForItem, {
             itemId: this.item.itemId,
             anatomyKey: this.profile.anatomyKey,
+            anatomy: this.profile.anatomy,
           });
           const chunkIds = Array.from(new Set(swaps.flatMap((s) => s.guidelineChunkIds)));
           const chunks: ChunkView[] = chunkIds.length ? await this.ctx.runQuery(internal.guidelines.byChunkIds, { chunkIds }) : [];
@@ -347,6 +351,7 @@ class Agent {
             anatomyKey: this.profile.anatomyKey,
           });
           for (const o of options) {
+            if (o.includesSynthetic) this.reg.communitySynthetic = true;
             if (o.yourAnatomy.total > 0 && !this.reg.communityTotals.includes(o.yourAnatomy.total)) this.reg.communityTotals.push(o.yourAnatomy.total);
             for (const c of o.careTeam) {
               if (!this.reg.careTeamIds.includes(c.id)) this.reg.careTeamIds.push(c.id);
@@ -405,7 +410,10 @@ class Agent {
   }
 }
 
-function unidentifiedDraft(reason: string): Answer {
+function unidentifiedDraft(
+  reason: string,
+  ask = "ASK: Can you confirm the exact product name and release type printed on my medicine's label?",
+): Answer {
   return {
     state: "cant-tell",
     verdict: `I couldn't identify this confidently (${reason}).`,
@@ -416,7 +424,7 @@ function unidentifiedDraft(reason: string): Answer {
     personal: [],
     diagram: null,
     sourcesChecked: ["your photo"],
-    ask: "ASK: Can you confirm the exact product name and release type printed on my medicine's label?",
+    ask,
     confidence: "low",
     unidentified: true,
   };
@@ -444,6 +452,7 @@ export const run = internalAction({
 
       // "I saw something": closed-set match against this user's own meds.
       let sawContext: unknown = null;
+      let sawNames: string[] = [];
       if (answer.input.saw) {
         const saw = { ...answer.input.saw };
         if (answer.input.photoId) {
@@ -470,6 +479,7 @@ export const run = internalAction({
           { profileId: answer.profileId, saw },
         );
         const top = res.matches[0];
+        sawNames = res.matches.map((m) => m.name);
         // Each possible match's printed strength identifies the product; it is not a dose.
         for (const m of res.matches) agent.reg.allowedStrengths.push(...strengthsIn(m.name));
         if (top) {
@@ -521,6 +531,18 @@ export const run = internalAction({
           identified: itemName || "unreadable photo",
           clearPhoto: true,
         });
+        // Reading food packaging (nutrition panels) isn't supported in this build.
+        if (seen?.kind === "food") {
+          await ctx.runMutation(internal.answers.saveDraft, {
+            answerId: args.answerId,
+            draft: unidentifiedDraft(
+              "this build reads medicine and drink labels, not food packaging; type the food's name instead",
+              "ASK: Which everyday foods should we favor or limit for this anatomy?",
+            ),
+            registry: agent.reg,
+          });
+          return null;
+        }
       } else if (answer.kind === "scan") {
         await ctx.runMutation(internal.answers.setIdentified, { answerId: args.answerId, identified: itemName, clearPhoto: false });
       }
@@ -539,7 +561,7 @@ export const run = internalAction({
       // canonicalize_item: one catalog entry per thing, in any language, never merged across release forms.
       // An open question ("what can I have that's sweet?") is not a catalog item.
       const openQuestion =
-        !saw && answer.kind === "scan" && /\?\s*$|^(what|which|can i|could i|is there|are there|qu[eé]|cu[aá]l)\b/i.test(itemName.trim());
+        !saw && answer.kind === "scan" && OPEN_QUESTION_RE.test(itemName.trim());
       if (openQuestion) {
         category = "action";
         await ctx.runMutation(internal.answers.setIdentified, { answerId: args.answerId, identified: itemName, clearPhoto: false });
@@ -563,6 +585,12 @@ export const run = internalAction({
         await agent.trace("canonicalize_item", "couldn't match this to a known item", false);
       }
 
+      // Claims about any other medicine on file are out of scope for this answer.
+      agent.reg.otherMedWords = otherMedWords(
+        profile.meds.map((m) => m.name),
+        [itemName, agent.item?.canonicalName ?? "", ...sawNames],
+      );
+
       // 2. Prefetch the label server-side so the first model turn already has it.
       const label = saw
         ? agent.itemName
@@ -575,6 +603,8 @@ export const run = internalAction({
       const context = {
         profile: {
           role: profile.role,
+          // Who the answer is about, in the reader's words ("you" or e.g. "your parent").
+          checkingFor: personFor(profile.role, profile.caresFor),
           anatomy: profile.anatomyText,
           anatomyGroup: profile.anatomyKey,
           language: profile.language,

@@ -2,6 +2,7 @@ import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { requireProfile } from "./profiles";
 import { extractCitations } from "./lib/safety";
+import type { Doc } from "./_generated/dataModel";
 
 // "Add to appointment sheet": copies the reviewed ASK line, never client text.
 export const addFromAnswer = mutation({
@@ -27,9 +28,27 @@ export const addFromAnswer = mutation({
         citations: final.why.flatMap((w) => extractCitations(w.citation).map((c) => `${c.kind}:${c.ref}`)),
       },
       resolved: false,
+      status: "open",
       synthetic: false,
       createdAt: Date.now(),
     });
+    return null;
+  },
+});
+
+export function statusOf(q: Doc<"questions">): "open" | "asked" | "answered" {
+  return q.status ?? (q.resolved ? "answered" : "open");
+}
+
+// "I asked this": open <-> asked. Answered questions move only by logging what they said.
+export const setAsked = mutation({
+  args: { anonId: v.string(), questionId: v.id("questions"), asked: v.boolean() },
+  handler: async (ctx, args) => {
+    const profile = await requireProfile(ctx, args.anonId);
+    const q = await ctx.db.get("questions", args.questionId);
+    if (!q || q.profileId !== profile._id) throw new ConvexError("Question not found");
+    if (statusOf(q) === "answered") return null;
+    await ctx.db.patch("questions", q._id, args.asked ? { status: "asked", askedAt: Date.now() } : { status: "open", askedAt: undefined });
     return null;
   },
 });
@@ -49,6 +68,7 @@ export const listMine = query({
       itemName: q.context.itemName ?? null,
       answerId: q.context.answerId ?? null,
       resolved: q.resolved,
+      status: statusOf(q),
       createdAt: q.createdAt,
     }));
   },

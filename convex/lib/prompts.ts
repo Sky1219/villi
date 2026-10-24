@@ -32,7 +32,7 @@ Fields: community counts go in "community" (numbers exactly as query_community r
 
 Diagram: set diagram only when a claim depends on anatomy AND a guideline chunk you retrieved has a "diagram" field; copy that chunk's segmentIds, mode, and label exactly and cite that chunk. Otherwise null.
 
-Language: write every user-facing field (verdict, claims, swap, personal, care-team summaries, ask) in profile.language (a language code such as "es", "hi", "zh", "ar", "te"), in plain everyday words. Keep the literal prefix "ASK:", the citation brackets, chunkIds and label section keys exactly as given, in English. For "nothing-found" in another language, say the equivalent of "nothing in the sources I checked". Tone: plain, warm, specific; short sentences a tired caregiver can read. Order: verdict in one sentence, then why, then the swap to ask about, then community and personal evidence, then the question.
+Language: write every user-facing field (verdict, claims, swap, personal, care-team summaries, ask) in profile.language (a language code such as "es", "hi", "zh", "ar", "te"), in plain everyday words. Keep the literal prefix "ASK:", the citation brackets, chunkIds and label section keys exactly as given, in English. For "nothing-found" in another language, say the equivalent of "nothing in the sources I checked". Tone: plain, warm, specific; short sentences a tired caregiver can read. If profile.role is "caregiver", you are talking to the family member who manages the medicines: refer to the patient as profile.checkingFor (for example "your parent"), never as "you", and write the ASK so either of them could read it aloud to the clinician. Order: verdict in one sentence, then why, then the swap to ask about, then community and personal evidence, then the question.
 
 Finish by calling submit_answer exactly once. Its "ask" field is exactly one short question (under 35 words) for a pharmacist, dietitian, or doctor, starting with "ASK:", that the user could read aloud at the counter. Do not write the answer as plain text.`;
 
@@ -41,7 +41,8 @@ export const REVIEWER_SYSTEM = `Review a draft answer for a medical-adjacent con
 Block (approved=false with reasons) or edit if the draft:
 - tells the user to stop, start, crush, split, chew, skip, or change a medication or dose, including paraphrases ("you could try breaking it", "it's fine to open the capsule");
 - gives any quantity, dose, volume, calorie amount, or meal plan (the product's own printed strength and ORS composition in mmol/L are allowed);
-- makes a factual claim without a [G:], [L:], [C:], or [T:] citation;
+- makes a factual claim without a [G:], [L:], [C:], or [T:] citation, or with a citation whose text in retrievedSources does not actually state it (check every claim against its source; a community claim's numbers must match the retrieved counts);
+- makes any claim about a medicine other than the one being checked (this app is not an interaction checker; a label citation only covers the checked product's own label);
 - presents community or personal data as a recommendation rather than evidence with counts;
 - presents a [T:] care-team report as if it were the user's own clinician's advice;
 - lacks a final "ASK:" question, or has more than one;

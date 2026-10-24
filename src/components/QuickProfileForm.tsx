@@ -4,6 +4,7 @@ import { useMutation } from "convex/react";
 import { useState } from "react";
 import { api } from "@convex/_generated/api";
 import type { Anatomy, BowelLengthBand } from "@convex/lib/anatomy";
+import { CARES_FOR_CHOICES, type CaresFor } from "@convex/lib/careFor";
 
 const ANATOMY_CHOICES: { label: string; value: Pick<Anatomy, "stomaType" | "colonInContinuity"> }[] = [
   { label: "End-jejunostomy (no colon)", value: { stomaType: "jejunostomy", colonInContinuity: false } },
@@ -35,7 +36,7 @@ export function QuickProfileForm({ anonId, onDone }: { anonId: string; onDone?: 
   const [role, setRole] = useState<"patient" | "caregiver" | "clinician">("patient");
   const [anatomy, setAnatomy] = useState(0);
   const [length, setLength] = useState<BowelLengthBand>("unknown");
-  const [language, setLanguage] = useState("en");
+  const [caresFor, setCaresFor] = useState<CaresFor>("parent");
   const [saving, setSaving] = useState(false);
 
   return (
@@ -48,7 +49,9 @@ export function QuickProfileForm({ anonId, onDone }: { anonId: string; onDone?: 
           await upsert({
             anonId,
             role,
-            language,
+            // Answers are English-only in this build.
+            language: "en",
+            caresFor: role === "caregiver" ? caresFor : undefined,
             anatomy: { ...ANATOMY_CHOICES[anatomy].value, bowelLengthBand: length },
           });
           onDone?.();
@@ -75,6 +78,18 @@ export function QuickProfileForm({ anonId, onDone }: { anonId: string; onDone?: 
           ))}
         </div>
       </fieldset>
+      {role === "caregiver" && (
+        <label className="block">
+          <span className="mb-2 block font-bold">Who do you care for?</span>
+          <select className={field} value={caresFor} onChange={(e) => setCaresFor(e.target.value as CaresFor)}>
+            {CARES_FOR_CHOICES.map(([v, l]) => (
+              <option key={v} value={v}>
+                {l}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       <label className="block">
         <span className="mb-2 block font-bold">{role === "caregiver" ? "Their" : "My"} anatomy</span>
         <select className={field} value={anatomy} onChange={(e) => setAnatomy(Number(e.target.value))}>
@@ -90,16 +105,6 @@ export function QuickProfileForm({ anonId, onDone }: { anonId: string; onDone?: 
         <select className={field} value={length} onChange={(e) => setLength(e.target.value as BowelLengthBand)}>
           {LENGTHS.map((l) => (
             <option key={l.value} value={l.value}>
-              {l.label}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="block">
-        <span className="mb-2 block font-bold">Language</span>
-        <select className={field} value={language} onChange={(e) => setLanguage(e.target.value)}>
-          {LANGUAGES.map((l) => (
-            <option key={l.code} value={l.code}>
               {l.label}
             </option>
           ))}

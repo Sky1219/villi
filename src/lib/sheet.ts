@@ -1,10 +1,27 @@
 import type { FunctionReturnType } from "convex/server";
 import type { api } from "@convex/_generated/api";
 import { citationLabel } from "@/lib/citations";
+import { preparedBy } from "@convex/lib/careFor";
 
 export type SheetData = NonNullable<FunctionReturnType<typeof api.sheet.get>>;
 
 export const OUTCOME_WORD = { helped: "helped", neutral: "no change", hurt: "worse" } as const;
+
+export type ResultingChange = "formulation_changed" | "dose_monitored" | "no_change" | "pending";
+
+export const CHANGE_CHOICES: readonly (readonly [ResultingChange, string])[] = [
+  ["formulation_changed", "They changed the form of a medicine"],
+  ["dose_monitored", "They're monitoring it (levels, readings or the effect)"],
+  ["no_change", "Nothing changed"],
+  ["pending", "Not decided yet"],
+] as const;
+
+export const CHANGE_SHORT: Record<ResultingChange, string> = {
+  formulation_changed: "Form of the medicine changed",
+  dose_monitored: "Being monitored",
+  no_change: "No change",
+  pending: "Not decided yet",
+};
 
 export function citeText(c: string | null): string {
   if (!c) return "";
@@ -20,11 +37,19 @@ export function patternSentence(p: SheetData["patterns"][number]): string {
 
 export function sheetMarkdown(d: SheetData, date: string): string {
   const lines: string[] = [];
-  lines.push(`# Appointment sheet`, ``, `Prepared with Villi on ${date}. Anatomy: ${d.anatomyText}.`, ``);
+  lines.push(
+    `# Appointment sheet`,
+    ``,
+    `Patient's anatomy: ${d.anatomyText}.`,
+    `Prepared with Villi on ${date} by ${preparedBy(d.role, d.caresFor)}.`,
+    ``,
+  );
   lines.push(`## Questions to ask`, ``);
   if (d.open.length === 0) lines.push(`- (none open)`);
-  d.open.forEach((q, i) => lines.push(`${i + 1}. ${q.text}${q.itemName ? ` _(about ${q.itemName})_` : ""}`));
-  lines.push(``, `## Patterns in my own log (to discuss, not conclusions)`, ``);
+  d.open.forEach((q, i) =>
+    lines.push(`${i + 1}. ${q.text}${q.itemName ? ` _(about ${q.itemName})_` : ""}${q.status === "asked" ? " _(asked, answer not logged yet)_" : ""}`),
+  );
+  lines.push(``, `## Patterns in the patient's log (to discuss, not conclusions)`, ``);
   if (d.patterns.length === 0) lines.push(`- Not enough entries yet.`);
   d.patterns.forEach((p) => lines.push(`- ${patternSentence(p)}`));
   lines.push(``, `## Medicines and what the labels say`, ``);
@@ -37,7 +62,10 @@ export function sheetMarkdown(d: SheetData, date: string): string {
     lines.push(``, `## Answered`, ``);
     for (const q of d.answered) {
       lines.push(`- ${q.text}`);
-      if (q.answer) lines.push(`  - ${q.answer.professionalType}: ${q.answer.text}`);
+      if (q.answer) {
+        lines.push(`  - ${q.answer.professionalType}: ${q.answer.text}`);
+        if (q.answer.resultingChange) lines.push(`  - Outcome: ${CHANGE_SHORT[q.answer.resultingChange]}`);
+      }
     }
   }
   lines.push(

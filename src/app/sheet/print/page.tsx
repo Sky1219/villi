@@ -3,7 +3,8 @@
 import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { useAnonId } from "@/lib/anon";
-import { citeText, patternSentence } from "@/lib/sheet";
+import { CHANGE_SHORT, citeText, patternSentence } from "@/lib/sheet";
+import { preparedBy } from "@convex/lib/careFor";
 
 // Print / Save as PDF: plain layout, selectable text, correct fonts for every script.
 function Print({ anonId }: { anonId: string }) {
@@ -22,8 +23,9 @@ function Print({ anonId }: { anonId: string }) {
       </div>
       <header>
         <h1 className="text-2xl font-bold">Appointment sheet</h1>
+        <p className="text-sm">Patient&apos;s anatomy: {d.anatomyText}.</p>
         <p className="text-sm">
-          Prepared with Villi on {date}. Anatomy: {d.anatomyText}.
+          Prepared with Villi on {date} by {preparedBy(d.role, d.caresFor)}.
         </p>
       </header>
       <section>
@@ -33,6 +35,7 @@ function Print({ anonId }: { anonId: string }) {
             <li key={q._id}>
               {q.text}
               {q.itemName && <span className="text-muted"> (about {q.itemName})</span>}
+              {q.status === "asked" && <span className="text-muted"> (asked, answer not logged yet)</span>}
               <div className="mt-1 h-10 border-b border-dashed border-neutral-400" aria-label="Space for the answer" />
             </li>
           ))}
@@ -40,7 +43,7 @@ function Print({ anonId }: { anonId: string }) {
         </ol>
       </section>
       <section>
-        <h2 className="mb-1 text-lg font-bold">Patterns in my own log</h2>
+        <h2 className="mb-1 text-lg font-bold">Patterns in the patient&apos;s log</h2>
         <p className="text-sm text-muted">To discuss, not conclusions.</p>
         <ul className="list-disc space-y-1 pl-6">
           {d.patterns.map((p) => (
@@ -75,6 +78,7 @@ function Print({ anonId }: { anonId: string }) {
                 {q.answer && (
                   <div className="text-sm">
                     {q.answer.professionalType}: {q.answer.text}
+                    {q.answer.resultingChange && <div>Outcome: {CHANGE_SHORT[q.answer.resultingChange]}</div>}
                   </div>
                 )}
               </li>

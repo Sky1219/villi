@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { checkSwap, type SwapItem } from "./lib/swapCheck";
 import type { Anatomy } from "./lib/anatomy";
+import { SEED_ITEMS, SEED_SWAPS, SYNTHETIC_GROUPS } from "./lib/seedData";
 
 const JEJ: Anatomy = { colonInContinuity: false, stomaType: "jejunostomy", bowelLengthBand: "<100cm" };
 const COLON: Anatomy = { colonInContinuity: true, stomaType: "none", bowelLengthBand: "100-200cm" };
@@ -30,5 +31,15 @@ describe("swap guideline check", () => {
   it("only applies the water rule to the anatomy it is scoped to", () => {
     expect(checkSwap(sports, water, JEJ).passed).toBe(false);
     expect(checkSwap(sports, water, COLON).passed).toBe(true);
+  });
+
+  it("every seeded swap passes the check for every anatomy its poster could have", () => {
+    const item = new Map(SEED_ITEMS.map((i) => [i.canonicalName, i]));
+    const failures = SEED_SWAPS.flatMap((s) =>
+      SYNTHETIC_GROUPS.find((g) => g.key === s.anatomy)!.anatomies
+        .filter((a) => !checkSwap(item.get(s.insteadOf)!, item.get(s.use)!, a).passed)
+        .map((a) => `${s.insteadOf} -> ${s.use} (${JSON.stringify(a)})`),
+    );
+    expect(failures).toEqual([]);
   });
 });

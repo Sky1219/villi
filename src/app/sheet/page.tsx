@@ -8,7 +8,8 @@ import type { Id } from "@convex/_generated/dataModel";
 import { useAnonId } from "@/lib/anon";
 import { friendlyError } from "@/lib/errors";
 import { LogStatus } from "@/components/LogCard";
-import { citeText, patternSentence, sheetMarkdown } from "@/lib/sheet";
+import { CHANGE_CHOICES, CHANGE_SHORT, citeText, patternSentence, sheetMarkdown, type ResultingChange } from "@/lib/sheet";
+import { preparedBy } from "@convex/lib/careFor";
 
 const PROS = ["pharmacist", "dietitian", "doctor", "nurse"] as const;
 
@@ -17,12 +18,13 @@ function LogAnswer({ anonId, questionId }: { anonId: string; questionId: Id<"que
   const [open, setOpen] = useState(false);
   const [pro, setPro] = useState<(typeof PROS)[number]>("pharmacist");
   const [text, setText] = useState("");
+  const [change, setChange] = useState<ResultingChange>("pending");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   if (!open) {
     return (
       <button onClick={() => setOpen(true)} className="mt-2 min-h-11 rounded-xl border border-accent px-3 text-sm font-bold text-accent">
-        Log what they told you
+        What did they say?
       </button>
     );
   }
@@ -34,7 +36,7 @@ function LogAnswer({ anonId, questionId }: { anonId: string; questionId: Id<"que
         setBusy(true);
         setError(null);
         try {
-          await log({ anonId, questionId, professionalType: pro, answerText: text });
+          await log({ anonId, questionId, professionalType: pro, answerText: text, resultingChange: change });
         } catch (err) {
           setError(friendlyError(err));
         } finally {
@@ -69,6 +71,7 @@ function LogAnswer({ anonId, questionId }: { anonId: string; questionId: Id<"que
           className="mt-1 w-full rounded-xl border border-border bg-background p-3"
         />
       </label>
+      <ChangeChoices value={change} onPick={setChange} />
       <p className="text-xs text-muted">
         Shared anonymously with people who have your anatomy, labeled as your care team&apos;s answer, after a safety
         check. Leave out names and doses.
@@ -82,6 +85,96 @@ function LogAnswer({ anonId, questionId }: { anonId: string; questionId: Id<"que
         </p>
       )}
     </form>
+  );
+}
+
+function ChangeChoices({ value, onPick }: { value: ResultingChange | null; onPick: (c: ResultingChange) => void }) {
+  return (
+    <fieldset>
+      <legend className="mb-1 text-sm font-bold">What changed because of it?</legend>
+      <div className="grid gap-2">
+        {CHANGE_CHOICES.map(([c, label]) => (
+          <button
+            type="button"
+            key={c}
+            onClick={() => onPick(c)}
+            aria-pressed={value === c}
+            className={`min-h-11 rounded-xl border px-3 text-left text-sm ${value === c ? "border-accent bg-accent-soft font-bold" : "border-border"}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
+// "I asked this": the question moves from open to asked, and back if tapped by mistake.
+function AskedToggle({ anonId, questionId, asked }: { anonId: string; questionId: Id<"questions">; asked: boolean }) {
+  const setAsked = useMutation(api.questions.setAsked);
+  const [error, setError] = useState<string | null>(null);
+  return (
+    <>
+      <button
+        onClick={async () => {
+          setError(null);
+          try {
+            await setAsked({ anonId, questionId, asked: !asked });
+          } catch (e) {
+            setError(friendlyError(e));
+          }
+        }}
+        aria-pressed={asked}
+        className={`mt-2 mr-2 min-h-11 rounded-xl border px-3 text-sm font-bold ${asked ? "border-accent bg-accent-soft text-accent" : "border-border"}`}
+      >
+        {asked ? "Asked ✓" : "I asked this"}
+      </button>
+      {error && (
+        <p role="alert" className="text-sm text-flag">
+          {error}
+        </p>
+      )}
+    </>
+  );
+}
+
+// Outcome of a logged answer; "not decided yet" can be updated when the team decides.
+function Outcome({ anonId, id, value }: { anonId: string; id: Id<"care_team_answers">; value: ResultingChange | null }) {
+  const set = useMutation(api.careTeam.setResultingChange);
+  const [editing, setEditing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  if (!editing) {
+    return (
+      <p className="mt-2 flex flex-wrap items-center gap-x-2 text-sm">
+        <span className="font-bold">Outcome:</span> {value ? CHANGE_SHORT[value] : "not logged"}
+        {(value === "pending" || value === null) && (
+          <button onClick={() => setEditing(true)} className="min-h-11 font-bold text-accent underline">
+            Update
+          </button>
+        )}
+      </p>
+    );
+  }
+  return (
+    <div className="mt-2">
+      <ChangeChoices
+        value={value}
+        onPick={async (c) => {
+          setError(null);
+          try {
+            await set({ anonId, id, resultingChange: c });
+            setEditing(false);
+          } catch (e) {
+            setError(friendlyError(e));
+          }
+        }}
+      />
+      {error && (
+        <p role="alert" className="text-sm text-flag">
+          {error}
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -123,7 +216,8 @@ function Sheet({ anonId }: { anonId: string }) {
       </Link>
       <header>
         <h1 className="text-2xl font-bold">Appointment sheet</h1>
-        <p className="text-sm text-muted">{d.anatomyText}</p>
+        <p className="text-sm text-muted">Patient&apos;s anatomy: {d.anatomyText}</p>
+        <p className="text-sm text-muted">Prepared by {preparedBy(d.role, d.caresFor)}. Either of you can hand it to the clinician.</p>
       </header>
 
       <div className="grid grid-cols-2 gap-2">
@@ -143,15 +237,17 @@ function Sheet({ anonId }: { anonId: string }) {
         {d.open.length === 0 && <p className="text-muted">No open questions. Add one from any answer&apos;s question card.</p>}
         {d.open.map((q) => (
           <div key={q._id} className="rounded-2xl border border-border bg-surface p-4">
+            {q.status === "asked" && <p className="mb-1 text-xs font-bold uppercase tracking-wide text-accent">Asked</p>}
             <p className="font-bold">{q.text}</p>
             {q.itemName && <p className="text-xs text-muted">about {q.itemName}</p>}
+            <AskedToggle anonId={anonId} questionId={q._id} asked={q.status === "asked"} />
             <LogAnswer anonId={anonId} questionId={q._id} />
           </div>
         ))}
       </section>
 
       <section className="space-y-2">
-        <h2 className="font-bold">Patterns in your own log</h2>
+        <h2 className="font-bold">Patterns in the patient&apos;s log</h2>
         <p className="text-xs text-muted">Hypotheses to talk through, with counts. Not conclusions.</p>
         {d.patterns.length === 0 && <p className="text-sm text-muted">Log a few things and patterns will show up here.</p>}
         <ul className="space-y-2">
@@ -200,6 +296,7 @@ function Sheet({ anonId }: { anonId: string }) {
                     <span className="text-xs font-bold uppercase text-muted">{q.answer.professionalType}: </span>
                     {q.answer.text}
                   </p>
+                  <Outcome anonId={anonId} id={q.answer._id} value={q.answer.resultingChange} />
                   <LogStatus status={q.answer.status} nudge={null} />
                 </>
               )}

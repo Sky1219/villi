@@ -16,6 +16,9 @@ import {
   noteFor,
   outcomeOdds,
 } from "./lib/seedData";
+import { checkSwap } from "./lib/swapCheck";
+
+const SEED_ITEM_BY_NAME = new Map(SEED_ITEMS.map((s) => [s.canonicalName, s]));
 
 // Deterministic PRNG so re-seeding produces the same community.
 function mulberry32(seed: number) {
@@ -113,6 +116,8 @@ export const insertProfiles = internalMutation({
         anatomy: p.anatomy,
         anatomyKey: anatomyKeyOf(p.anatomy),
         language: "en",
+        // The demo caregiver is a son or daughter checking for a parent, like the builder.
+        caresFor: p.role === "caregiver" ? "parent" : undefined,
         clinicianDemoVerified: p.role === "clinician",
         synthetic: true,
         templateKey: p.templateKey,
@@ -170,6 +175,9 @@ export const insertCommunity = internalMutation({
     for (const s of SEED_SWAPS) {
       const profileId = pick(s.anatomy, i++);
       const p = (await ctx.db.get("profiles", profileId))!;
+      // Seed swaps pass the same guideline check as real ones, or they aren't seeded.
+      const check = checkSwap(SEED_ITEM_BY_NAME.get(s.insteadOf)!, SEED_ITEM_BY_NAME.get(s.use)!, p.anatomy);
+      if (!check.passed) continue;
       await ctx.db.insert("swaps", {
         profileId,
         anatomySnapshot: p.anatomy,
@@ -196,6 +204,7 @@ export const insertCommunity = internalMutation({
         itemId: c.item ? args.itemIds[c.item] : undefined,
         professionalType: c.professional,
         answerText: c.answer,
+        resultingChange: c.change ?? (c.item && SEED_ITEM_BY_NAME.get(c.item)?.category === "pill" ? "pending" : "no_change"),
         pooled: true,
         clinicianEndorsements: c.endorsed ? [args.clinicians[i % args.clinicians.length]] : [],
         synthetic: true,
@@ -209,6 +218,7 @@ export const insertCommunity = internalMutation({
         text,
         context: {},
         resolved: false,
+        status: n % 3 === 0 ? "asked" : "open",
         synthetic: true,
         createdAt: Date.now() - n * 7_200_000,
       });

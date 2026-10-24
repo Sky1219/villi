@@ -15,7 +15,7 @@ import { CommunityCounts } from "@/components/CommunityCounts";
 import { LogCard } from "@/components/LogCard";
 import type { SegmentId } from "@convex/lib/anatomy";
 
-type FinalAnswer = Answer & { evidence?: Record<string, { kind: string; text: string }> };
+type FinalAnswer = Answer & { evidence?: Record<string, { kind: string; text: string }>; communitySynthetic?: boolean };
 type Trace = { step: number; tool: string; summary: string; ok: boolean; at: number };
 
 const TOOL_LABEL: Record<string, string> = {
@@ -133,6 +133,7 @@ function Citations({ citation, final, titles }: { citation: string; final: Final
             >
               <span className="inline-flex min-h-8 items-center rounded-full bg-info-soft px-2.5 text-xs font-bold text-info">
                 {citationLabel(c.kind, c.ref)}
+                {c.kind === "C" && final.communitySynthetic && " · demo data"}
               </span>
             </button>
           );
@@ -140,7 +141,13 @@ function Citations({ citation, final, titles }: { citation: string; final: Final
       </span>
       {open && (
         <span className="mt-2 block rounded-xl bg-info-soft p-3 text-sm">
-          {final.evidence?.[open] ? (
+          {final.evidence?.[open] && open.startsWith("G:") ? (
+            // Guideline chunks are our own summaries of the source, so they are not shown as quotes.
+            <>
+              <span className="block text-foreground">{final.evidence[open].text}</span>
+              <span className="mt-1 block text-xs text-muted">Villi&apos;s summary of this source, not yet checked by a clinician.</span>
+            </>
+          ) : final.evidence?.[open] ? (
             <mark className="bg-transparent text-foreground">&ldquo;{final.evidence[open].text}&rdquo;</mark>
           ) : (
             <span className="text-muted">{open.startsWith("C:") ? "Self-reported by other users, not a trial." : "Source text not available."}</span>
@@ -249,7 +256,7 @@ function AnswerCard({
           <section className="rounded-2xl border border-border bg-surface p-4">
             <h2 className="mb-2 flex items-center gap-2 font-bold">
               People with your anatomy
-              {final.community.includesSynthetic && (
+              {(final.communitySynthetic ?? final.community.includesSynthetic) && (
                 <span className="rounded-full bg-surface-2 px-2.5 py-1 text-xs font-bold text-muted">demo data</span>
               )}
             </h2>
@@ -331,6 +338,41 @@ function QuestionCard({ ask, answerId, anonId }: { ask: string; answerId: Id<"an
       >
         {added ? "Added to appointment sheet ✓" : "Add to appointment sheet"}
       </button>
+      {error && (
+        <p role="alert" className="mt-2 text-sm text-flag">
+          {error}
+        </p>
+      )}
+    </section>
+  );
+}
+
+function Useful({ anonId, answerId, value }: { anonId: string; answerId: Id<"answers">; value: boolean | null }) {
+  const rate = useMutation(api.answers.rateUseful);
+  const [error, setError] = useState<string | null>(null);
+  const pick = async (useful: boolean) => {
+    setError(null);
+    try {
+      await rate({ anonId, answerId, useful });
+    } catch (e) {
+      setError(friendlyError(e));
+    }
+  };
+  const btn = (on: boolean) =>
+    `min-h-11 flex-1 rounded-xl border px-3 text-sm font-bold ${on ? "border-accent bg-accent-soft text-accent" : "border-border"}`;
+  return (
+    <section className="rounded-2xl border border-border bg-surface p-4">
+      <h2 id="useful" className="mb-2 font-bold">
+        Was this useful?
+      </h2>
+      <div role="group" aria-labelledby="useful" className="flex gap-2">
+        <button onClick={() => pick(true)} aria-pressed={value === true} className={btn(value === true)}>
+          Yes
+        </button>
+        <button onClick={() => pick(false)} aria-pressed={value === false} className={btn(value === false)}>
+          Not really
+        </button>
+      </div>
       {error && (
         <p role="alert" className="mt-2 text-sm text-flag">
           {error}
@@ -474,6 +516,7 @@ function AnswerView({ anonId, answerId }: { anonId: string; answerId: Id<"answer
 
       {done && (
         <div className="space-y-3 pt-4">
+          <Useful anonId={anonId} answerId={a._id} value={a.useful} />
           <FollowUp anonId={anonId} parentId={a.kind === "followup" && a.parentId ? a.parentId : a._id} />
           {a.itemId && itemName && <LogCard anonId={anonId} answerId={a._id} itemName={itemName} />}
         </div>

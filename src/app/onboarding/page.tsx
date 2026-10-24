@@ -17,18 +17,21 @@ import {
 import { useAnonId } from "@/lib/anon";
 import { friendlyError } from "@/lib/errors";
 import { GutDiagram } from "@/components/GutDiagram";
-import { LANGUAGES, QuickProfileForm } from "@/components/QuickProfileForm";
+import { QuickProfileForm } from "@/components/QuickProfileForm";
+import { CARES_FOR_CHOICES, type CaresFor } from "@convex/lib/careFor";
 import { MedsEditor } from "@/components/MedsEditor";
 
 type Role = "patient" | "caregiver" | "clinician";
 type Stoma = "none" | "jejunostomy" | "ileostomy" | "colostomy" | "unsure";
 type Colon = "all" | "part" | "none" | "unsure";
 type SmallBowel = "most" | "some" | "none" | "unsure";
-type Step = "role" | "colon" | "smallBowel" | "stoma" | "check" | "language" | "meds" | "describe";
+type Step = "role" | "relation" | "colon" | "smallBowel" | "stoma" | "check" | "meds" | "describe";
 type Profile = NonNullable<ReturnType<typeof useQuery<typeof api.profiles.me>>>;
 
 // One question per screen; "check" shows the diagram the answers produced so it can be adjusted.
-const FLOW: Step[] = ["role", "colon", "smallBowel", "stoma", "check", "language"];
+// Answers are English-only in this build, so there is no language step.
+const flowFor = (role: Role): Step[] =>
+  role === "caregiver" ? ["role", "relation", "colon", "smallBowel", "stoma", "check"] : ["role", "colon", "smallBowel", "stoma", "check"];
 
 const chip = (on: boolean) =>
   `min-h-12 rounded-xl border px-3 py-2 text-left ${on ? "border-accent bg-accent-soft font-bold" : "border-border bg-surface"}`;
@@ -51,6 +54,7 @@ function seedFrom(p: Profile | null) {
   const band = p.anatomy.bowelLengthBand;
   return {
     role: p.role as Role,
+    caresFor: p.caresFor,
     language: p.language,
     removed,
     stoma: p.anatomy.stomaType as Stoma,
@@ -72,13 +76,8 @@ function Onboarding({ anonId, profile }: { anonId: string; profile: Profile | nu
   const [stoma, setStoma] = useState<Stoma | null>(seed?.stoma ?? null);
   const [removed, setRemoved] = useState<SegmentId[]>(seed?.removed ?? []);
   const [length, setLength] = useState<BowelLengthBand | "from-diagram">(seed?.length ?? "from-diagram");
-  const [language, setLanguage] = useState(
-    () =>
-      seed?.language ??
-      (typeof navigator !== "undefined" && LANGUAGES.some((l) => navigator.language.startsWith(l.code))
-        ? navigator.language.slice(0, 2)
-        : "en"),
-  );
+  const [caresFor, setCaresFor] = useState<CaresFor | null>(seed?.caresFor ?? null);
+  const language = seed?.language ?? "en";
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -86,9 +85,10 @@ function Onboarding({ anonId, profile }: { anonId: string; profile: Profile | nu
   const their = they ? "their" : "your";
   const stomaAfter = stomaAfterFor(stoma ?? "none", removed);
   const anatomy = deriveAnatomy({ removed, stomaAfter }, length);
-  const index = FLOW.indexOf(step);
-  const next = () => setStep(FLOW[index + 1]);
-  const back = () => setStep(step === "describe" ? "check" : FLOW[index - 1]);
+  const flow = flowFor(role);
+  const index = flow.indexOf(step);
+  const next = () => setStep(flow[index + 1]);
+  const back = () => setStep(step === "describe" ? "check" : flow[index - 1]);
 
   // Guided answers pre-mark segments; the check step's taps adjust them afterwards.
   function applyGuides(n: { colon?: Colon; smallBowel?: SmallBowel }) {
@@ -111,7 +111,7 @@ function Onboarding({ anonId, profile }: { anonId: string; profile: Profile | nu
     setSaving(true);
     setError(null);
     try {
-      await upsert({ anonId, role, language, anatomy, diagram: { removed, stomaAfter } });
+      await upsert({ anonId, role, language, caresFor: caresFor ?? undefined, anatomy, diagram: { removed, stomaAfter } });
       setStep("meds");
     } catch (e) {
       setError(friendlyError(e));
@@ -122,11 +122,11 @@ function Onboarding({ anonId, profile }: { anonId: string; profile: Profile | nu
 
   const title: Record<Step, string> = {
     role: "Who is this for?",
+    relation: "Who do you care for?",
     colon: `Was ${their} colon (large intestine) removed?`,
     smallBowel: `How much of ${their} small bowel was removed?`,
     stoma: `Is there a stoma (a bag)?`,
     check: "Does this look right?",
-    language: "Which language should answers use?",
     meds: they ? "Their medicines" : "Your medicines",
     describe: "Describe it instead",
   };
@@ -157,7 +157,7 @@ function Onboarding({ anonId, profile }: { anonId: string; profile: Profile | nu
         )}
         {index >= 0 && (
           <span className="text-sm text-muted">
-            Step {index + 1} of {FLOW.length}
+            Step {index + 1} of {flow.length}
           </span>
         )}
       </nav>
@@ -180,12 +180,24 @@ function Onboarding({ anonId, profile }: { anonId: string; profile: Profile | nu
             profile ? role : null,
             (v) => {
               setRole(v);
-              next();
+              setStep(v === "caregiver" ? "relation" : "colon");
             },
           )}
           <p className="text-sm text-muted">
             Villi never asks for a name, birthday, or medical history. Your setup is tied to a random id on this device
             only.
+          </p>
+        </section>
+      )}
+
+      {step === "relation" && (
+        <section className="space-y-3">
+          {options(CARES_FOR_CHOICES, caresFor, (v) => {
+            setCaresFor(v);
+            next();
+          })}
+          <p className="text-sm text-muted">
+            You&apos;ll set up their anatomy and medicines, and check and log things on their behalf. No names.
           </p>
         </section>
       )}
@@ -239,12 +251,12 @@ function Onboarding({ anonId, profile }: { anonId: string; profile: Profile | nu
         )}
 
       {(step === "colon" || step === "smallBowel" || step === "stoma") && (
-        <p className="flex items-center gap-3 rounded-xl bg-surface-2 p-3 text-sm">
+        <div className="flex items-center gap-3 rounded-xl bg-surface-2 p-3 text-sm">
           <GutDiagram size="badge" removed={removed} stoma={stomaAfter ? { afterSegment: stomaAfter } : null} />
           <span>
             So far: <span className="font-bold">{describeAnatomy(anatomy)}</span>
           </span>
-        </p>
+        </div>
       )}
 
       {step === "check" && (
@@ -286,9 +298,18 @@ function Onboarding({ anonId, profile }: { anonId: string; profile: Profile | nu
           <p className="rounded-xl bg-surface-2 p-3 text-sm">
             Villi will use: <span className="font-bold">{describeAnatomy(anatomy)}</span>
           </p>
-          <button onClick={next} className="min-h-12 w-full rounded-xl bg-accent px-4 text-lg font-bold text-accent-ink">
-            Looks right
+          <button
+            disabled={saving}
+            onClick={save}
+            className="min-h-12 w-full rounded-xl bg-accent px-4 text-lg font-bold text-accent-ink disabled:opacity-60"
+          >
+            {saving ? "Saving…" : "Looks right, save"}
           </button>
+          {error && (
+            <p role="alert" className="text-sm text-flag">
+              {error}
+            </p>
+          )}
           <button onClick={() => setStep("describe")} className="min-h-11 w-full text-sm font-bold text-accent underline">
             I&apos;d rather describe it
           </button>
@@ -296,30 +317,6 @@ function Onboarding({ anonId, profile }: { anonId: string; profile: Profile | nu
       )}
 
       {step === "describe" && <QuickProfileForm anonId={anonId} onDone={() => setStep("meds")} />}
-
-      {step === "language" && (
-        <section className="space-y-3">
-          <div role="group" aria-labelledby="step-title" className="grid grid-cols-2 gap-2">
-            {LANGUAGES.map((l) => (
-              <button key={l.code} onClick={() => setLanguage(l.code)} aria-pressed={language === l.code} className={chip(language === l.code)}>
-                {l.label}
-              </button>
-            ))}
-          </div>
-          <button
-            disabled={saving}
-            onClick={save}
-            className="min-h-12 w-full rounded-xl bg-accent px-4 text-lg font-bold text-accent-ink disabled:opacity-60"
-          >
-            {saving ? "Saving…" : "Save"}
-          </button>
-          {error && (
-            <p role="alert" className="text-sm text-flag">
-              {error}
-            </p>
-          )}
-        </section>
-      )}
 
       {step === "meds" && (
         <section className="space-y-4">

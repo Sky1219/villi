@@ -6,6 +6,7 @@ import { retrier } from "./lib/retrier";
 import type { Doc } from "./_generated/dataModel";
 import { categoryValidator, sawValidator } from "./schema";
 import { requireProfile } from "./profiles";
+import { OPEN_QUESTION_MESSAGE, OPEN_QUESTION_RE } from "./lib/answerSchema";
 
 const MAX_TRACE = 40;
 const STUCK_MS = 5 * 60_000;
@@ -26,6 +27,7 @@ function publicAnswer(a: Doc<"answers">) {
     toolTrace: a.toolTrace,
     final: done ? a.final : null,
     reviewSummary: a.reviewSummary ?? null,
+    useful: a.useful ?? null,
     error: a.status === "failed" || a.status === "blocked" ? (a.error ?? null) : null,
     createdAt: a.createdAt,
   };
@@ -53,6 +55,8 @@ export const start = mutation({
     const profile = await requireProfile(ctx, args.anonId);
     const text = args.text?.trim().slice(0, 500);
     if (!text && !args.photoId && !args.saw) throw new ConvexError("Type a name or add a photo.");
+    // Follow-ups are questions by nature; a new check must name one item.
+    if (!args.parentId && !args.saw && text && OPEN_QUESTION_RE.test(text)) throw new ConvexError(OPEN_QUESTION_MESSAGE);
     const saw = args.saw && {
       shape: args.saw.shape?.slice(0, 20) ?? null,
       color: args.saw.color?.slice(0, 20) ?? null,
@@ -96,6 +100,18 @@ export const get = query({
     const a = await ctx.db.get("answers", args.answerId);
     if (!a || a.profileId !== profile._id) return null;
     return publicAnswer(a);
+  },
+});
+
+// "Was this useful?": one tap, changeable, on the user's own final answers.
+export const rateUseful = mutation({
+  args: { anonId: v.string(), answerId: v.id("answers"), useful: v.boolean() },
+  handler: async (ctx, args) => {
+    const profile = await requireProfile(ctx, args.anonId);
+    const a = await ctx.db.get("answers", args.answerId);
+    if (!a || a.profileId !== profile._id || a.status !== "final") throw new ConvexError("Answer not found");
+    await ctx.db.patch("answers", a._id, { useful: args.useful });
+    return null;
   },
 });
 
