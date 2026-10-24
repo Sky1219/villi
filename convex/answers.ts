@@ -52,9 +52,12 @@ export const start = mutation({
     parentId: v.optional(v.id("answers")),
     saw: v.optional(sawValidator),
     followsQuestionId: v.optional(v.id("questions")),
+    productNdc: v.optional(v.string()),
+    barcodePath: v.optional(v.union(v.literal("ndc"), v.literal("upc"))),
   },
   handler: async (ctx, args) => {
     const profile = await requireProfile(ctx, args.anonId);
+    if (args.productNdc && !/^\d{4,5}-\d{3,4}$/.test(args.productNdc)) throw new ConvexError("That barcode didn't resolve to a product.");
     if (args.followsQuestionId) {
       const q = await ctx.db.get("questions", args.followsQuestionId);
       if (!q || q.profileId !== profile._id) throw new ConvexError("Question not found");
@@ -90,7 +93,14 @@ export const start = mutation({
       profileId: profile._id,
       kind: args.parentId ? "followup" : "scan",
       parentId: args.parentId,
-      input: { text, photoId: args.photoId, category: saw ? "pill" : args.category, saw },
+      input: {
+        text,
+        photoId: args.photoId,
+        category: saw || args.productNdc ? "pill" : args.category,
+        saw,
+        productNdc: args.productNdc,
+        barcodePath: args.productNdc ? (args.barcodePath ?? "ndc") : undefined,
+      },
       followsQuestionId: args.followsQuestionId,
       status: "queued",
       toolTrace: [],

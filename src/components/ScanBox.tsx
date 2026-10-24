@@ -1,9 +1,11 @@
 "use client";
 
 import { friendlyError } from "@/lib/errors";
-import { useMutation } from "convex/react";
+import { useAction, useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
+import { looksLikeNdc } from "@convex/lib/barcode";
+import { BarcodeScanner } from "./BarcodeScanner";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { downscaleToJpeg } from "@/lib/image";
@@ -13,9 +15,36 @@ export function ScanBox({ anonId, initialText = "" }: { anonId: string; initialT
   const start = useMutation(api.answers.start);
   const uploadUrl = useMutation(api.answers.generateUploadUrl);
   const [text, setText] = useState(initialText);
-  const [busy, setBusy] = useState<null | "photo" | "text">(null);
+  const resolveBarcode = useAction(api.fda.resolveBarcode);
+  const [busy, setBusy] = useState<null | "photo" | "text" | "barcode">(null);
+  const [scanning, setScanning] = useState(false);
+  const [found, setFound] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // A scanned barcode or typed NDC: resolve it to one product, then run the normal check on it.
+  const fromCode = useCallback(
+    async (code: string) => {
+      setScanning(false);
+      setError(null);
+      setBusy("barcode");
+      try {
+        const r = await resolveBarcode({ anonId, code });
+        if (!r.found) {
+          setError(r.reason);
+          setBusy(null);
+          return;
+        }
+        setFound(r.name);
+        const answerId = await start({ anonId, text: r.name, productNdc: r.productNdc, barcodePath: r.path });
+        router.push(`/answer/${answerId}`);
+      } catch (e) {
+        setError(friendlyError(e));
+        setBusy(null);
+      }
+    },
+    [anonId, resolveBarcode, router, start],
+  );
 
   async function go(args: { text?: string; photoId?: Id<"_storage"> }) {
     const answerId = await start({ anonId, ...args });
@@ -41,12 +70,30 @@ export function ScanBox({ anonId, initialText = "" }: { anonId: string; initialT
   return (
     <section className="rounded-2xl border border-border bg-surface p-4 shadow-sm">
       <h2 className="text-lg font-bold">Check a medicine or drink</h2>
-      <p className="mb-3 text-sm text-muted">Photograph a medicine or drink label, or type the name as it&apos;s printed. Villi checks pills and drinks; the community teaches food, so log how a food went below.</p>
+      <p className="mb-3 text-sm text-muted">
+        Scan the barcode on a pharmacy bottle, photograph a box or drink label, or type the name or NDC as it&apos;s printed.
+        Villi checks pills and drinks; the community teaches food, so log how a food went below.
+      </p>
+      {scanning ? (
+        <BarcodeScanner onCode={fromCode} onClose={() => setScanning(false)} />
+      ) : (
+        <button
+          type="button"
+          onClick={() => setScanning(true)}
+          disabled={!!busy}
+          className="mb-3 flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-lg font-bold text-accent-ink disabled:opacity-60"
+        >
+          <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M4 6v12M7 6v12M11 6v12M14 6v12M18 6v12M20 6v12" />
+          </svg>
+          {busy === "barcode" ? (found ? `Found ${found}…` : "Looking it up…") : "Scan the barcode"}
+        </button>
+      )}
       <button
         type="button"
         onClick={() => fileRef.current?.click()}
         disabled={!!busy}
-        className="mb-3 flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-lg font-bold text-accent-ink disabled:opacity-60"
+        className="mb-3 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-accent px-4 py-2 font-bold text-accent disabled:opacity-60"
       >
         <svg aria-hidden width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M4 8h3l2-3h6l2 3h3v11H4z" />
@@ -71,6 +118,7 @@ export function ScanBox({ anonId, initialText = "" }: { anonId: string; initialT
         onSubmit={async (e) => {
           e.preventDefault();
           if (!text.trim()) return;
+          if (looksLikeNdc(text)) return void fromCode(text.trim());
           setError(null);
           setBusy("text");
           try {

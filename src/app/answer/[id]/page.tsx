@@ -23,6 +23,7 @@ type Trace = { step: number; tool: string; summary: string; ok: boolean; at: num
 const TOOL_LABEL: Record<string, string> = {
   get_profile: "Read your anatomy",
   read_photo: "Read the photo",
+  read_barcode: "Read the barcode",
   fetch_label: "FDA label",
   search_guidelines: "Clinical guidelines",
   query_community: "Community logs",

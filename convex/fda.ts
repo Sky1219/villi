@@ -1,5 +1,6 @@
-import { v } from "convex/values";
-import { env, internalAction, internalMutation, internalQuery, type ActionCtx } from "./_generated/server";
+import { ConvexError, v } from "convex/values";
+import { action, env, internalAction, internalMutation, internalQuery, type ActionCtx } from "./_generated/server";
+import { parseCode, productName } from "./lib/barcode";
 import { internal } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
 import { coreName, hintFromName, labelKeyFor, releaseFormOf, type ReleaseForm } from "./lib/labelNames";
@@ -51,7 +52,7 @@ export type LabelResult = {
   flags: { flag: string; section: string; evidence: string; quote?: string }[];
   fromCache: boolean;
   // Which path answered: Villi's reviewed drug table, the saved openFDA copy, or live openFDA.
-  source: "table" | "cache" | "live" | "none";
+  source: "table" | "cache" | "live" | "ndc" | "none";
   tableMatch?: TableMatch;
   tableFacts?: TableFacts;
   // From the drug table when it has one; drives only the illustrative CAT animation.
@@ -239,6 +240,16 @@ async function fetchFromOpenFda(name: string): Promise<Omit<LabelResult, "fromCa
   const marketForms = Array.from(
     new Set(((ndcAll.body?.results ?? []) as { dosage_form?: string }[]).map((r) => r.dosage_form).filter((x): x is string => !!x)),
   );
+  return resultFromLabel(label, ownForms, marketForms, hint);
+}
+
+// One chosen label plus its own NDC dosage forms, trimmed to the sections Villi reads.
+function resultFromLabel(
+  label: OpenFdaLabel,
+  ownForms: string[],
+  marketForms: string[],
+  hint: ReleaseForm | null,
+): Omit<LabelResult, "fromCache" | "queryKey" | "source"> {
   let releaseForm: ReleaseForm = ownForms.length ? releaseFormOf(ownForms[0]) : "unknown";
   if (releaseForm === "unknown") {
     // Fall back to the label's own dosage-forms text.
@@ -397,18 +408,109 @@ function fromTable(name: string, rec: DrugRecord, match: TableMatch): LabelResul
 }
 
 // Exact generic name, then brand/alias. Pure and in-memory, so no network on a hit.
+// The exact product behind a barcode: its label and its own NDC listing, by product NDC.
+async function fetchFromOpenFdaByNdc(productNdc: string): Promise<Omit<LabelResult, "fromCache" | "queryKey" | "source">> {
+  const base = "https://api.fda.gov/drug";
+  const [byNdc, ndcOwn] = await Promise.all([
+    getJson(`${base}/label.json?search=openfda.product_ndc:${q(productNdc)}&limit=1`),
+    getJson(`${base}/ndc.json?search=product_ndc:${q(productNdc)}&limit=5`),
+  ]);
+  for (const r of [byNdc, ndcOwn]) {
+    if (r.status === 429) return { ...emptyResult(""), error: "openFDA rate limit" };
+    if (r.status !== 200 && r.status !== 404) return { ...emptyResult(""), error: `openFDA error ${r.status}` };
+  }
+  const label = (byNdc.body?.results ?? [])[0] as OpenFdaLabel | undefined;
+  if (!label) return emptyResult("");
+  const ownForms = Array.from(
+    new Set(((ndcOwn.body?.results ?? []) as { dosage_form?: string }[]).map((r) => r.dosage_form).filter((x): x is string => !!x)),
+  );
+  return resultFromLabel(label, ownForms, ownForms, null);
+}
+
+export type BarcodeResult =
+  | { found: true; path: "ndc" | "upc"; productNdc: string; name: string; dosageForm: string | null }
+  | { found: false; reason: string };
+
+// A scanned (or typed) code to one product in openFDA's NDC directory: one request
+// for an NDC barcode, two for an OTC UPC.
+export async function lookupBarcode(code: string): Promise<BarcodeResult> {
+  const parsed = parseCode(code);
+  const base = "https://api.fda.gov/drug";
+  let productNdc: string | null = null;
+  if (parsed.kind === "ndc") {
+    const search = parsed.packageNdcs.map((p) => `packaging.package_ndc:${q(p)}`).join("+");
+    const r = await getJson(`${base}/ndc.json?search=${search}&limit=1`);
+    if (r.status === 429) return { found: false, reason: "openFDA is busy. Try again in a minute, or take a photo." };
+    const row = (r.body?.results ?? [])[0] as NdcRow | undefined;
+    if (row) return ndcFound("ndc", row);
+    // A 12-digit code starting with 3 can also be an ordinary retail UPC.
+    const digits = code.replace(/\D/g, "");
+    if (digits.length !== 12) {
+      return { found: false, reason: "That barcode's NDC isn't in the FDA directory. Take a photo or type the name." };
+    }
+  }
+  if (parsed.kind === "upc" || parsed.kind === "ndc") {
+    const upc = parsed.kind === "upc" ? parsed.upc : code.replace(/\D/g, "");
+    // openFDA lists UPCs as 13-digit EAN ("0" + the 12-digit UPC-A a camera reads).
+    const forms = upc.length === 12 ? [upc, `0${upc}`] : [upc];
+    const r = await getJson(`${base}/label.json?search=${forms.map((u) => `openfda.upc:${q(u)}`).join("+")}&limit=1`);
+    const label = (r.body?.results ?? [])[0] as OpenFdaLabel | undefined;
+    productNdc = (label?.openfda?.product_ndc as string[] | undefined)?.[0] ?? null;
+    if (productNdc) {
+      const n = await getJson(`${base}/ndc.json?search=product_ndc:${q(productNdc)}&limit=1`);
+      const row = (n.body?.results ?? [])[0] as NdcRow | undefined;
+      if (row) return ndcFound("upc", row);
+    }
+    return { found: false, reason: "That barcode isn't in the FDA directory. Take a photo or type the name." };
+  }
+  return { found: false, reason: "That doesn't look like a medicine barcode. Take a photo or type the name." };
+}
+
+type NdcRow = { product_ndc?: string; brand_name?: string; generic_name?: string; dosage_form?: string; active_ingredients?: { strength?: string }[] };
+
+function ndcFound(path: "ndc" | "upc", row: NdcRow): BarcodeResult {
+  if (!row.product_ndc) return { found: false, reason: "That barcode's product has no NDC listing. Take a photo or type the name." };
+  const strength = row.active_ingredients?.length === 1 ? (row.active_ingredients[0].strength ?? null) : null;
+  return {
+    found: true,
+    path,
+    productNdc: row.product_ndc,
+    name: productName({ brandName: row.brand_name, genericName: row.generic_name, strength, dosageForm: row.dosage_form }),
+    dosageForm: row.dosage_form ?? null,
+  };
+}
+
+// "Scan the barcode" on the check box. Fast: no model call.
+export const resolveBarcode = action({
+  args: { anonId: v.string(), code: v.string() },
+  handler: async (ctx, args): Promise<BarcodeResult> => {
+    await ctx.runQuery(internal.swaps.profileFor, { anonId: args.anonId });
+    if (args.code.length > 120) throw new ConvexError("That code is too long.");
+    try {
+      return await lookupBarcode(args.code);
+    } catch {
+      return { found: false, reason: "Couldn't reach the FDA directory. Take a photo or type the name." };
+    }
+  },
+});
+
 export function lookupTable(name: string, hint: ReleaseForm | null = hintFromName(name)) {
   return lookupDrug(DRUG_TABLE.records, name, hint);
 }
 
-async function cachedOrLive(ctx: ActionCtx, name: string, queryKey: string): Promise<LabelResult> {
+async function cachedOrLive(
+  ctx: ActionCtx,
+  name: string,
+  queryKey: string,
+  fetchFresh: () => Promise<Omit<LabelResult, "fromCache" | "queryKey" | "source">> = () => fetchFromOpenFda(name),
+): Promise<LabelResult> {
   const cached: Doc<"fda_label_cache"> | null = await ctx.runQuery(internal.fda.getCached, { queryKey });
   if (cached && Date.now() - cached.fetchedAt < (cached.found ? FOUND_TTL : MISSING_TTL)) {
     return fromRow(cached);
   }
   let fresh: Omit<LabelResult, "fromCache" | "queryKey" | "source">;
   try {
-    fresh = await fetchFromOpenFda(name);
+    fresh = await fetchFresh();
   } catch (e) {
     return { ...(cached ? fromRow(cached) : emptyResult(queryKey)), error: `openFDA unreachable: ${(e as Error).message}` };
   }
@@ -432,8 +534,14 @@ async function cachedOrLive(ctx: ActionCtx, name: string, queryKey: string): Pro
 // canonicalize_item); the saved or live openFDA label only on a miss.
 // needFullText skips the table for callers that read appearance prose (match_pill).
 export const fetchLabel = internalAction({
-  args: { name: v.string(), needFullText: v.optional(v.boolean()) },
+  args: { name: v.string(), needFullText: v.optional(v.boolean()), productNdc: v.optional(v.string()) },
   handler: async (ctx, args): Promise<LabelResult> => {
+    // A barcode names the exact product: its own label, not a ranked guess by name.
+    if (args.productNdc) {
+      const ndc = args.productNdc;
+      const label = await cachedOrLive(ctx, args.name, `ndc:${ndc}`, () => fetchFromOpenFdaByNdc(ndc));
+      return { ...label, source: label.source === "cache" ? "cache" : "ndc" };
+    }
     const queryKey = labelKeyFor(args.name);
     let hit: { record: DrugRecord; match: TableMatch } | null = lookupTable(args.name);
     if (!hit && !args.needFullText && coreName(args.name)) {

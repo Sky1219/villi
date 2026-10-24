@@ -131,7 +131,16 @@ const SOURCE_WORDS: Record<LabelResult["source"], string> = {
   table: "Villi's checked drug table",
   cache: "saved copy of the FDA label",
   live: "FDA label, fetched live",
+  ndc: "FDA label for the scanned product",
   none: "FDA label search",
+};
+// Which path resolved the drug, named the same way in the trace, the README and the eval harness.
+const PATH_TAG: Record<LabelResult["source"], string> = {
+  table: "drugs.json",
+  cache: "openfda_cache",
+  live: "openfda_live",
+  ndc: "ndc",
+  none: "openfda_live",
 };
 const MATCH_WORDS = { exact: "exact name", alias: "brand or other name", fuzzy: "closest known name" } as const;
 
@@ -140,7 +149,7 @@ function labelPath(l: LabelResult): string {
 }
 
 function labelTrace(l: LabelResult): string {
-  return `${labelPath(l)}: ${labelSummary(l)}`;
+  return `${labelPath(l)}: ${labelSummary(l)} [path: ${PATH_TAG[l.source]}]`;
 }
 
 function labelSummary(l: LabelResult): string {
@@ -190,8 +199,8 @@ class Agent {
   // own label may back them. Other products' labels are never citable.
   primaryCore: string | null = null;
 
-  async fetchLabel(name: string): Promise<LabelResult> {
-    const label: LabelResult = await this.ctx.runAction(internal.fda.fetchLabel, { name });
+  async fetchLabel(name: string, productNdc?: string): Promise<LabelResult> {
+    const label: LabelResult = await this.ctx.runAction(internal.fda.fetchLabel, { name, productNdc });
     const core = coreName(name);
     this.primaryCore ??= core;
     const sameItem = core.split(" ").some((w) => w.length > 3 && this.primaryCore!.includes(w));
@@ -551,7 +560,7 @@ export const run = internalAction({
         if (seen?.legible && seen.name) {
           itemName = joinPhotoName(seen);
           if (seen.kind !== "unknown") category = seen.kind;
-          await agent.trace("read_photo", `read "${itemName}" (${seen.kind})`);
+          await agent.trace("read_photo", `read "${itemName}" (${seen.kind}) [path: vision]`);
         } else {
           await agent.trace("read_photo", "could not read a product name", false);
         }
@@ -562,6 +571,10 @@ export const run = internalAction({
         });
         if (seen?.kind === "food") throw new Error(FOOD_MESSAGE);
       } else if (answer.kind === "scan") {
+        if (answer.input.productNdc) {
+          const how = answer.input.barcodePath === "upc" ? "barcode (UPC)" : "barcode";
+          await agent.trace("read_barcode", `${how}: NDC ${answer.input.productNdc}, ${itemName} [path: ndc]`);
+        }
         await ctx.runMutation(internal.answers.setIdentified, { answerId: args.answerId, identified: itemName, clearPhoto: false });
       }
 
@@ -615,7 +628,9 @@ export const run = internalAction({
           : null
         : category === "pill"
           ? // The canonical name, not the user's sentence; the raw text only if canonicalization failed.
-            await agent.fetchLabel(agent.item ? [agent.item.canonicalName, ...strengthsIn(itemName)].join(" ") : itemName)
+            answer.input.productNdc
+            ? await agent.fetchLabel(itemName, answer.input.productNdc)
+            : await agent.fetchLabel(agent.item ? [agent.item.canonicalName, ...strengthsIn(itemName)].join(" ") : itemName)
           : null;
 
       const context = {

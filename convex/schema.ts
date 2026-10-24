@@ -375,6 +375,9 @@ export default defineSchema({
       category: v.optional(categoryValidator),
       // "I saw something": chips the user picked (coarse descriptors only).
       saw: v.optional(sawValidator),
+      // A scanned barcode or typed NDC, already resolved to one product NDC by fda.resolveBarcode.
+      productNdc: v.optional(v.string()),
+      barcodePath: v.optional(v.union(v.literal("ndc"), v.literal("upc"))),
     }),
     status: answerStatusValidator,
     // What the agent identified, shown as correctable before the answer lands.
