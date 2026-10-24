@@ -36,3 +36,13 @@ One check runs live. Everything else was run beforehand on the same profile and 
 - The live check is slow: keep talking about the trace, since that's the point. Past 60 seconds, open the pre-run metoprolol answer from Recent checks.
 - "AI service is busy" or "didn't pass the safety check": open the pre-run answer, or switch to the screen recording.
 - The laptop count doesn't tick: the log is still being screened (a few seconds). Move on, and come back to it.
+
+## Optional swaps (proposed overnight; you decide)
+
+Two new pieces can stand in for a step without slowing the run. Neither needs a live model call.
+
+- **Medicine list review instead of step 7 (I saw something), or right after step 3.** Scroll the home screen to **Medicine list review**: every medicine on your dad's list already has its row (Flag to discuss / Nothing found in the sections checked / Can't tell yet), with citation chips. Say: "That was one pill in 30 seconds. This is his whole list, instantly, from the labels and the guidelines. Pantoprazole reads differently: acid medicine is commonly used after resection, so the flag is about which form, not whether." Setup: clone the demo profile at least a minute before (each medicine's label lookup runs on its own after the clone; until then a row says "Label not checked yet"), and tap a chip once to make sure it opens.
+- **Care-team link instead of step 8's last sentence.** On **Your sheet**, tap **Share with the care team**, open the link on the laptop, choose **Reviewed: form changed** on the metoprolol question, and the phone's sheet shows "Recorded through the care-team link" live; **Is Villi working?** then shows it in the funnel as a care-team-link answer. Say: "The pharmacist closes the loop, and Villi says plainly it can't verify who holds the link." Setup: one open question on the sheet (tap **Add a question to the sheet** on the metoprolol review row, or the answer's question card), and no more than 2 active links already (the limit is 3). Revoke the demo link afterwards.
+- **Two-week follow-up card.** After a reseed, a freshly cloned "my dad" profile shows one "It's been two weeks since your parent's Metoprolol succinate ER was changed" card, badged **demo data**. Use it only if you want to show the outcome step; tapping it records a demo (synthetic) log, never real use.
+
+**New pre-demo note:** the laptop "second device" in step 6 must be a profile older than 10 minutes, or one that has shared fewer than 3 note-free logs. A brand-new profile's 4th note-free log waits for a re-check after its first 10 minutes, so the phone's count would not tick on stage. Clone the laptop profile during setup, not right before.

@@ -1,30 +1,37 @@
 # Morning handoff (overnight run, 2026-10-24)
 
-Started 05:52 PDT (H0). Updated after every task. Broken things first.
+Started 05:52 PDT (H0), finished about 07:40 (H+1:50). All of Part A and B1-B9 are done and committed on branch `claude/overnight-judging-prep-128d92` (also pointed to by `overnight/judging-prep`), one commit per task, never on `main`. Nothing was deployed and nothing touched production or your dev deployment.
 
-## Broken or not verified
+## Broken, or not verified (read this first)
 
-- **No live check on dev.** This worktree has no `.env.local`, so the Convex CLI has no deployment (`npx convex codegen` and `npx convex run` both stop at "No CONVEX_DEPLOYMENT set"). Per the brief I did not copy secrets. Everything below is verified by tests, tsc, eslint and `next build` only. Run C1 yourself before the demo (see the commands at the end).
-- `npm run build` needs `NEXT_PUBLIC_CONVEX_URL` at build time. I built with a placeholder URL (`https://placeholder-overnight.convex.cloud`); your `.env.local` / Vercel env covers this normally.
+- **No agent check has run live tonight.** This worktree has no `.env.local`, so there was no dev deployment and no Anthropic key; I did not copy secrets. Every answer-pipeline change (A1 prefetch, A2 lint, A4 prompt, B5's new `query_care_outcomes` tool and prompt rule) is verified by tests with Claude scripted, not by a real Opus run. **Before the demo, run the brief's C1 checks on dev** (metoprolol ×3 + "Can I crush it?", Gatorade, pantoprazole, Zorblatrin, "loperamide, what dose should I take", the yellow-oval flow) and read each answer once. The riskiest live change is the stricter numerator lint: a claim whose numbers don't match the retrieved cell is now deleted, so watch for answers losing their community sentence (that's the intended behavior, but it's new).
+- **What I did verify in a browser:** the non-AI UI at 320 px against an anonymous *local* Convex backend with real openFDA labels (medicine review, warning card, care-team link round trip in two tabs, two-week card, `/impact`, `/community`, `/how`, `/sheet`). See `STATUS.md`. It found 4 small bugs, all fixed in 9db7f87. That run created a throwaway local deployment and a `.env.local` in the worktree; I stopped the backend and deleted that `.env.local`. Your main checkout's `.env.local` was never opened or changed.
+- **Moderation can't be checked without a key.** Locally every new log and care-team answer failed closed to "private", which is correct behavior; with your key they should screen and share as before.
+- `npm run build` needs `NEXT_PUBLIC_CONVEX_URL`; I built with a placeholder (`https://placeholder-overnight.convex.cloud`). Vercel has the real one.
+- `convex codegen` couldn't run against a cloud deployment, so I hand-added the module lines for `convex/lib/medReview.ts` and `convex/lib/warningSigns.ts` to `convex/_generated/api.d.ts`; the later local `convex dev` regenerated it byte-for-byte identical. New functions went into existing files, as the brief asks.
 
 ## Tasks
 
 | Task | Commit | Status |
 |---|---|---|
-| A1 pill-flow bugs | ad83cc8 | Done, tests only (`convex/pillflow.test.ts`) |
-| A2 red-team fixes | 17b8bd9 | Done, tests only (`convex/redteam.test.ts`, `convex/community.test.ts`) |
-| A3 corpus source check | 771bc43 | Done; `convex/corpus.test.ts` |
-| A4 cut features out of the agent | 6cccf84 | Done (code read + tsc/tests) |
-| A5 end-to-end pipeline test | a3d0261 | Done; `convex/pipeline.test.ts` (3 tests) |
-| B1 medicine list review | 00ee2d2 | Done, tests only; UI not opened in a browser |
-| B2 warning-sign escalation | 7c12637 | Done, tests only; UI not opened in a browser |
-| B3 care-team link | 74440f2 | Done, tests only; UI not opened in a browser |
-| B4 after-change follow-up | 9dee345 | Done, tests only; UI not opened in a browser |
-| B5 what care teams changed | 6316b5a | Done, tests only; UI not opened in a browser; seed run in convex-test |
-| B7 "Something's wrong with this answer" | ac66863 | Done, tests only (done before B6 because B6 counts it; the B6 funnel tally also landed in this commit) |
-| B6 impact funnel and safety record | 90533b6 | Done, tests only (`convex/impact.test.ts`); UI not opened in a browser |
-| B8 "How Villi decides" page | c87da45 | Done; every sentence checked against the code by reading it; not opened in a browser |
-| B9 second phone on the same profile | (next commit) | Done, tests only (`convex/deviceLinks.test.ts`); UI not opened in a browser |
+| A1 pill-flow bugs | ad83cc8 | Done (`pillflow.test.ts`) |
+| A2 red-team fixes | 17b8bd9 | Done (`redteam.test.ts`, `community.test.ts`) |
+| A3 corpus source check | 771bc43 | Done (`corpus.test.ts`); **corpus decisions below** |
+| A4 cut features out of the agent | 6cccf84 | Done |
+| A5 end-to-end pipeline test | a3d0261 | Done (`pipeline.test.ts`) |
+| B1 medicine list review | 00ee2d2 | Done; local UI checked |
+| B2 warning-sign escalation | 7c12637 | Done; local UI checked |
+| B3 care-team link | 74440f2 | Done; local UI checked in two tabs |
+| B4 after-change follow-up | 9dee345 | Done; local UI checked (seeded card) |
+| B5 what care teams changed | 6316b5a | Done; local UI checked; agent tool not run live |
+| B7 "Something's wrong with this answer" | ac66863 | Done (before B6, which counts it; the B6 funnel tally also landed in this commit) |
+| B6 impact funnel and safety record | 90533b6 | Done; local UI checked |
+| B8 "How Villi decides" page | c87da45 | Done; local UI checked |
+| B9 second phone on the same profile | e01e39b | Done (`deviceLinks.test.ts`); not clicked through on two phones |
+| C1 local 320 px pass + fixes | 9db7f87 | Done against a local backend; live agent checks not run |
+| C2 README, STATUS, PITCH, DEMO swaps, this file, SUMMARY | (last commit) | Done |
+
+Checks after every task: `tsc` (app and convex), `eslint`, `vitest` (17 files, 82 tests at the end) and `next build` all green.
 
 ## Decisions to check
 
@@ -75,13 +82,21 @@ Started 05:52 PDT (H0). Updated after every task. Broken things first.
 
 - B9: "Use Villi on another phone" (home, above Delete my data) makes a 6-digit code, valid 10 minutes, single use; making a new one cancels the old. The new phone taps "I have a code from another phone" on the welcome screen. New tables `device_links`, `device_codes`, `device_link_attempts`. **`requireProfile` changed:** `findProfile` still looks up the device's own profile first, exactly as before, and only if there is none falls back to a `device_links` row; every existing flow goes through it unchanged for single-device users (all 80-odd tests still pass). Guessing is throttled: 5 wrong codes per device per 10 minutes, and 100 wrong codes across all devices per 10 minutes, after which even a right code is refused until the window passes. A phone that already has its own profile can't join (delete its data first). Max 5 linked phones. The device list never shows other phones' ids. **Decision:** "Delete my data" on *either* phone deletes the whole shared profile and all its links (it is one profile); "Remove" on a phone in the list only unlinks it. If you'd rather a linked phone's Delete only unlinks itself, that's a two-line change in `deleteMine`.
 
-## Couldn't do
+## Couldn't do, and why
+
+- **Live agent verification (C1 on dev):** no deployment or key in the worktree. Done against a local backend for everything that doesn't call Claude.
+- **Test profiles to delete:** none on dev (I never reached it). The local throwaway deployment holds only test data.
+- **Clinician review of the corpus:** out of scope; the README and `/how` say the check was Claude's, not a clinician's.
+- **Two-phone hands-on test of B9:** tests only. Try it on the real iPhone with the laptop.
 
 ## Morning commands, in order
 
-1. Review and merge this branch.
-2. `npm run deploy:convex`
-3. `npx convex run --prod seed:run`
-4. `npx convex env list --prod`: confirm `ANTHROPIC_API_KEY`, `OPENFDA_API_KEY`, `VOYAGE_API_KEY`.
-5. Redeploy Vercel.
-6. Real iPhone: bottle photo, blurry photo, "Can I crush it?" follow-up, care-team link opened on a second phone.
+1. Review and merge this branch (`overnight/judging-prep` = `claude/overnight-judging-prep-128d92`). Read the corpus decisions above first.
+2. On **dev**, run the C1 checks listed at the top (at most a handful each; they cost Opus time) and read the answers.
+3. `npm run deploy:convex`
+4. `npx convex run --prod seed:run` (re-embeds the 51 changed chunks, rebuilds the counters as "people", adds the care-outcome reports and the demo follow-up). Never during the demo.
+5. Optional cleanup of the red-team item: check its exact name in the prod dashboard, then `npx convex run --prod canonicalize:removeItem '{"canonicalName":"zorblatrin (immediate-release)"}'`.
+6. `npx convex env list --prod`: confirm `ANTHROPIC_API_KEY`, `OPENFDA_API_KEY`, `VOYAGE_API_KEY`.
+7. Redeploy Vercel (no new env vars needed).
+8. Real iPhone: bottle photo, blurry photo, "Can I crush it?" follow-up, care-team link opened on a second phone, a warning-sign log ("dizzy and peeing less"), and "Use Villi on another phone" with the laptop.
+9. Clone the laptop "second device" profile at least 10 minutes before the demo (new-profile throttle, see A2).

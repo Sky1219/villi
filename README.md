@@ -14,16 +14,21 @@ Built solo for Cal Hacks 13.0.
 
 | Flow | What happens |
 |---|---|
-| **Check** (photo or typed name) | Vision reads the label (photo deleted right after), the item is canonicalized, then an agent pulls the FDA label, guideline chunks, community counts, swaps and care-team answers. Its draft is linted by code and reviewed by a second Claude call before you see it. A live tool trace streams in while it works. |
+| **Check** (photo or typed name) | Vision reads the label (photo deleted right after), the item is canonicalized, then an agent pulls the FDA label, guideline chunks, community counts, what care teams changed, swaps and care-team answers. Its draft is linted by code and reviewed by a second Claude call before you see it. A live tool trace streams in while it works. A new check that asks for an amount ("what dose…", "how much…") is refused with a no-doses message. |
 | **Follow-up** ("Can I crush it?") | Same agent and reviewer, re-reading the label and guidelines. It repeats what the label says (for example, a swallow-whole warning) and leaves the decision to the pharmacist. |
-| **Gut diagram** | Onboarding is tap-to-mark: which parts were removed, where the stoma is. Answers draw *your* gut with the cited highlight (for example, where a timed-release tablet needs time you no longer have). |
-| **I saw something** | Shape, color, size and imprint chips (optional tablet photo) are matched against *your own* medicine list only, and reported as a possible match. The answer explains that an intact tablet can be undissolved or an empty shell, then asks the pharmacist to look. |
-| **Log** | One tap: helped / no change / worse, with an optional note. It's screened before anyone else sees it. |
-| **Community** | Tolerance counts split by anatomy, a safe-swaps board (guideline-checked on submit, upvotes, anatomy filter), and care-team answers. Profiles set up as clinicians can endorse. That role is self-declared in this build, so every endorsement is badged "demo verification". |
-| **Appointment sheet** | Questions to ask, patterns from the patient's own log (as hypotheses with counts), medicines with label-derived flags, and answers logged. Written in the third person, so the patient or the caregiver can hand it over. Print / Save as PDF, share, or Markdown. |
-| **The ASK loop** | Each question moves open → asked → answered. **I asked this** marks it asked. **What did they say?** logs the care team's answer (moderated, then shared as a care-team report) and what changed: the form of a medicine changed, monitoring started, nothing changed, or not decided yet (updatable later). |
-| **Is Villi working?** | One live query (`impact.summary`): flags raised, questions asked, answers logged, formulation changes and monitoring started, each split by anatomy, with real use and demo data counted separately. Plus the one-tap **Was this useful?** on every answer. |
-| **Caregivers** | A caregiver profile holds the patient's anatomy and medicines, and records who they care for (parent, partner, child or another family member; never a name). The caregiver checks and logs on the patient's behalf, and answers refer to the patient as "your parent". |
+| **Medicine list review** | An instant, deterministic first pass over every medicine on file, from the cached FDA label: extended- or delayed-release forms (NDC dosage form), sugar alcohols in the ingredients, and "swallow whole / do not crush" wording, each with tappable citations to fixed guideline chunks filtered by anatomy. "Nothing found" only after the label was read, with the sections listed; "Can't tell yet" before. Acid-suppressing medicines cite the PPI chunks (commonly used; the team chooses the form), not "avoid". Each row: **Run full check** and **Add a question to the sheet** (a fixed question with no dose). No model call, so it can't fail on stage. |
+| **Gut diagram** | Onboarding is tap-to-mark: which parts were removed, where the stoma is. Answers draw *your* gut with the cited highlight. |
+| **I saw something** | Shape, color, size and imprint chips (optional tablet photo) are matched against *your own* medicine list only, and reported as a possible match. The answer explains that an intact tablet can be undissolved or a shell left after release, then asks the pharmacist to look. |
+| **Log** | One tap: helped / no change / worse, with an optional note. It's screened before it counts for anyone else. |
+| **Warning signs** | If a log note mentions thirst, dark or less urine, dizziness or much higher output, a card says "These can be warning signs of dehydration. Contact your parent's care team today." (cited). Fainting, confusion, chest pain or bleeding: "call emergency services now". A worse drink gets a softer card. The card stays until "Got it"; the sheet lists the dates and signs, never the note. |
+| **Community** | Tolerance counts split by anatomy, **what care teams changed** for people like you (counts by anatomy, "too few to say" under 5), a swaps board (guideline-checked on submit, upvotes, anatomy filter), and care-team answers. Profiles set up as clinicians can endorse; that role is self-declared in this build, so every endorsement is badged "demo verification". |
+| **Appointment sheet** | Questions to ask, warning signs logged, patterns from the patient's own log (as hypotheses with counts), the medicine list review, and answers logged. Written in the third person, so the patient or the caregiver can hand it over. Print / Save as PDF, share, or Markdown. |
+| **Care-team link** | **Share with the care team** makes a private link (`/team/<token>`, 192-bit token, 14 days, revocable, at most 3 active). The pharmacist or doctor sees the sheet ("Shared by the patient's family through Villi. Not a medical record.") and records, per question, *Reviewed: form changed / Monitoring started / No change needed / Will discuss at a visit*, plus an optional note. It lands as the same care-team answer as the family's own, marked "recorded through the care-team link" (the link holder isn't identity-checked) and screened the same way. |
+| **The ASK loop** | Each question moves open → asked → answered. **What did they say?** logs the care team's answer and what changed. After a form change: name the new form and **Check the new form**; two weeks later the home screen asks "How is it going?" (helped / no change / worse), saved as a normal log linked to the question. |
+| **Is Villi working?** | One live query (`impact.summary`). A real-use-only funnel by anatomy: flags raised → question saved → asked → answer logged (self vs care-team link) → something changed → two-week outcome, each with % of the step before. Then the medicine review (reviewed, flagged), a safety record (reviewer outcomes, code-check fixes, shared vs private, warning cards, "Something's wrong" reports), and all activity with demo data counted separately. |
+| **Was this useful? / Something's wrong** | One tap each on every answer. "Something's wrong" offers four fixed reasons (wrong medicine identified, a claim isn't supported by its source, confusing, other), no free text. |
+| **How Villi decides** | `/how`, linked from the home footer and every answer: the three tiers, what Villi never does, the two checks, warning cards, the care-team link's limits, synthetic data, and how much of the corpus was source-checked. |
+| **Caregivers and a second phone** | A caregiver profile holds the patient's anatomy and medicines and records who they care for (never a name); answers say "your parent". **Use Villi on another phone** links a second device to the same profile with a 6-digit, 10-minute, single-use code. |
 
 ## The three-tier policy (built into the prompts, the code checks and the UI)
 
@@ -65,19 +70,23 @@ Next.js (App Router) is a thin client: every page is a client component using `u
 
 | Convex feature | What it does here |
 |---|---|
-| **Agent tools are Convex functions** | `get_profile` → `profiles.getById`, `fetch_label` → `fda.fetchLabel` (action, label + NDC, trimmed and cached in `fda_label_cache`), `search_guidelines` → `guidelines.search`, `canonicalize_item` → `canonicalize.run`, `query_community` / `query_my_log` / `query_swaps` / `query_care_team_answers` / `browse_options` → `community.*`, `lookup_ors`, `match_pill` → `meds.matchPill`. The model never chooses a profile id: it's injected from the answer row. |
+| **Agent tools are Convex functions** | `get_profile` → `profiles.getById`, `fetch_label` → `fda.fetchLabel` (action, label + NDC, trimmed and cached in `fda_label_cache`), `search_guidelines` → `guidelines.search`, `canonicalize_item` → `canonicalize.run`, `query_community` / `query_my_log` / `query_swaps` / `query_care_team_answers` / `query_care_outcomes` → `community.*`, `lookup_ors`, `match_pill` → `meds.matchPill`. The model never chooses a profile id: it's injected from the answer row. |
 | **The agent runs in a Convex action** (`agent.run`) | A manual Claude tool loop (Opus, `effort: medium`, parallel tool calls). Every tool step is a code-written trace line appended to the `answers` row by a mutation, and the client subscribes to that row, so the trace streams live. Drafts go to a hidden `answer_reviews` table that no public query reads. |
 | **Safety passes are scheduled functions** | The draft and its reviewer job are committed in one transaction (`answers.saveDraft`). The reviewer, log moderation, swap checks and care-team moderation run through `@convex-dev/action-retrier`, and every `onComplete` fails closed: an unreviewed draft never becomes final, and an unmoderated entry stays author-only. A watchdog marks stuck answers failed. |
-| **Community is live queries** | `community.liveCounts`, `swaps.list`, `careTeam.list`, `sheet.get`. A log from a second device changes the counts on the first without a reload. |
-| **Aggregates** | One counter row per (item × anatomy), changed only in the same mutation that pools or unpools an entry (`applyPooledTransition`), so `query_community` is O(1). |
+| **Community is live queries** | `community.liveCounts`, `community.careOutcomesFor`, `swaps.list`, `careTeam.list`, `sheet.get`, `careTeam.linkView`. A log from a second device changes the counts on the first without a reload, and a revoked care-team link flips to "expired" on the open page. |
+| **Aggregates** | One counter row per (item × anatomy) for tolerance (`applyPooledTransition`) and one for care-team outcomes (`applyCareOutcomeTransition`), each changed only in the same mutation that pools or unpools an entry, so `query_community` and `query_care_outcomes` are O(1). |
+| **Time is written by the scheduler** | Care-team links expire through a scheduled mutation at `expiresAt`, and the two-week follow-up becomes due through one scheduled at the change. No query reads the clock. |
 | **Guidelines are a vector index** | `guideline_chunks.by_embedding` (1024-d, Voyage `voyage-4-lite`; the 51 chunks are embedded by `guidelines.embedMissing` during the seed), searched with `ctx.vectorSearch` and filtered by anatomy scope after hydration. Any embedding error falls back to a Convex `searchIndex`, and the trace says "(keyword search)" when it does. This is what matches "slow-release heart pill" to the extended-release guidance. `items.by_embedding` is defined but not populated yet; item matching uses the text index and the model. |
 | **Photos are Convex storage** | `generateUploadUrl` → client upload (downscaled and EXIF-stripped on the device) → storage URL to Claude vision → `ctx.storage.delete` right after reading. |
 
 Other pieces:
-- **Deterministic safety lint** (`convex/lib/safety.ts`): an unconditional gate before the LLM reviewer. It checks that every citation points at something retrieved in this run, and it removes claims that name another medicine on file. It blocks dose and quantity patterns (digits or spelled out) and medication directives, and requires exactly one `ASK:` question. Uncited claims are deleted, not repaired.
-- **What the lint can't check:** it verifies that a citation exists, not that the source says the claim. For a community fraction only the denominator is matched against retrieved totals. Checking that each claim is supported by its source is the reviewer's job; the reviewer sees the retrieved text. A reviewer edit may only reuse the draft's citations, and only counts if the reviewer also approved.
+- **Deterministic safety lint** (`convex/lib/safety.ts`): an unconditional gate before the LLM reviewer. Every citation must point at something retrieved in this run. A community fraction `[C:n/total, anatomy]` must match a retrieved cell for that anatomy in both numerator and total, and the claim's own count numbers must come from that cell. Claims that name another medicine on file are removed. Dose and quantity patterns (digits or spelled out) and medication directives block the answer, and it needs exactly one `ASK:` question. A "community" swap with no retrieved swap group becomes a guideline swap. A no-concern verdict missing "nothing in the sources I checked" is repaired in English, not blocked. Uncited claims are deleted, not repaired.
+- **What the lint can't check:** it verifies that a citation exists and that numbers match, not that the source says the claim. That is the reviewer's job; the reviewer sees the retrieved text. A reviewer edit may only reuse the draft's citations, and only counts if the reviewer also approved.
+- **Deterministic medicine review** (`convex/lib/medReview.ts`): fixed flag → chunk mappings over the cached label, used by the home screen, the sheet and the care-team link.
 - **Diagram payloads are looked up, not generated**: a highlight is shown only if the answer cites a retrieved chunk that has one, and code swaps in that chunk's fixed segments and label.
-- **Label citations** are only valid for the checked item's own label. A section key can't show which product it came from, so claims that name another medicine on file are removed. Villi isn't an interaction checker.
+- **Label citations** are only valid for the checked item's own label. Villi isn't an interaction checker.
+- **Counters count people.** `aggregates` (tolerance) and `care_outcomes` (what care teams changed) count one pooled entry per profile and item, the latest one, and change only in the mutation that pools or unpools it.
+- **Catalog hygiene.** A pill with no FDA label match is answered as unidentified but never added to the catalog, so it can't appear in counts or swaps.
 
 ## Community model: why there are no DMs or threads
 
@@ -89,31 +98,37 @@ Patients teach each other through structured, moderated artifacts: tolerance log
 |---|---|
 | **False reassurance** | No "safe" state; "nothing in the sources I checked" with the list of sources; absent label sections reported; confidence lowered when key sections are missing; the lint blocks overcertain wording. |
 | **Label misreads / wrong product** | NDC dosage form decides extended- vs immediate-release; ranking prefers the named release form, strength and adult single-ingredient products; the label used (manufacturer, date) is shown; the photo read can be corrected; `canonicalize_item` never merges across release forms. |
-| **Hallucinated or misattributed citations** | Citation registry per run; anything not retrieved is deleted; community fractions must match retrieved totals; reviewer edits can't add citations. |
+| **Hallucinated or misattributed citations** | Citation registry per run; anything not retrieved is deleted; community fractions must match a retrieved cell for that anatomy (numerator and total) and so must the claim's numbers; reviewer edits can't add citations; the corpus records each chunk's section and whether it was checked against source text. |
 | **Medication advice leaking** | Prompt rules, code lint for directives and quantities, LLM reviewer for paraphrases, and fixture tests. |
 | **Small-n, self-selected community data** | Always split by anatomy, with denominators; "too few to say" under 5; "self-reported, not a trial"; a demo badge whenever synthetic rows are counted; never overrides a guideline. |
 | **Bad advice entering the pool** | Scheduled moderation (rule pre-filter + Claude), guideline check on swaps, counters only move on approval, fail-closed retries. |
 | **Stale corpus** | Stable `sourceId#locator` ids, content hashes and re-embedding on change; each chunk records the section it comes from and whether Claude checked it against the abstract or full text; no clinician review yet. |
 | **Overconfidence** | A confidence field, the three-state UI, and every answer ending in a question for a professional. |
 | **Honor-system clinician verification** | The clinician role is self-declared in this build and always badged "demo verification". |
+| **Link holder isn't who they say** | A care-team link is a capability, not an identity: answers through it are labeled "recorded through the care-team link", never "verified clinician", reported separately in the impact funnel, moderated like any answer, rate-limited, one per question; links expire in 14 days and can be revoked. |
+| **Missed warning signs** | The log scans notes for dehydration and emergency phrases (negations included on purpose) and shows a card that stays until acknowledged; the sheet carries the dates and signs to the clinician. The card gives no advice beyond contacting the care team or emergency services. |
 | **Model refusal / outage** | Refusal is a first-class outcome; outages read "busy, try again", never a stack trace; nothing unreviewed is shown. |
 
 **Known gaps:**
-- **Hidden in this build because they aren't fully tested:** answers in other languages (the onboarding language step is gone; profiles are English), open questions like "what can I have that's sweet?" (`answers.start` refuses them; `browse_options` stays in the code), and photos of food packaging (typed foods still work).
+- **Hidden in this build because they aren't fully tested:** answers in other languages, open questions like "what can I have that's sweet?" (refused as new checks; the agent no longer has a tool or prompt for them), and photos of food packaging (typed foods still work).
 - "Is Villi working?" counts with bounded scans. At production scale those become counter rows updated in the same mutations, like `aggregates`.
-- A log with no free text (just an outcome on a known item) is pooled without a Claude screen, because there's nothing to screen.
-- The tests cover the code layers; the live-model moderation test runs only with `ANTHROPIC_API_KEY` in the shell (`npx convex run moderation:evalFixtures` and `careTeam:evalFixtures` run the same checks inside Convex).
+- A log with no free text on a known item is pooled without a Claude screen, because there's nothing to screen; a profile in its first 10 minutes can pool at most 3 of them.
+- The warning-sign scan is a phrase list in English; it will miss signs described in other words.
+- The medicine review reads only what the cached label and NDC listing say; it doesn't know the person's dose, how long they've taken it, or whether it's working.
+- The tests cover the code layers with Claude and openFDA scripted; the live-model moderation check runs only with `ANTHROPIC_API_KEY` (`npx convex run moderation:evalFixtures` and `careTeam:evalFixtures`).
 
 ## Synthetic data disclosure
 
-All community data in this demo is **synthetic** and generated by `npm run seed`: ~60 anonymous profiles across four anatomy groups (plus five clinician profiles), 1,500 log entries with anatomy-dependent patterns from the corpus, 38 swaps (each must pass the same guideline check as a real one), 30 care-team answers and 20 questions. Every seed record has `synthetic: true`, and any count that includes synthetic rows shows a **demo data** badge. The "my dad" demo profile is modeled on my father's anatomy only (no identity) with a realistic medicine list. Clinician endorsements are honor-system and badged "demo verification".
+All community data in this demo is **synthetic** and generated by `npm run seed`: ~60 anonymous profiles across four anatomy groups (plus five clinician profiles), 1,500 log entries with anatomy-dependent patterns from the corpus, 38 swaps (each must pass the same guideline check as a real one), 83 care-team answers (53 of them short outcome reports for metoprolol ER, pantoprazole, sports drinks and loperamide; no synthetic person reports twice on the same item) and 20 questions, plus one already-due two-week follow-up on the "my dad" template so that card can be shown. Every seed record has `synthetic: true`, and any count that includes synthetic rows shows a **demo data** badge. The "my dad" demo profile is modeled on my father's anatomy only (no identity) with a realistic medicine list. Clinician endorsements are honor-system and badged "demo verification".
 
 ## Privacy posture
 
 - **No accounts.** A random id in the browser's localStorage is the only credential. It's never returned by any query, and there's no "list profiles" function.
 - **No identity data.** No names, birthdays or free-text medical history. Anatomy is coarse: stoma type, colon in continuity, a bowel-length band.
 - **Photos.** They're downscaled and EXIF-stripped on the device and deleted from storage as soon as they're read. Bottle labels can carry a patient's name, so nothing is kept.
-- **Delete my data** removes the profile and everything tied to it, including its contribution to community counts.
+- **Delete my data** removes the profile and everything tied to it, including its contribution to community and care-outcome counts, its care-team links and its linked phones.
+- **Care-team links** are unguessable 192-bit capability tokens with a 14-day expiry and a revoke button, at most 3 active. The link view never shows the device id or any other profile's data. Anyone holding the link can read the sheet, so the sheet says to share it only with the care team.
+- **A second phone** joins with a 6-digit code that lasts 10 minutes and works once; guessing is throttled per device and overall. Each phone keeps its own random id; the device list never shows them. "Delete my data" on either phone deletes the shared profile.
 - **Per-device rate limits** apply to answers, logs and swaps.
 - `DEMO_MODE` (on by default) enables `/demo?as=father|peer`; set `DEMO_MODE=off` after the hackathon.
 
@@ -122,9 +137,26 @@ All community data in this demo is **synthetic** and generated by `npm run seed`
 1. **Clinician review of the corpus.** A GI pharmacist and an intestinal-rehabilitation dietitian review every chunk's section and wording. Today `verified` means Claude checked it against source text, not that a clinician did.
 2. **Pilot** with an intestinal-rehabilitation clinic: patients use Villi before appointments, clinicians see the sheet, and real clinician verification replaces the honor system.
 3. **Privacy:** a real auth option with export, a retention policy, a regional data residency choice, a DPIA, and no third-party analytics.
-4. **Impact:** the primary metric is the share of flagged checks whose question reaches a care team and ends in a logged change (`resultingChange`), split by anatomy. In a clinic pilot, the clinic confirms a sample of those changes.
-5. **Evals:** a growing fixture set for the reviewer and moderator from real (consented, de-identified) edge cases, run in CI.
+4. **Impact:** see "Measuring impact" below.
+5. **Evals:** a growing fixture set for the reviewer and moderator from real (consented, de-identified) edge cases, run in CI. Every "Something's wrong with this answer" report is a candidate fixture: the answer, its retrieved sources and the reason go to review, and confirmed problems become reviewer fixtures.
 6. **Item embeddings** for cross-language canonicalization, and the corpus expanded with pediatric SBS and more stoma-specific sources.
+
+## Measuring impact
+
+Villi is working if a flag reaches a care team and changes something that helps. All of it is visible in the product at **Is Villi working?** (`/impact`), real use only, by anatomy, with demo data separate.
+
+- **Primary metric:** the share of flagged checks (and flagged medicines in the list review) whose question gets a logged care-team answer with a real change (form changed or monitoring started) within 30 days, split by anatomy. Answers recorded through the care-team link are reported separately from self-reported ones.
+- **Outcome metric:** the two-week "helped" rate after a change.
+- **Secondary:** asked rate, "Was this useful?" rate, time from flag to answer, medicines reviewed per profile.
+- **Safety:** reviewer edit and block rates, moderation private rate, warning-sign cards shown, "Something's wrong" reports.
+- **Pilot:** 8 to 12 weeks, 30 to 50 adults at one intestinal-rehabilitation clinic, where the clinic's pharmacists receive care-team links. Baseline: the share of patients with extended-release or enteric-coated medicines on file whose form was reviewed. Partners we would approach (none is a partner today): an intestinal-rehabilitation program, the Oley Foundation, and the United Ostomy Associations of America.
+- **This weekend:** real use is the builder's own checks, and the page says so.
+
+## How Claude built this
+
+- **Development.** A spec-driven build with Claude Code: research, a roadmap and quick tasks kept in `.planning/`, then critique, accessibility and red-team passes. Claude generated the synthetic seed, shaped by the corpus. Claude drafted the corpus too; in an overnight run Claude source-checked it against the sources' text (see "How the corpus was checked"), and it still awaits clinician review.
+- **In the product.** An Opus agent whose tools are Convex functions; an Opus reviewer that can't add citations; Haiku for vision, canonicalization and moderation. Around the models sit deterministic code: the safety lint, the medicine list review, the warning-sign scan and the counters.
+- **What Claude got wrong, and how it was caught.** Its first spec assumed openFDA labels carry `dosage_form`, `inactive_ingredient` and `warnings`; live calls showed modern labels don't, so the dosage form comes from the NDC endpoint. The first corpus attributed claims to sources that don't make them (sports drinks to Parrish & DiBaise instead of the AGA update; a dehydration-signs list to the AGA update, which has none) and gave three sources the wrong title; the source check fixed or deleted those. The first counters counted log entries while the UI said "people", and the canonicalizer once gave a drug that doesn't exist a release form; both are fixed and tested.
 
 ## Running it
 
@@ -156,13 +188,12 @@ The Convex backend and the Next.js front end deploy separately:
 - **Vercel** hosts only the front end. It needs one environment variable, `NEXT_PUBLIC_CONVEX_URL=https://energized-lion-632.convex.cloud`. Redeploy Vercel after changing it, because the URL is inlined at build time.
 - **Order matters:** if you change Convex function signatures, deploy Convex before (or with) the front end.
 
-Tests (`npm test`):
-- the reviewer blocks dose changes (including spelled-out doses) and uncited claims, removes claims about other medicines, and never applies an unapproved edit (fixtures)
-- moderation classifies 11 fixture entries correctly
-- every seeded swap passes the guideline check for its poster's anatomy
-- a question moves open → asked → open, the impact view counts it by anatomy, and open questions are refused as new checks
-- stratified counts are correct
-- the swap guideline check rejects a soda swap
+Tests (`npm test`, 17 files):
+- the reviewer and lint: dose changes (including spelled-out doses), uncited claims, claims about other medicines, unapproved edits, community numerators and claim numbers, swap source, the no-concern repair, dose questions refused
+- the answer pipeline end to end (`answers.start` → agent → draft → retrier → reviewer → final): the draft is never exposed, citations are all retrieved, one ASK, and a throwing or disapproving reviewer ends blocked
+- the corpus: every cited chunk id exists, verified chunks name their section, and changed text re-embeds
+- the medicine list review across end-jejunostomy and colostomy profiles; warning signs; the care-team link (expired, revoked, cross-profile, rate limits); the two-week follow-up; care outcomes; the impact funnel and safety tallies; "Something's wrong" reports; second-phone codes
+- counters count people, new profiles are throttled, unlabeled pills stay out of the catalog, moderation fixtures, swap checks, and the whole seed run twice
 
 Stack: Next.js 16, React 19, TypeScript 6, Tailwind 4, Convex 1.48 (+ action-retrier), Anthropic SDK (Opus 5.5 for the agent and reviewer; Haiku 5.5 for vision, canonicalization and moderation), Zod, Vitest + convex-test.
 
