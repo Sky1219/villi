@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { reviewDraft, type CitationRegistry } from "./lib/safety";
 import type { Answer, ReviewerDecision } from "./lib/answerSchema";
 import { CAPTIONS } from "./lib/cat";
-import { COLON } from "./lib/anatomy";
+import { COLON, type DiagramState } from "./lib/anatomy";
 
 const registry: CitationRegistry = {
   guidelineIds: ["aga-sbs#medications-release-forms", "pg139#time-release"],
@@ -132,7 +132,7 @@ describe("reviewer", () => {
 });
 
 describe("illustration caption", () => {
-  const endJejunostomy = { removed: ["ileum", ...COLON], stomaAfter: "jejunum" as const };
+  const endJejunostomy: DiagramState = { removed: ["ileum", ...COLON], stomaAfter: "jejunum" };
   const simReg: CitationRegistry = {
     ...registry,
     simulation: { diagram: endJejunostomy, releaseForm: "extended-release", permeabilityClass: "unknown" },

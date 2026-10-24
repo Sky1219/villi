@@ -1,6 +1,10 @@
 "use client";
 
+import { useState, type ReactNode } from "react";
 import { SEGMENT_LABELS, SEGMENTS, describeDiagram, type SegmentId } from "@convex/lib/anatomy";
+import { MODEL_IGNORES, MODEL_LABEL, type Formulation, type PermeabilityClass } from "@convex/lib/cat";
+import { CatLayer } from "./CatLayer";
+import { PATHS } from "./gutPaths";
 
 export type HighlightMode = "absorbs-here" | "releases-here" | "missing";
 
@@ -12,20 +16,12 @@ type Props = {
   onToggle?: (id: SegmentId) => void;
   size?: "full" | "badge";
   className?: string;
+  // Illustrative CAT animation (full size only). `citations` renders under its caption.
+  simulation?: { formulation: Formulation; permeabilityClass: PermeabilityClass; caption: string } | null;
+  citations?: ReactNode;
 };
 
-// Flat, friendly, not anatomically exact. Order matters: colon first so the
-// small bowel and stomach draw on top where they cross.
-const PATHS: Record<SegmentId, { d: string; w: number; end: [number, number] }> = {
-  "ascending-colon": { d: "M288 322 L288 146", w: 20, end: [288, 146] },
-  "transverse-colon": { d: "M288 146 C288 138 282 134 272 134 L50 134 C40 134 34 140 34 148", w: 20, end: [34, 148] },
-  "descending-sigmoid": { d: "M34 148 L34 300 C34 330 70 344 110 336 C128 332 140 338 146 352", w: 20, end: [146, 352] },
-  cecum: { d: "M258 322 C266 336 284 338 288 322", w: 20, end: [288, 322] },
-  stomach: { d: "M96 34 C70 34 58 70 76 94 C92 114 132 114 156 102 C174 92 184 78 196 70", w: 28, end: [196, 70] },
-  duodenum: { d: "M196 70 C214 78 220 100 208 118 C198 132 184 138 178 154", w: 14, end: [178, 154] },
-  jejunum: { d: "M178 154 C210 152 240 160 234 178 C228 196 112 188 106 206 C100 224 214 216 222 234", w: 16, end: [222, 234] },
-  ileum: { d: "M222 234 C230 254 110 248 108 266 C106 286 214 280 226 298 C234 310 246 318 258 322", w: 16, end: [258, 322] },
-};
+// Order matters: colon first so the small bowel and stomach draw on top where they cross.
 
 const DRAW_ORDER: SegmentId[] = [
   "ascending-colon",
@@ -44,11 +40,23 @@ const MODE_COLOR: Record<HighlightMode, string> = {
   missing: "var(--flag)",
 };
 
-export function GutDiagram({ removed, stoma, highlight, interactive = false, onToggle, size = "full", className = "" }: Props) {
+export function GutDiagram({
+  removed,
+  stoma,
+  highlight,
+  interactive = false,
+  onToggle,
+  size = "full",
+  className = "",
+  simulation,
+  citations,
+}: Props) {
+  const [playKey, setPlayKey] = useState(0);
   const isRemoved = (s: SegmentId) => removed.includes(s);
   const lit = new Set(highlight?.segmentIds ?? []);
   const summary = describeDiagram({ removed, stomaAfter: stoma?.afterSegment ?? null });
   const badge = size === "badge";
+  const sim = badge ? null : (simulation ?? null);
 
   return (
     <figure className={className}>
@@ -110,6 +118,14 @@ export function GutDiagram({ removed, stoma, highlight, interactive = false, onT
             </g>
           );
         })}
+        {sim && (
+          <CatLayer
+            diagram={{ removed, stomaAfter: stoma?.afterSegment ?? null }}
+            formulation={sim.formulation}
+            permeabilityClass={sim.permeabilityClass}
+            playKey={playKey}
+          />
+        )}
         {stoma && (
           <g aria-hidden>
             <circle cx={PATHS[stoma.afterSegment].end[0]} cy={PATHS[stoma.afterSegment].end[1]} r={badge ? 16 : 11} fill="var(--accent)" stroke="var(--surface)" strokeWidth={4} />
@@ -136,6 +152,48 @@ export function GutDiagram({ removed, stoma, highlight, interactive = false, onT
           <span aria-hidden className="mt-1 inline-block h-3 w-3 shrink-0 rounded-full" style={{ background: MODE_COLOR[highlight.mode] }} />
           <span>{highlight.label}</span>
         </figcaption>
+      )}
+      {sim && (
+        <div className="mt-3 space-y-2 text-sm">
+          <p>{sim.caption}</p>
+          {citations}
+          <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
+            <li className="flex items-center gap-1.5">
+              <svg aria-hidden width="10" height="10"><circle cx="5" cy="5" r="4" fill="var(--info)" /></svg>
+              drug released from the tablet
+            </li>
+            <li className="flex items-center gap-1.5">
+              <svg aria-hidden width="10" height="10"><circle cx="5" cy="5" r="3.5" fill="var(--ok)" /></svg>
+              reached bowel that can absorb it
+            </li>
+            <li className="flex items-center gap-1.5">
+              <svg aria-hidden width="10" height="10"><circle cx="5" cy="5" r="3.5" fill="var(--surface)" stroke="var(--muted)" strokeWidth="1.5" /></svg>
+              left the body still in the tablet
+            </li>
+          </ul>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs text-muted">{MODEL_LABEL}</p>
+            <button
+              type="button"
+              onClick={() => setPlayKey((k) => k + 1)}
+              className="min-h-11 rounded-full px-3 text-xs font-bold text-info motion-reduce:hidden"
+            >
+              Play again
+            </button>
+          </div>
+          <details className="rounded-xl bg-surface-2 px-3 text-xs">
+            <summary className="flex min-h-11 cursor-pointer items-center font-bold">Why this is only an illustration</summary>
+            <div className="space-y-1 pb-3">
+              <p>This drawing follows a simple textbook model of how a tablet moves through the gut and releases its medicine. It leaves out:</p>
+              <ul className="list-disc space-y-1 pl-5">
+                {MODEL_IGNORES.map((m) => (
+                  <li key={m}>{m}</li>
+                ))}
+              </ul>
+              <p>It shows why the release form matters for this anatomy. It cannot say how much of a medicine your body takes in.</p>
+            </div>
+          </details>
+        </div>
       )}
       {!badge && (
         <p className="mt-1 flex items-center gap-2 text-xs text-muted">

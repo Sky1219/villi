@@ -182,7 +182,12 @@ function AnswerCard({
 }) {
   const gIds = Array.from(
     new Set(
-      [...final.why.map((w) => w.citation), final.swapToAskAbout?.citation ?? "", final.diagram?.citation ?? ""].flatMap((c) =>
+      [
+        ...final.why.map((w) => w.citation),
+        final.swapToAskAbout?.citation ?? "",
+        final.diagram?.citation ?? "",
+        final.simulation?.citation ?? "",
+      ].flatMap((c) =>
         Array.from(c.matchAll(/\[G:([^\]]+)\]/g), (m) => m[1].trim()),
       ),
     ),
@@ -191,6 +196,8 @@ function AnswerCard({
   const profile = useQuery(api.profiles.me, { anonId });
   const titles: Record<string, string> = Object.fromEntries((chunks ?? []).map((c) => [`G:${c.chunkId}`, c.sourceTitle]));
   const style = STATE_STYLE[final.state] ?? STATE_STYLE["cant-tell"];
+  // Only a caption the review filled in by rule is ever drawn.
+  const simulation = final.simulation?.caption ? { ...final.simulation, caption: final.simulation.caption } : null;
 
   const lang = profile?.language ?? "en";
   // Reading order: verdict, the reasoning behind it, the question to take away, then supporting evidence.
@@ -205,7 +212,7 @@ function AnswerCard({
 
       {profile && (
         <section className="rounded-2xl border border-border bg-surface p-4">
-          <h2 className="mb-2 font-bold">{final.diagram ? "Where this matters in your gut" : "Your anatomy"}</h2>
+          <h2 className="mb-2 font-bold">{final.diagram || simulation ? "Where this matters in your gut" : "Your anatomy"}</h2>
           <GutDiagram
             removed={profile.diagram.removed}
             stoma={profile.diagram.stomaAfter ? { afterSegment: profile.diagram.stomaAfter } : null}
@@ -214,6 +221,8 @@ function AnswerCard({
                 ? { segmentIds: final.diagram.segmentIds as SegmentId[], mode: final.diagram.mode, label: final.diagram.label }
                 : null
             }
+            simulation={simulation}
+            citations={simulation && <Citations citation={simulation.citation} final={final} titles={titles} />}
           />
           {final.diagram && <Citations citation={final.diagram.citation} final={final} titles={titles} />}
         </section>
