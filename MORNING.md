@@ -14,7 +14,8 @@ Started 05:52 PDT (H0). Updated after every task. Broken things first.
 | A1 pill-flow bugs | ad83cc8 | Done, tests only (`convex/pillflow.test.ts`) |
 | A2 red-team fixes | 17b8bd9 | Done, tests only (`convex/redteam.test.ts`, `convex/community.test.ts`) |
 | A3 corpus source check | 771bc43 | Done; `convex/corpus.test.ts` |
-| A4 cut features out of the agent | (next commit) | Done (code read + tsc/tests) |
+| A4 cut features out of the agent | 6cccf84 | Done (code read + tsc/tests) |
+| A5 end-to-end pipeline test | (next commit) | Done; `convex/pipeline.test.ts` (3 tests) |
 
 ## Decisions to check
 
@@ -39,6 +40,8 @@ Started 05:52 PDT (H0). Updated after every task. Broken things first.
 - A2 swap source: a `community` swap with no retrieved swap group is relabeled `guideline` (and removed if it has no `[G:]` citation).
 
 - A4: `browse_options` is gone from the agent's tools and from `convex/community.ts` (`optionsFor` was only its back-end). The open-question and multilingual paragraphs are gone from `AGENT_SYSTEM`; it now says "plain everyday English". The agent's dead open-question branch is removed (`answers.start` already refuses those). The caregiver wording, tone line and server-side refusals are unchanged.
+
+- A5: the pipeline test drives the real `answers.start` → `agent.run` → `saveDraft` → retrier → `reviewer.run` → `finalize` in convex-test, with the action-retrier component registered and `fetch` scripted (`testing/fetchMock.ts`: Anthropic, openFDA, Voyage). It steps the clock in 0.5 s increments, because `runAllTimers` fires the 5-minute watchdog before the reviewer's async work finishes (a test artifact; in production the reviewer finishes long before 5 minutes).
 
 ## Couldn't do
 
