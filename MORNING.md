@@ -1,6 +1,6 @@
 # Morning handoff (overnight run, 2026-10-24)
 
-Started 05:52 PDT (H0), finished about 07:40 (H+1:50). All of Part A and B1-B9 are done and committed on branch `claude/overnight-judging-prep-128d92` (also pointed to by `overnight/judging-prep`), one commit per task, never on `main`. Nothing was deployed and nothing touched production or your dev deployment.
+Started 05:52 PDT (H0), finished about 07:30 (H+1:38). All of Part A and B1-B9 are done and committed on branch `claude/overnight-judging-prep-128d92` (also pointed to by `overnight/judging-prep`), one commit per task, never on `main`. Nothing was deployed and nothing touched production or your dev deployment.
 
 ## Broken, or not verified (read this first)
 
@@ -29,7 +29,7 @@ Started 05:52 PDT (H0), finished about 07:40 (H+1:50). All of Part A and B1-B9 a
 | B8 "How Villi decides" page | c87da45 | Done; local UI checked |
 | B9 second phone on the same profile | e01e39b | Done (`deviceLinks.test.ts`); not clicked through on two phones |
 | C1 local 320 px pass + fixes | 9db7f87 | Done against a local backend; live agent checks not run |
-| C2 README, STATUS, PITCH, DEMO swaps, this file, SUMMARY | (last commit) | Done |
+| C2 README, STATUS, PITCH, DEMO swaps, this file, SUMMARY | 68e8594 | Done |
 
 Checks after every task: `tsc` (app and convex), `eslint`, `vitest` (17 files, 82 tests at the end) and `next build` all green.
 
