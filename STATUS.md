@@ -16,3 +16,4 @@ Works / Partial / Broken / Cut, how it was verified, and where it lives. "Tests"
 | What care teams changed (B5) | Works (UI not opened in a browser) | `convex/careOutcomes.test.ts`, `convex/seed.test.ts` | `convex/community.ts`, `convex/careTeam.ts`, `convex/agent.ts`, `src/components/CareOutcomes.tsx`, `convex/lib/seedData.ts` |
 | "Something's wrong" reports (B7) | Works (UI not opened in a browser) | `convex/problemReport.test.ts` | `convex/answers.ts`, `src/app/answer/[id]/page.tsx` |
 | Impact funnel and safety record (B6) | Works (UI not opened in a browser) | `convex/impact.test.ts` | `convex/impact.ts`, `convex/lib/impact.ts`, `src/app/impact/page.tsx` |
+| "How Villi decides" page (B8) | Works (not opened in a browser) | build + code read of each sentence | `src/app/how/page.tsx` |

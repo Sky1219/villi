@@ -107,6 +107,9 @@ function Receipt({
           </p>
         </div>
       </details>
+      <Link href="/how" className="inline-flex min-h-11 items-center text-sm font-bold text-accent underline">
+        How Villi decides
+      </Link>
       {hasLabel && (
         <p className="text-xs text-muted">
           FDA label text via openFDA. openFDA says not to rely on it alone for decisions about medical care; that&apos;s why

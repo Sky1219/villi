@@ -22,7 +22,8 @@ Started 05:52 PDT (H0). Updated after every task. Broken things first.
 | B4 after-change follow-up | 9dee345 | Done, tests only; UI not opened in a browser |
 | B5 what care teams changed | 6316b5a | Done, tests only; UI not opened in a browser; seed run in convex-test |
 | B7 "Something's wrong with this answer" | ac66863 | Done, tests only (done before B6 because B6 counts it; the B6 funnel tally also landed in this commit) |
-| B6 impact funnel and safety record | (next commit) | Done, tests only (`convex/impact.test.ts`); UI not opened in a browser |
+| B6 impact funnel and safety record | 90533b6 | Done, tests only (`convex/impact.test.ts`); UI not opened in a browser |
+| B8 "How Villi decides" page | (next commit) | Done; every sentence checked against the code by reading it; not opened in a browser |
 
 ## Decisions to check
 
@@ -68,6 +69,8 @@ Started 05:52 PDT (H0). Updated after every task. Broken things first.
 - B7: four one-tap chips under "Was this useful?" (wrong medicine identified / a claim isn't supported by its source / confusing / other), stored as `answers.problemReport` (+ `problemReportedAt`), own final answers only, tap again to clear, max 10 reports per hour per device, no free text. I did B7 before B6 so the B6 safety record could count it.
 
 - B6: `/impact` now leads with "From a flag to a change (real use only)": flags raised (flagged checks + flagged medicines in the list review) → question saved (from a flagged check, or "Add a question" on a flagged review row, new `context.fromReview`) → asked → answer logged (self vs care-team link shown separately) → something changed (form changed or monitoring) → two-week outcome (helped / no change / worse). Each stage is a strict subset of the one before, with "% of the step before", by anatomy, and the honest zero state "No real answers logged yet. This weekend, real use is the builder's own checks." Then a Medicine list review card (reviewed / flagged by anatomy), a Safety record (approved / edited / blocked / failed, code-check fixes, logs and swaps shared vs private with demo shares marked, warning cards shown, "Something's wrong" reports), and the old metric cards under "All activity, including demo data". All bounded scans in the one `impact.summary` query; questions from non-flagged answers are deliberately not in the funnel.
+
+- B8: `/how` is a static page linked from the home footer and the answer receipt. The checked-chunk numbers are computed from `data/guidelines.json` at build time, so they stay true.
 
 ## Couldn't do
 
