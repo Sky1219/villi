@@ -20,6 +20,11 @@ export function humanizeCitations(text: string): string {
   return text.replace(/\[(G|L|C|T):([^\]]+)\]/g, (_, k: string, r: string) => `(${citationLabel(k, r.trim())})`);
 }
 
+// Drop citation tokens entirely, for previews where the sources can't be opened.
+export function stripCitations(text: string): string {
+  return text.replace(/\s*\[(G|L|C|T):[^\]]+\]/g, "").trim();
+}
+
 export function sectionOf(ref: string): string {
   return ref.split("#")[1]?.replace(/-/g, " ") ?? "";
 }

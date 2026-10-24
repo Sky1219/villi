@@ -115,6 +115,7 @@ export const listMine = query({
         status: r.status,
         title: r.identified ?? r.input.text ?? "Photo",
         verdict: r.status === "final" ? ((r.final as { verdict?: string } | undefined)?.verdict ?? null) : null,
+        state: r.status === "final" ? ((r.final as { state?: string } | undefined)?.state ?? null) : null,
         createdAt: r.createdAt,
       }));
   },

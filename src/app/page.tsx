@@ -9,6 +9,8 @@ import { MedsEditor } from "@/components/MedsEditor";
 import { QuickLog } from "@/components/QuickLog";
 import { DeleteMyData } from "@/components/DeleteMyData";
 import { ScanBox } from "@/components/ScanBox";
+import { useState } from "react";
+import { stripCitations } from "@/lib/citations";
 
 function Header() {
   return (
@@ -47,6 +49,65 @@ function Welcome() {
       </Link>
       <p className="text-sm text-muted">No name, no birthday, no medical history. Only coarse anatomy, tied to a random id on this device.</p>
     </main>
+  );
+}
+
+const STATE_TAG: Record<string, { label: string; cls: string }> = {
+  flagged: { label: "Flag to discuss", cls: "text-flag" },
+  "nothing-found": { label: "Nothing found in the sources I checked", cls: "text-muted" },
+  "cant-tell": { label: "Can't tell yet", cls: "text-muted" },
+};
+
+const STATUS_TAG: Record<string, string> = {
+  queued: "Checking…",
+  running: "Checking…",
+  reviewing: "Safety review in progress…",
+  blocked: "Didn't pass the safety check",
+  failed: "Something went wrong",
+};
+
+type RecentCheck = { _id: string; title: string; status: string; verdict: string | null; state?: string | null };
+
+function RecentChecks({ answers }: { answers: RecentCheck[] }) {
+  const [showAll, setShowAll] = useState(false);
+  const shown = showAll ? answers : answers.slice(0, 5);
+  return (
+    <section>
+      <h2 className="mb-2 font-bold">Recent checks</h2>
+      <ul className="space-y-2">
+        {shown.map((a) => {
+          const tag = a.state ? STATE_TAG[a.state] : undefined;
+          return (
+            <li key={a._id}>
+              <Link href={`/answer/${a._id}`} className="block rounded-xl border border-border bg-surface px-4 py-3">
+                <span className={`block text-xs font-bold uppercase tracking-wide ${tag?.cls ?? "text-muted"}`}>
+                  {tag?.label ?? STATUS_TAG[a.status] ?? "Answer"}
+                </span>
+                <span className="block font-bold">{a.title}</span>
+                {a.verdict && <span className="line-clamp-2 text-sm text-muted">{stripCitations(a.verdict)}</span>}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+      {answers.length > 5 && (
+        <button onClick={() => setShowAll(!showAll)} className="mt-1 min-h-11 text-sm font-bold text-accent underline">
+          {showAll ? "Show fewer" : `Show all ${answers.length}`}
+        </button>
+      )}
+    </section>
+  );
+}
+
+function HelpNow() {
+  return (
+    <section className="rounded-2xl border-2 border-flag bg-flag-soft p-4 text-sm">
+      <h2 className="font-bold text-flag">Get help now if</h2>
+      <p>
+        you feel dizzy or faint, are very thirsty, are passing much less or darker urine, or your output suddenly rises.
+        Contact your care team, or emergency services if it&apos;s severe.
+      </p>
+    </section>
   );
 }
 
@@ -93,6 +154,8 @@ function Home({ anonId }: { anonId: string }) {
         I saw something (a tablet came through)
       </Link>
 
+      <HelpNow />
+
       <QuickLog anonId={anonId} />
 
       <section>
@@ -100,29 +163,7 @@ function Home({ anonId }: { anonId: string }) {
         <MedsEditor anonId={anonId} meds={profile.meds} checkable />
       </section>
 
-      {answers && answers.length > 0 && (
-        <section>
-          <h2 className="mb-2 font-bold">Recent checks</h2>
-          <ul className="space-y-2">
-            {answers.map((a) => (
-              <li key={a._id}>
-                <Link href={`/answer/${a._id}`} className="block rounded-xl border border-border bg-surface px-4 py-3">
-                  <span className="block font-bold">{a.title}</span>
-                  <span className="block text-sm text-muted">{a.verdict ?? a.status}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      <section className="rounded-2xl border-2 border-flag bg-flag-soft p-4 text-sm">
-        <h2 className="font-bold text-flag">Get help now if</h2>
-        <p>
-          you feel dizzy or faint, are very thirsty, are passing much less or darker urine, or your output suddenly rises.
-          Contact your care team, or emergency services if it&apos;s severe.
-        </p>
-      </section>
+      {answers && answers.length > 0 && <RecentChecks answers={answers} />}
 
       <footer className="space-y-2 pt-2 text-xs text-muted">
         <p>
