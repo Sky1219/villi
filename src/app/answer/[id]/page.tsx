@@ -139,7 +139,7 @@ function Citations({ citation, final, titles }: { citation: string; final: Final
         })}
       </span>
       {open && (
-        <span className="mt-2 block rounded-xl border-l-4 border-info bg-info-soft/50 p-3 text-sm">
+        <span className="mt-2 block rounded-xl bg-info-soft p-3 text-sm">
           {final.evidence?.[open] ? (
             <mark className="bg-transparent text-foreground">&ldquo;{final.evidence[open].text}&rdquo;</mark>
           ) : (
@@ -267,7 +267,7 @@ function AnswerCard({
           </p>
           <ul className="space-y-3">
             {final.careTeamAnswers.map((c) => (
-              <li key={c.id} className="border-l-4 border-border pl-3">
+              <li key={c.id} className="rounded-xl bg-surface-2 p-3">
                 <p className="text-xs font-bold uppercase tracking-wide text-muted">{c.professionalType}</p>
                 <p>{prose(c.summary)}</p>
               </li>

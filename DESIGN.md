@@ -225,7 +225,7 @@ The depth is warm and tactile, built from layered paper more than shadow. Depth 
 
 ## Shapes
 
-Gently rounded and soft. Controls, inputs and chips use 12px corners (`rounded-xl`). Cards and panels use 16px (`rounded-2xl`). Pills, the citation chips, status dots and community bars are fully round. Quoted evidence (source text, care-team answers) is marked by a 4px left rule instead of a box. The gut diagram uses round line caps for living bowel and square-cut dashed strokes for removed bowel.
+Gently rounded and soft. Controls, inputs and chips use 12px corners (`rounded-xl`). Cards and panels use 16px (`rounded-2xl`). Pills, the citation chips, status dots and community bars are fully round. Quoted evidence sits in a 12px-cornered wash panel with no border: Harbor Wash for source text opened from a citation pill, Linen for care-team answers. Side rules (a thick border on one edge) are not used anywhere. The gut diagram uses round line caps for living bowel and square-cut dashed strokes for removed bowel.
 
 ## Components
 
