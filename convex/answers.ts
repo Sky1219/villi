@@ -6,7 +6,7 @@ import { retrier } from "./lib/retrier";
 import type { Doc } from "./_generated/dataModel";
 import { categoryValidator, sawValidator } from "./schema";
 import { requireProfile } from "./profiles";
-import { OPEN_QUESTION_MESSAGE, OPEN_QUESTION_RE } from "./lib/answerSchema";
+import { AMOUNT_QUESTION_MESSAGE, AMOUNT_QUESTION_RE, OPEN_QUESTION_MESSAGE, OPEN_QUESTION_RE } from "./lib/answerSchema";
 
 const MAX_TRACE = 40;
 const STUCK_MS = 5 * 60_000;
@@ -56,7 +56,9 @@ export const start = mutation({
     const text = args.text?.trim().slice(0, 500);
     if (!text && !args.photoId && !args.saw) throw new ConvexError("Type a name or add a photo.");
     // Follow-ups are questions by nature; a new check must name one item.
-    if (!args.parentId && !args.saw && text && OPEN_QUESTION_RE.test(text)) throw new ConvexError(OPEN_QUESTION_MESSAGE);
+    if (!args.parentId && !args.saw && text && OPEN_QUESTION_RE.test(text)) {
+      throw new ConvexError(AMOUNT_QUESTION_RE.test(text) ? AMOUNT_QUESTION_MESSAGE : OPEN_QUESTION_MESSAGE);
+    }
     const saw = args.saw && {
       shape: args.saw.shape?.slice(0, 20) ?? null,
       color: args.saw.color?.slice(0, 20) ?? null,
@@ -282,7 +284,7 @@ export const finalize = internalMutation({
           tool: "reviewer",
           summary:
             args.status === "final"
-              ? `${args.edited ? "edited and approved" : "approved"} in ${secs}s${args.lint.length ? `; code checks removed ${args.lint.length} item(s)` : ""}`
+              ? `${args.edited ? "edited and approved" : "approved"} in ${secs}s${args.lint.length ? `; code checks fixed or removed ${args.lint.length} item(s)` : ""}`
               : `blocked: ${args.blockedReasons.join("; ")}`.slice(0, 300),
           ok: args.status === "final",
           at: Date.now(),

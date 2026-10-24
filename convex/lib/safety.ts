@@ -86,6 +86,9 @@ function userFacingTexts(a: Answer): string[] {
   ];
 }
 
+// Silence is not reassurance: a no-concern verdict always names its limits.
+export const NOTHING_FOUND_PREFIX = "Nothing in the sources I checked raised a concern. ";
+
 export type LintResult = {
   answer: Answer; // with uncited claims removed
   issues: string[]; // everything found
@@ -186,10 +189,11 @@ export function lintAnswer(input: Answer, reg: CitationRegistry): LintResult {
   if (!answer.unidentified && answer.sourcesChecked.length === 0) {
     blocking.push("sources checked are not listed");
   }
-  // The exact wording is checked in English; the reviewer checks its meaning in other languages.
+  // The exact wording is repaired in English; the reviewer checks its meaning in other languages.
   const english = !reg.language || reg.language.startsWith("en");
   if (english && answer.state === "nothing-found" && !/nothing in the sources i checked/i.test(answer.verdict)) {
-    blocking.push('a no-concern verdict must say "nothing in the sources I checked"');
+    answer.verdict = `${NOTHING_FOUND_PREFIX}${answer.verdict}`;
+    issues.push('added "nothing in the sources I checked" to a no-concern verdict');
   }
   if (answer.unidentified && answer.state !== "cant-tell") blocking.push("unidentified items must be cant-tell");
 

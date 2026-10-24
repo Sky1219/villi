@@ -597,7 +597,8 @@ export const run = internalAction({
           ? await ctx.runAction(internal.fda.fetchLabel, { name: agent.itemName })
           : null
         : category === "pill"
-          ? await agent.fetchLabel(itemName)
+          ? // The canonical name, not the user's sentence; the raw text only if canonicalization failed.
+            await agent.fetchLabel(agent.item ? [agent.item.canonicalName, ...strengthsIn(itemName)].join(" ") : itemName)
           : null;
 
       const context = {

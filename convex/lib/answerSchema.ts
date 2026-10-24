@@ -13,8 +13,13 @@ export const SEGMENT_IDS = [
 
 // "What can I have that's sweet?" is an open question, not one named item. The
 // open-question flow is hidden in this build: Villi checks one named item at a time.
-export const OPEN_QUESTION_RE = /\?\s*$|^(what|which|can i|could i|is there|are there|qu[eé]|cu[aá]l)\b/i;
+// A new check that asks for an amount anywhere ("loperamide, what dose should I take")
+// is refused too: Villi never gives doses. Follow-ups are handled by the agent and reviewer.
+export const AMOUNT_QUESTION_RE = /\b(?:what|which)\s+(?:dose|dosage|amount)\b|\bhow\s+(?:much|many|often)\b/i;
+export const OPEN_QUESTION_RE = /\?\s*$|^(what|which|can i|could i|is there|are there|qu[eé]|cu[aá]l)\b|\b(?:what|which)\s+(?:dose|dosage|amount)\b|\bhow\s+(?:much|many|often)\b/i;
 export const OPEN_QUESTION_MESSAGE = "Villi checks one named item at a time. Type the name of a medicine, drink or food.";
+export const AMOUNT_QUESTION_MESSAGE =
+  "Villi doesn't give doses or amounts; that's a question for the pharmacist or doctor. Type just the name to check the medicine.";
 
 const counts = z.object({
   helped: z.number().int().min(0),
