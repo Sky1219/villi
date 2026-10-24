@@ -23,6 +23,7 @@ import type * as lib_embed from "../lib/embed.js";
 import type * as lib_evidence from "../lib/evidence.js";
 import type * as lib_impact from "../lib/impact.js";
 import type * as lib_llm from "../lib/llm.js";
+import type * as lib_medReview from "../lib/medReview.js";
 import type * as lib_moderation from "../lib/moderation.js";
 import type * as lib_moderationFixtures from "../lib/moderationFixtures.js";
 import type * as lib_pillMatch from "../lib/pillMatch.js";
@@ -64,6 +65,7 @@ declare const fullApi: ApiFromModules<{
   "lib/evidence": typeof lib_evidence;
   "lib/impact": typeof lib_impact;
   "lib/llm": typeof lib_llm;
+  "lib/medReview": typeof lib_medReview;
   "lib/moderation": typeof lib_moderation;
   "lib/moderationFixtures": typeof lib_moderationFixtures;
   "lib/pillMatch": typeof lib_pillMatch;

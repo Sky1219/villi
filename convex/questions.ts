@@ -2,6 +2,9 @@ import { ConvexError, v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { requireProfile } from "./profiles";
 import { extractCitations } from "./lib/safety";
+import { anatomyShort } from "./lib/anatomy";
+import { reviewQuestion } from "./lib/medReview";
+import { medReviewRows } from "./meds";
 import type { Doc } from "./_generated/dataModel";
 
 // "Add to appointment sheet": copies the reviewed ASK line, never client text.
@@ -26,6 +29,38 @@ export const addFromAnswer = mutation({
         answerId: a._id,
         itemName: a.identified ?? a.input.text,
         citations: final.why.flatMap((w) => extractCitations(w.citation).map((c) => `${c.kind}:${c.ref}`)),
+      },
+      resolved: false,
+      status: "open",
+      synthetic: false,
+      createdAt: Date.now(),
+    });
+    return null;
+  },
+});
+
+// "Add a question to the sheet" from the medicine list review: a fixed
+// template with the anatomy and the medicine's name, never a dose.
+export const addFromReview = mutation({
+  args: { anonId: v.string(), medId: v.id("meds") },
+  handler: async (ctx, args) => {
+    const profile = await requireProfile(ctx, args.anonId);
+    const med = await ctx.db.get("meds", args.medId);
+    if (!med || med.profileId !== profile._id) throw new ConvexError("Medicine not found");
+    const text = reviewQuestion(med.name, anatomyShort(profile.anatomy));
+    const existing = await ctx.db
+      .query("questions")
+      .withIndex("by_profileId", (q) => q.eq("profileId", profile._id))
+      .order("desc")
+      .take(100);
+    if (existing.some((q) => q.text === text)) return null;
+    const row = (await medReviewRows(ctx, profile)).find((r) => r._id === med._id);
+    await ctx.db.insert("questions", {
+      profileId: profile._id,
+      text,
+      context: {
+        itemName: med.name,
+        citations: Array.from(new Set((row?.flags ?? []).flatMap((f) => f.citations.map((c) => c.key)))),
       },
       resolved: false,
       status: "open",

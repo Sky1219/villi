@@ -1,10 +1,13 @@
 import { ConvexError, v } from "convex/values";
-import { env, internalAction, internalMutation, internalQuery, mutation } from "./_generated/server";
+import { env, internalAction, internalMutation, internalQuery, mutation, query, type QueryCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { requireProfile } from "./profiles";
 import { sawValidator } from "./schema";
 import { joinPhotoName, readPhoto } from "./lib/vision";
-import type { LabelResult } from "./fda";
+import { labelKeyFor, type LabelResult } from "./fda";
+import type { Doc } from "./_generated/dataModel";
+import { reviewMed, type MedReview } from "./lib/medReview";
+import { scopeTagsFor } from "./lib/anatomy";
 import { matchPills, type MedForMatch, type PillMatch } from "./lib/pillMatch";
 
 const MAX_MEDS = 30;
@@ -94,12 +97,20 @@ export const getMed = internalQuery({
   handler: async (ctx, args) => (await ctx.db.get("meds", args.medId))?.name ?? null,
 });
 
+// Scheduled whenever a med is added (typed, photo or demo clone), so the
+// medicine list review has the label ready by the time the list renders.
 export const enrich = internalAction({
-  args: { medId: v.id("meds") },
+  args: { medId: v.id("meds"), attempt: v.optional(v.number()) },
   handler: async (ctx, args) => {
     const name: string | null = await ctx.runQuery(internal.meds.getMed, { medId: args.medId });
     if (!name || name.startsWith("Unreadable")) return null;
     const label: LabelResult = await ctx.runAction(internal.fda.fetchLabel, { name });
+    // A rate limit or outage is not "no label": leave the med unchecked and try again.
+    if (label.error && !label.fromCache) {
+      const attempt = args.attempt ?? 0;
+      if (attempt < 3) await ctx.scheduler.runAfter(60_000 * (attempt + 1), internal.meds.enrich, { medId: args.medId, attempt: attempt + 1 });
+      return null;
+    }
     await ctx.runMutation(internal.meds.setLabelInfo, {
       medId: args.medId,
       dosageForm: label.found ? (label.dosageForms[0] ?? "form not listed") : "no FDA label found",
@@ -107,6 +118,49 @@ export const enrich = internalAction({
       fdaLabelKey: label.queryKey,
     });
     return null;
+  },
+});
+
+export type MedReviewRow = MedReview & { _id: Doc<"meds">["_id"]; name: string; dosageForm: string | null; labelSource: string | null };
+
+// One row per med on file, from the cached label only: instant, no model call.
+export async function medReviewRows(ctx: QueryCtx, profile: Doc<"profiles">): Promise<MedReviewRow[]> {
+  const meds = await ctx.db
+    .query("meds")
+    .withIndex("by_profileId", (q) => q.eq("profileId", profile._id))
+    .take(MAX_MEDS);
+  const tags = scopeTagsFor(profile.anatomy);
+  const rows: MedReviewRow[] = [];
+  for (const m of meds) {
+    // No cache row yet means the label lookup hasn't finished: "Label not checked yet".
+    const cached = await ctx.db
+      .query("fda_label_cache")
+      .withIndex("by_queryKey", (q) => q.eq("queryKey", m.fdaLabelKey ?? labelKeyFor(m.name)))
+      .unique();
+    const dosageForm = cached?.dosageForms[0] ?? (cached?.found ? (m.dosageForm ?? null) : null);
+    const review = reviewMed({
+      name: m.name,
+      dosageForm,
+      label: cached ? { found: cached.found, sections: cached.sections } : null,
+      scopeTags: tags,
+    });
+    rows.push({
+      ...review,
+      _id: m._id,
+      name: m.name,
+      dosageForm,
+      labelSource: cached?.found ? `${cached.brandName ?? cached.genericName ?? ""} (${cached.manufacturer ?? "?"}, ${cached.effectiveTime ?? "?"})` : null,
+    });
+  }
+  return rows;
+}
+
+// "Medicine list review" on the home screen.
+export const review = query({
+  args: { anonId: v.string() },
+  handler: async (ctx, args) => {
+    const profile = await requireProfile(ctx, args.anonId);
+    return await medReviewRows(ctx, profile);
   },
 });
 

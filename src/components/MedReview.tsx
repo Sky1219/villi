@@ -1,0 +1,148 @@
+"use client";
+
+import { useMutation, useQuery } from "convex/react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
+import type { ReviewCitation } from "@convex/lib/medReview";
+import { friendlyError } from "@/lib/errors";
+
+const STATE = {
+  flagged: { tag: "Flag to discuss", cls: "text-flag", box: "border-flag bg-flag-soft" },
+  "nothing-found": { tag: "Nothing found in the sections checked", cls: "text-muted", box: "border-border bg-surface" },
+  "cant-tell": { tag: "Can't tell yet", cls: "text-muted", box: "border-border bg-surface-2" },
+} as const;
+
+function Chips({ citations }: { citations: ReviewCitation[] }) {
+  const [open, setOpen] = useState<string | null>(null);
+  const c = citations.find((x) => x.key === open);
+  return (
+    <span className="block">
+      <span className="flex flex-wrap gap-x-1">
+        {citations.map((x) => (
+          <button
+            key={x.key}
+            onClick={() => setOpen(open === x.key ? null : x.key)}
+            aria-expanded={open === x.key}
+            aria-label={`Source: ${x.label}`}
+            className="flex min-h-11 items-center"
+          >
+            <span className="inline-flex min-h-8 items-center rounded-full bg-info-soft px-2.5 text-xs font-bold text-info">{x.label}</span>
+          </button>
+        ))}
+      </span>
+      {c && (
+        <span className="mt-1 block rounded-xl bg-info-soft p-3 text-sm">
+          {c.key.startsWith("G:") ? (
+            <>
+              <span className="block text-foreground">{c.text}</span>
+              <span className="mt-1 block text-xs text-muted">
+                Villi&apos;s summary of: {c.source ?? "this source"}
+                {c.section ? `, ${c.section}` : ""}.{" "}
+                {c.verifiedAgainst
+                  ? `Wording checked by Claude against the ${c.verifiedAgainst}; not yet reviewed by a clinician.`
+                  : "Not yet checked against the source text or by a clinician."}
+              </span>
+            </>
+          ) : (
+            <mark className="bg-transparent text-foreground">&ldquo;{c.text}&rdquo;</mark>
+          )}
+        </span>
+      )}
+    </span>
+  );
+}
+
+function Row({
+  anonId,
+  row,
+}: {
+  anonId: string;
+  row: { _id: Id<"meds">; name: string; state: keyof typeof STATE; summary: string; flags: { kind: string; text: string; citations: ReviewCitation[] }[]; labelSource: string | null };
+}) {
+  const router = useRouter();
+  const start = useMutation(api.answers.start);
+  const addQuestion = useMutation(api.questions.addFromReview);
+  const [added, setAdded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const s = STATE[row.state];
+  return (
+    <li className={`rounded-2xl border p-4 ${s.box}`}>
+      <p className={`text-xs font-bold uppercase tracking-wide ${s.cls}`}>{s.tag}</p>
+      <p className="font-bold break-words">{row.name}</p>
+      <p className="text-sm text-muted">{row.summary}</p>
+      {row.flags.length > 0 && (
+        <ul className="mt-2 space-y-2">
+          {row.flags.map((f) => (
+            <li key={f.kind} className="text-sm">
+              <span className="block">{f.text}</span>
+              <Chips citations={f.citations} />
+            </li>
+          ))}
+        </ul>
+      )}
+      {row.labelSource && <p className="mt-1 text-xs text-muted">Label used: {row.labelSource}</p>}
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <button
+          onClick={async () => {
+            setError(null);
+            try {
+              const id = await start({ anonId, text: row.name, category: "pill" });
+              router.push(`/answer/${id}`);
+            } catch (e) {
+              setError(friendlyError(e));
+            }
+          }}
+          className="min-h-11 rounded-xl border border-accent px-3 text-sm font-bold text-accent"
+        >
+          Run full check
+        </button>
+        <button
+          disabled={added}
+          onClick={async () => {
+            setError(null);
+            try {
+              await addQuestion({ anonId, medId: row._id });
+              setAdded(true);
+            } catch (e) {
+              setError(friendlyError(e));
+            }
+          }}
+          className="min-h-11 rounded-xl border border-border bg-background px-3 text-sm font-bold disabled:opacity-70"
+        >
+          {added ? "On the sheet ✓" : "Add a question to the sheet"}
+        </button>
+      </div>
+      {error && (
+        <p role="alert" className="mt-2 text-sm text-flag">
+          {error}
+        </p>
+      )}
+    </li>
+  );
+}
+
+// Instant first pass over every medicine on file, from the cached FDA label and fixed guideline mappings.
+export function MedReview({ anonId, person = "you" }: { anonId: string; person?: string }) {
+  const rows = useQuery(api.meds.review, { anonId });
+  if (!rows || rows.length === 0) return null;
+  const whose = person === "you" ? "your" : `${person}'s`;
+  return (
+    <section>
+      <h2 className="font-bold">Medicine list review</h2>
+      <p className="mb-2 text-sm text-muted">
+        An instant first pass over {whose} medicines, from the FDA label and the guidelines. It doesn&apos;t decide anything;
+        a full check goes further.
+      </p>
+      <ul className="space-y-2">
+        {rows.map((r) => (
+          <Row key={r._id} anonId={anonId} row={r} />
+        ))}
+      </ul>
+      <p className="mt-2 text-xs text-muted">
+        FDA label text via openFDA, which says not to rely on it alone for decisions about medical care.
+      </p>
+    </section>
+  );
+}

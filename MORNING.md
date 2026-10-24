@@ -15,7 +15,8 @@ Started 05:52 PDT (H0). Updated after every task. Broken things first.
 | A2 red-team fixes | 17b8bd9 | Done, tests only (`convex/redteam.test.ts`, `convex/community.test.ts`) |
 | A3 corpus source check | 771bc43 | Done; `convex/corpus.test.ts` |
 | A4 cut features out of the agent | 6cccf84 | Done (code read + tsc/tests) |
-| A5 end-to-end pipeline test | (next commit) | Done; `convex/pipeline.test.ts` (3 tests) |
+| A5 end-to-end pipeline test | a3d0261 | Done; `convex/pipeline.test.ts` (3 tests) |
+| B1 medicine list review | (next commit) | Done, tests only; UI not opened in a browser |
 
 ## Decisions to check
 
@@ -42,6 +43,11 @@ Started 05:52 PDT (H0). Updated after every task. Broken things first.
 - A4: `browse_options` is gone from the agent's tools and from `convex/community.ts` (`optionsFor` was only its back-end). The open-question and multilingual paragraphs are gone from `AGENT_SYSTEM`; it now says "plain everyday English". The agent's dead open-question branch is removed (`answers.start` already refuses those). The caregiver wording, tone line and server-side refusals are unchanged.
 
 - A5: the pipeline test drives the real `answers.start` → `agent.run` → `saveDraft` → retrier → `reviewer.run` → `finalize` in convex-test, with the action-retrier component registered and `fetch` scripted (`testing/fetchMock.ts`: Anthropic, openFDA, Voyage). It steps the clock in 0.5 s increments, because `runAllTimers` fires the 5-minute watchdog before the reviewer's async work finishes (a test artifact; in production the reviewer finishes long before 5 minutes).
+
+- B1: the review is a pure function (`convex/lib/medReview.ts`) over the cached label, used by both the home screen (`meds.review`) and the sheet (`sheet.get`, which no longer has its own flag code). Flags come from the NDC dosage form (extended / delayed release), the label's ingredient sections (sugar alcohols) and "swallow whole / do not crush" wording in dosage and administration. Each flag cites fixed chunks filtered by anatomy scope; a flag with no chunk in scope is dropped (e.g. a colostomy gets no release-form flag). PPIs (name ending -prazole or a known brand) cite `pg139#ppi`, `sood-2013#ppi`, `aga-sbs#acid-suppression` instead of the release-form chunks. "Nothing found" is only shown after the label was read, with the sections listed. There is no separate meds page in the app, so the review sits on the home screen under "Medicines on file" and replaces the medicines list on the interactive sheet (print and Markdown keep the old one-line format).
+- B1: `meds.enrich` is already scheduled on every add (typed, photo, demo clone). It now retries up to 3 times on an openFDA error instead of writing "no FDA label found". The "swallow whole" label regex now also matches "Swallow tablets whole".
+- B1: the "Add a question to the sheet" text is a fixed template: "With <anatomy>, is <medicine name without its strength> the best form for absorption, or is there another form we should discuss?"
+- `convex codegen` can't run here, so I added the two lines for `convex/lib/medReview.ts` to `convex/_generated/api.d.ts` by hand, exactly as codegen writes them. Your next `npx convex dev` or deploy regenerates the file.
 
 ## Couldn't do
 

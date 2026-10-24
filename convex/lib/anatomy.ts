@@ -66,6 +66,18 @@ export function describeAnatomy(a: Anatomy): string {
   }`;
 }
 
+// "an end-jejunostomy (no colon) and under 100 cm of small bowel", for a spoken question.
+export function anatomyShort(a: Anatomy): string {
+  const base = {
+    "end-jejunostomy": "an end-jejunostomy (no colon)",
+    "colon-in-continuity": "the small bowel joined to the colon",
+    ileostomy: "an ileostomy",
+    colostomy: "a colostomy",
+  }[anatomyKeyOf(a)];
+  const len = { unknown: "", "<100cm": " and under 100 cm of small bowel", "100-200cm": " and 100 to 200 cm of small bowel", ">200cm": "" }[a.bowelLengthBand];
+  return base + len;
+}
+
 // ---- Gut diagram segments (shared by GutDiagram, onboarding and answers)
 
 export const SEGMENTS = [

@@ -8,8 +8,9 @@ import type { Id } from "@convex/_generated/dataModel";
 import { useAnonId } from "@/lib/anon";
 import { friendlyError } from "@/lib/errors";
 import { LogStatus } from "@/components/LogCard";
-import { CHANGE_CHOICES, CHANGE_SHORT, citeText, patternSentence, sheetMarkdown, type ResultingChange } from "@/lib/sheet";
-import { preparedBy } from "@convex/lib/careFor";
+import { CHANGE_CHOICES, CHANGE_SHORT, patternSentence, sheetMarkdown, type ResultingChange } from "@/lib/sheet";
+import { personFor, preparedBy } from "@convex/lib/careFor";
+import { MedReview } from "@/components/MedReview";
 
 const PROS = ["pharmacist", "dietitian", "doctor", "nurse"] as const;
 
@@ -259,30 +260,14 @@ function Sheet({ anonId }: { anonId: string }) {
         </ul>
       </section>
 
-      <section className="space-y-2">
-        <h2 className="font-bold">Medicines and what the labels say</h2>
-        <ul className="space-y-2">
-          {d.meds.map((m) => (
-            <li key={m._id} className="rounded-xl border border-border bg-surface px-4 py-3">
-              <p className="font-bold">{m.name}</p>
-              {m.dosageForm && <p className="text-xs text-muted">{m.dosageForm.toLowerCase()}</p>}
-              {m.flags.length > 0 ? (
-                <ul className="mt-1 space-y-0.5 text-sm">
-                  {m.flags.map((f) => (
-                    <li key={f.text} className="text-flag">
-                      ⚑ {f.text}
-                      <span className="text-muted">{citeText(f.citation)}</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="mt-1 text-sm text-muted">{m.labelChecked ? "No flags in the sections checked." : "Label not checked yet."}</p>
-              )}
-            </li>
-          ))}
-          {d.meds.length === 0 && <li className="text-sm text-muted">No medicines on file.</li>}
-        </ul>
-      </section>
+      {d.meds.length > 0 ? (
+        <MedReview anonId={anonId} person={personFor(d.role, d.caresFor)} />
+      ) : (
+        <section>
+          <h2 className="font-bold">Medicines and what the labels say</h2>
+          <p className="text-sm text-muted">No medicines on file.</p>
+        </section>
+      )}
 
       {d.answered.length > 0 && (
         <section className="space-y-3">

@@ -96,7 +96,7 @@ export function computeFlags(sections: Record<string, string>, releaseForm: Rele
     }
   }
   const da = sections.dosage_and_administration ?? "";
-  const sw = da.match(/[^.]*\b(swallow(ed)? whole|do not (crush|chew|split|break)|not be (crushed|chewed|split))[^.]*\./i);
+  const sw = da.match(/[^.]*\b(swallow(ed)?(\s+\w+){0,2}\s+whole|do not (crush|chew|split|break)|not be (crushed|chewed|split))[^.]*\./i);
   if (sw) flags.push({ flag: "swallow-whole", section: "dosage_and_administration", evidence: sw[0].trim().slice(0, 240) });
   return flags;
 }

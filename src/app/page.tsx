@@ -6,6 +6,7 @@ import { api } from "@convex/_generated/api";
 import { useAnonId } from "@/lib/anon";
 import { GutDiagram } from "@/components/GutDiagram";
 import { MedsEditor } from "@/components/MedsEditor";
+import { MedReview } from "@/components/MedReview";
 import { QuickLog } from "@/components/QuickLog";
 import { DeleteMyData } from "@/components/DeleteMyData";
 import { ScanBox } from "@/components/ScanBox";
@@ -166,6 +167,8 @@ function Home({ anonId }: { anonId: string }) {
         <h2 className="mb-2 font-bold">Medicines on file</h2>
         <MedsEditor anonId={anonId} meds={profile.meds} checkable />
       </section>
+
+      <MedReview anonId={anonId} person={personFor(profile.role, profile.caresFor)} />
 
       {answers && answers.length > 0 && <RecentChecks answers={answers} />}
 
