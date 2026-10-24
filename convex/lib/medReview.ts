@@ -122,7 +122,9 @@ export function reviewMed(m: MedReviewInput): MedReview {
   const releaseForm: ReleaseForm = form ? releaseFormOf(form) : ((cachedRelease as ReleaseForm | undefined) ?? "unknown");
   const formSource = form ? `NDC listing: ${form.toLowerCase()}` : "from the label text";
   const flags: ReviewFlag[] = [];
-  for (const f of computeFlags(sections, releaseForm)) {
+  // This med's own form first; a label covering several products lists the others too.
+  const forms = Array.from(new Set([m.dosageForm, ...(sections.dosage_form?.split(/;\s*/) ?? [])].filter((f): f is string => !!f)));
+  for (const f of computeFlags(sections, releaseForm, forms)) {
     if (f.flag === "extended-release" || f.flag === "delayed-release") {
       const ppi = f.flag === "delayed-release" && isAcidSuppressant(m.name);
       const g = guideline(FLAG_CHUNKS[ppi ? "ppi" : f.flag], m.scopeTags);
@@ -135,13 +137,14 @@ export function reviewMed(m: MedReviewInput): MedReview {
         citations: [labelCite("dosage_form", form ?? `The label describes a ${f.flag} form.`), ...g],
       });
     } else if (f.flag === "sugar-alcohol") {
-      const g = guideline(FLAG_CHUNKS["sugar-alcohol"], m.scopeTags);
-      if (!g.length) continue;
       const liquid = releaseForm === "liquid";
+      // The excipient chunk is about liquid medicines; a tablet cites only the general rule.
+      const g = guideline(FLAG_CHUNKS["sugar-alcohol"].filter((id) => liquid || id !== "sood-2013#liquid-excipients"), m.scopeTags);
+      if (!g.length) continue;
       flags.push({
         kind: "sugar-alcohol",
         text: `The label lists ${f.evidence} among its ingredients${liquid ? ", in a liquid medicine" : ""}.`,
-        citations: [labelCite(f.section, `Ingredients include ${f.evidence}.`), ...g],
+        citations: [labelCite(f.section, f.quote ?? `Ingredients include ${f.evidence}.`), ...g],
       });
     } else if (f.flag === "swallow-whole") {
       flags.push({

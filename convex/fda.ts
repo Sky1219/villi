@@ -47,7 +47,8 @@ export type LabelResult = {
   otherReleaseFormsOnMarket: ReleaseForm[];
   sections: Record<string, string>;
   absentSections: string[];
-  flags: { flag: string; section: string; evidence: string }[];
+  // quote: the label sentence a flag rests on, when there is one.
+  flags: { flag: string; section: string; evidence: string; quote?: string }[];
   fromCache: boolean;
   // Which path answered: Villi's reviewed drug table, the saved openFDA copy, or live openFDA.
   source: "table" | "cache" | "live" | "none";
@@ -70,20 +71,53 @@ export function labelSentence(raw: string): string {
   return s.trim();
 }
 
-export function computeFlags(sections: Record<string, string>, releaseForm: ReleaseForm) {
+const SUGAR_ALCOHOL_RE = /\b(sorbitol|xylitol|mannitol|maltitol|isomalt|erythritol|lactitol)\b/i;
+
+type FormFamily = "tablet" | "capsule" | "liquid";
+
+function familyOfNdcForm(form: string): FormFamily | null {
+  if (/TABLET/i.test(form)) return "tablet";
+  if (/CAPSULE/i.test(form)) return "capsule";
+  if (/SOLUTION|SUSPENSION|SYRUP|ELIXIR|GRANULE|LIQUID|POWDER, FOR/i.test(form)) return "liquid";
+  return null;
+}
+
+// Which product forms a label sentence names ("PROTONIX Delayed-Release Tablets contains...").
+function familiesNamed(sentence: string): FormFamily[] {
+  const out: FormFamily[] = [];
+  if (/\btablets?\b/i.test(sentence)) out.push("tablet");
+  if (/\bcapsules?\b/i.test(sentence)) out.push("capsule");
+  if (/\b(suspension|granules?|solution|syrup|elixir|liquid)\b/i.test(sentence)) out.push("liquid");
+  return out;
+}
+
+// A sugar alcohol counts only if the label ties it to this product's own form. A label
+// can cover several products (tablets and granules for suspension), and its flat
+// ingredient list can't say which one an ingredient belongs to.
+function sugarAlcoholFlag(sections: Record<string, string>, forms: string[]): LabelResult["flags"][number] | null {
+  const own = forms[0] ? familyOfNdcForm(forms[0]) : null;
+  const multiForm = new Set(forms.map(familyOfNdcForm)).size > 1;
+  for (const key of ["inactive_ingredient", "description"]) {
+    for (const sentence of (sections[key] ?? "").split(/(?<=\.)\s+/)) {
+      const m = sentence.match(SUGAR_ALCOHOL_RE);
+      if (!m) continue;
+      const named = familiesNamed(sentence);
+      if (named.length ? own && !named.includes(own) : multiForm) continue;
+      return { flag: "sugar-alcohol", section: key, evidence: m[1].toLowerCase(), quote: labelSentence(sentence).slice(0, 240) };
+    }
+  }
+  if (multiForm) return null;
+  const m = (sections.spl_product_data_elements ?? "").match(SUGAR_ALCOHOL_RE);
+  return m ? { flag: "sugar-alcohol", section: "spl_product_data_elements", evidence: m[1].toLowerCase() } : null;
+}
+
+export function computeFlags(sections: Record<string, string>, releaseForm: ReleaseForm, forms: string[] = []) {
   const flags: LabelResult["flags"] = [];
   if (releaseForm === "extended-release" || releaseForm === "delayed-release") {
     flags.push({ flag: releaseForm, section: "dosage_form", evidence: "NDC dosage form" });
   }
-  for (const key of ["spl_product_data_elements", "inactive_ingredient", "description"]) {
-    const text = sections[key];
-    if (!text) continue;
-    const m = text.match(/\b(sorbitol|xylitol|mannitol|maltitol|isomalt|erythritol|lactitol)\b/i);
-    if (m) {
-      flags.push({ flag: "sugar-alcohol", section: key, evidence: m[1].toLowerCase() });
-      break;
-    }
-  }
+  const sugar = sugarAlcoholFlag(sections, forms);
+  if (sugar) flags.push(sugar);
   const da = sections.dosage_and_administration ?? "";
   const sw = da.match(/[^.]*\b(swallow(ed)?(\s+\w+){0,2}\s+whole|do not (crush|chew|split|break)|not be (crushed|chewed|split))[^.]*\./i);
   if (sw) flags.push({ flag: "swallow-whole", section: "dosage_and_administration", evidence: labelSentence(sw[0]).slice(0, 240) });
@@ -239,7 +273,7 @@ async function fetchFromOpenFda(name: string): Promise<Omit<LabelResult, "fromCa
     otherReleaseFormsOnMarket: Array.from(new Set(marketForms.map(releaseFormOf))).filter((f) => f !== releaseForm && f !== "unknown"),
     sections,
     absentSections,
-    flags: computeFlags(sections, releaseForm),
+    flags: computeFlags(sections, releaseForm, ownForms),
     error: null,
   };
 }
@@ -259,7 +293,7 @@ function fromRow(row: Doc<"fda_label_cache">): LabelResult {
     otherReleaseFormsOnMarket: other ? (other.split(",").filter(Boolean) as ReleaseForm[]) : [],
     sections,
     absentSections: row.absentSections,
-    flags: computeFlags(sections, releaseForm),
+    flags: computeFlags(sections, releaseForm, row.dosageForms),
     fromCache: true,
     source: "cache",
     error: null,
@@ -322,9 +356,9 @@ function fromTable(name: string, rec: DrugRecord, match: TableMatch): LabelResul
   if (releaseForm === "extended-release" || releaseForm === "delayed-release") {
     flags.push({ flag: releaseForm, section: "dosage_form", evidence: "NDC dosage form" });
   }
-  if (rec.containsSorbitol) flags.push({ flag: "sugar-alcohol", section: rec.evidence.containsSorbitol.section, evidence: "sorbitol" });
+  if (rec.containsSorbitol) flags.push({ flag: "sugar-alcohol", section: rec.evidence.containsSorbitol.section, evidence: "sorbitol", quote: rec.evidence.containsSorbitol.quote });
   else if (rec.otherSugarAlcohols?.length) {
-    flags.push({ flag: "sugar-alcohol", section: rec.evidence.otherSugarAlcohols.section, evidence: rec.otherSugarAlcohols[0] });
+    flags.push({ flag: "sugar-alcohol", section: rec.evidence.otherSugarAlcohols.section, evidence: rec.otherSugarAlcohols[0], quote: rec.evidence.otherSugarAlcohols.quote });
   }
   if (rec.doNotCrushStatement) {
     flags.push({ flag: "swallow-whole", section: rec.evidence.doNotCrushStatement.section, evidence: rec.doNotCrushStatement.slice(0, 240) });

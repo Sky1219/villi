@@ -151,3 +151,38 @@ describe("label quotes", () => {
     expect(new Set(labels).size).toBe(labels.length);
   });
 });
+
+// One label for several products, like Protonix (tablets and granules for suspension).
+describe("sugar alcohols on a label that covers several forms", () => {
+  const PROTONIX = {
+    dosage_form: "TABLET, DELAYED RELEASE; GRANULE, DELAYED RELEASE",
+    description:
+      "PROTONIX is supplied as a delayed-release tablet and as granules for delayed-release oral suspension. PROTONIX Delayed-Release Tablets contains the following inactive ingredients: calcium stearate, crospovidone, mannitol, povidone, and sodium carbonate. PROTONIX For Delayed-Release Oral Suspension contains the following inactive ingredients: crospovidone, microcrystalline cellulose, and talc.",
+    spl_product_data_elements: "Protonix PANTOPRAZOLE SODIUM CALCIUM STEARATE CROSPOVIDONE MANNITOL Protonix PANTOPRAZOLE SODIUM CROSPOVIDONE TALC",
+  };
+  const reviewForm = (dosageForm: string, sections: Record<string, string>) =>
+    reviewMed({ name: "Pantoprazole 40 mg", dosageForm, label: { found: true, sections }, scopeTags: scopeTagsFor(JEJ) });
+  const sugar = (r: ReturnType<typeof reviewForm>) => r.flags.find((f) => f.kind === "sugar-alcohol");
+
+  it("flags the tablet, quoting the sentence that ties mannitol to the tablets", () => {
+    const f = sugar(reviewForm("TABLET, DELAYED RELEASE", PROTONIX))!;
+    expect(f.citations[0].key).toBe("L:description");
+    expect(f.citations[0].text).toMatch(/^PROTONIX Delayed-Release Tablets contains .*mannitol/);
+    // A tablet cites the general rule, not the liquid-medicine chunk.
+    expect(f.citations.map((c) => c.key)).not.toContain("G:sood-2013#liquid-excipients");
+  });
+
+  it("does not flag the granules, whose own ingredients have no sugar alcohol", () => {
+    expect(sugar(reviewForm("GRANULE, DELAYED RELEASE", PROTONIX))).toBeUndefined();
+  });
+
+  it("ignores a flat ingredient list it can't tie to one product", () => {
+    const { description: _d, ...flatOnly } = PROTONIX;
+    expect(sugar(reviewForm("TABLET, DELAYED RELEASE", flatOnly))).toBeUndefined();
+  });
+
+  it("still reads a flat list when the label has one form", () => {
+    const f = sugar(reviewForm("TABLET", { dosage_form: "TABLET", spl_product_data_elements: "ACME TABLET SORBITOL TALC" }))!;
+    expect(f.citations[0].key).toBe("L:spl_product_data_elements");
+  });
+});
