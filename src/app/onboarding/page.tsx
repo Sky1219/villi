@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMutation, useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -14,12 +15,20 @@ import {
   type SegmentId,
 } from "@convex/lib/anatomy";
 import { useAnonId } from "@/lib/anon";
+import { friendlyError } from "@/lib/errors";
 import { GutDiagram } from "@/components/GutDiagram";
 import { LANGUAGES, QuickProfileForm } from "@/components/QuickProfileForm";
 import { MedsEditor } from "@/components/MedsEditor";
 
 type Role = "patient" | "caregiver" | "clinician";
 type Stoma = "none" | "jejunostomy" | "ileostomy" | "colostomy" | "unsure";
+type Colon = "all" | "part" | "none" | "unsure";
+type SmallBowel = "most" | "some" | "none" | "unsure";
+type Step = "role" | "colon" | "smallBowel" | "stoma" | "check" | "language" | "meds" | "describe";
+type Profile = NonNullable<ReturnType<typeof useQuery<typeof api.profiles.me>>>;
+
+// One question per screen; "check" shows the diagram the answers produced so it can be adjusted.
+const FLOW: Step[] = ["role", "colon", "smallBowel", "stoma", "check", "language"];
 
 const chip = (on: boolean) =>
   `min-h-12 rounded-xl border px-3 py-2 text-left ${on ? "border-accent bg-accent-soft font-bold" : "border-border bg-surface"}`;
@@ -34,42 +43,63 @@ function stomaAfterFor(stoma: Stoma, removed: SegmentId[]): SegmentId | null {
   return null;
 }
 
-function Onboarding({ anonId }: { anonId: string }) {
-  const router = useRouter();
-  const profile = useQuery(api.profiles.me, { anonId });
-  const upsert = useMutation(api.profiles.upsert);
+// Read the saved setup back into answers, so "Change" starts from what is already there.
+function seedFrom(p: Profile | null) {
+  if (!p) return null;
+  const removed = p.diagram.removed as SegmentId[];
+  const colonGone = COLON.filter((s) => removed.includes(s)).length;
+  const band = p.anatomy.bowelLengthBand;
+  return {
+    role: p.role as Role,
+    language: p.language,
+    removed,
+    stoma: p.anatomy.stomaType as Stoma,
+    colon: (colonGone === 0 ? "none" : colonGone === COLON.length ? "all" : "part") as Colon,
+    smallBowel: (band === "<100cm" ? "most" : band === "100-200cm" ? "some" : band === ">200cm" ? "none" : "unsure") as SmallBowel,
+    length: band as BowelLengthBand,
+  };
+}
 
-  const [step, setStep] = useState<"role" | "anatomy" | "language" | "meds" | "describe">("role");
-  const [role, setRole] = useState<Role>("patient");
-  const [colon, setColon] = useState<"all" | "part" | "none" | null>(null);
-  const [smallBowel, setSmallBowel] = useState<"most" | "some" | "none" | null>(null);
-  const [stoma, setStoma] = useState<Stoma | null>(null);
-  const [removed, setRemoved] = useState<SegmentId[]>([]);
-  const [length, setLength] = useState<BowelLengthBand | "from-diagram">("from-diagram");
-  const [language, setLanguage] = useState(() =>
-    typeof navigator !== "undefined" && LANGUAGES.some((l) => navigator.language.startsWith(l.code))
-      ? navigator.language.slice(0, 2)
-      : "en",
+function Onboarding({ anonId, profile }: { anonId: string; profile: Profile | null }) {
+  const router = useRouter();
+  const upsert = useMutation(api.profiles.upsert);
+  const seed = seedFrom(profile);
+
+  const [step, setStep] = useState<Step>(seed ? "check" : "role");
+  const [role, setRole] = useState<Role>(seed?.role ?? "patient");
+  const [colon, setColon] = useState<Colon | null>(seed?.colon ?? null);
+  const [smallBowel, setSmallBowel] = useState<SmallBowel | null>(seed?.smallBowel ?? null);
+  const [stoma, setStoma] = useState<Stoma | null>(seed?.stoma ?? null);
+  const [removed, setRemoved] = useState<SegmentId[]>(seed?.removed ?? []);
+  const [length, setLength] = useState<BowelLengthBand | "from-diagram">(seed?.length ?? "from-diagram");
+  const [language, setLanguage] = useState(
+    () =>
+      seed?.language ??
+      (typeof navigator !== "undefined" && LANGUAGES.some((l) => navigator.language.startsWith(l.code))
+        ? navigator.language.slice(0, 2)
+        : "en"),
   );
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const they = role === "caregiver";
+  const their = they ? "their" : "your";
   const stomaAfter = stomaAfterFor(stoma ?? "none", removed);
   const anatomy = deriveAnatomy({ removed, stomaAfter }, length);
+  const index = FLOW.indexOf(step);
+  const next = () => setStep(FLOW[index + 1]);
+  const back = () => setStep(step === "describe" ? "check" : FLOW[index - 1]);
 
-  // Guided answers pre-mark segments; taps on the diagram still override.
-  function applyGuides(next: { colon?: typeof colon; smallBowel?: typeof smallBowel }) {
-    const c = next.colon ?? colon;
-    const sb = next.smallBowel ?? smallBowel;
+  // Guided answers pre-mark segments; the check step's taps adjust them afterwards.
+  function applyGuides(n: { colon?: Colon; smallBowel?: SmallBowel }) {
+    const c = n.colon ?? colon;
+    const sb = n.smallBowel ?? smallBowel;
     const r = new Set<SegmentId>();
     if (c === "all") COLON.forEach((s) => r.add(s));
     if (c === "part") ["cecum", "ascending-colon"].forEach((s) => r.add(s as SegmentId));
-    if (sb === "most") r.add("ileum");
-    if (sb === "some") r.add("ileum");
+    if (sb === "most" || sb === "some") r.add("ileum");
     setRemoved(SEGMENTS.filter((s) => r.has(s)));
-    if (sb === "most") setLength("<100cm");
-    else if (sb === "some") setLength("100-200cm");
-    else if (sb === "none") setLength(">200cm");
+    setLength(sb === "most" ? "<100cm" : sb === "some" ? "100-200cm" : sb === "none" ? ">200cm" : "from-diagram");
   }
 
   function toggle(id: SegmentId) {
@@ -79,58 +109,80 @@ function Onboarding({ anonId }: { anonId: string }) {
 
   async function save() {
     setSaving(true);
+    setError(null);
     try {
       await upsert({ anonId, role, language, anatomy, diagram: { removed, stomaAfter } });
       setStep("meds");
+    } catch (e) {
+      setError(friendlyError(e));
     } finally {
       setSaving(false);
     }
   }
 
-  if (step === "describe") {
-    return (
-      <main className="space-y-4 pt-6">
-        <button onClick={() => setStep("anatomy")} className="min-h-11 text-sm font-bold text-accent">
-          ← Back to the diagram
+  const title: Record<Step, string> = {
+    role: "Who is this for?",
+    colon: `Was ${their} colon (large intestine) removed?`,
+    smallBowel: `How much of ${their} small bowel was removed?`,
+    stoma: `Is there a stoma (a bag)?`,
+    check: "Does this look right?",
+    language: "Which language should answers use?",
+    meds: they ? "Their medicines" : "Your medicines",
+    describe: "Describe it instead",
+  };
+
+  const options = <T extends string>(items: readonly (readonly [T, string])[], value: T | null, pick: (v: T) => void) => (
+    <div role="group" aria-labelledby="step-title" className="grid gap-2">
+      {items.map(([v, l]) => (
+        <button key={v} className={chip(value === v)} aria-pressed={value === v} onClick={() => pick(v)}>
+          {l}
         </button>
-        <h1 className="text-2xl font-bold">Describe it instead</h1>
-        <QuickProfileForm anonId={anonId} onDone={() => setStep("meds")} />
-      </main>
-    );
-  }
+      ))}
+    </div>
+  );
 
   return (
-    <main className="space-y-5 pt-6">
+    <main className="space-y-5 pt-4">
+      <nav className="flex min-h-11 items-center justify-between">
+        {index > 0 || step === "describe" ? (
+          <button onClick={back} className="min-h-11 text-sm font-bold text-accent">
+            ← Back
+          </button>
+        ) : step === "meds" ? (
+          <span />
+        ) : (
+          <Link href="/" className="inline-flex min-h-11 items-center text-sm font-bold text-accent">
+            {profile ? "Keep current setup" : "Cancel"}
+          </Link>
+        )}
+        {index >= 0 && (
+          <span className="text-sm text-muted">
+            Step {index + 1} of {FLOW.length}
+          </span>
+        )}
+      </nav>
+
       <header>
         <p className="text-sm text-muted">Set up Villi</p>
-        <h1 className="text-2xl font-bold">
-          {step === "role" && "Who is this for?"}
-          {step === "anatomy" && (they ? "Their gut, after surgery" : "Your gut, after surgery")}
-          {step === "language" && "Which language?"}
-          {step === "meds" && (they ? "Their medicines" : "Your medicines")}
+        <h1 id="step-title" className="text-2xl font-bold">
+          {title[step]}
         </h1>
       </header>
 
       {step === "role" && (
         <section className="space-y-3">
-          {(
+          {options(
             [
               ["patient", "Me, I'm the patient"],
               ["caregiver", "Someone I care for"],
               ["clinician", "I'm a clinician"],
-            ] as const
-          ).map(([r, label]) => (
-            <button
-              key={r}
-              onClick={() => {
-                setRole(r);
-                setStep("anatomy");
-              }}
-              className={`${chip(false)} w-full text-lg`}
-            >
-              {label}
-            </button>
-          ))}
+            ] as const,
+            profile ? role : null,
+            (v) => {
+              setRole(v);
+              next();
+            },
+          )}
           <p className="text-sm text-muted">
             Villi never asks for a name, birthday, or medical history. Your setup is tied to a random id on this device
             only.
@@ -138,67 +190,65 @@ function Onboarding({ anonId }: { anonId: string }) {
         </section>
       )}
 
-      {step === "anatomy" && (
-        <>
-          <section className="space-y-3">
-            <Question label={`Did they remove ${they ? "their" : "your"} colon (large intestine)?`}>
-              {(
-                [
-                  ["all", "All of it"],
-                  ["part", "Part of it"],
-                  ["none", "No"],
-                ] as const
-              ).map(([v, l]) => (
-                <button
-                  key={v}
-                  className={chip(colon === v)}
-                  aria-pressed={colon === v}
-                  onClick={() => {
-                    setColon(v);
-                    applyGuides({ colon: v });
-                  }}
-                >
-                  {l}
-                </button>
-              ))}
-            </Question>
-            <Question label="How much small bowel was removed?">
-              {(
-                [
-                  ["most", "Most of it"],
-                  ["some", "Some"],
-                  ["none", "None or a little"],
-                ] as const
-              ).map(([v, l]) => (
-                <button
-                  key={v}
-                  className={chip(smallBowel === v)}
-                  aria-pressed={smallBowel === v}
-                  onClick={() => {
-                    setSmallBowel(v);
-                    applyGuides({ smallBowel: v });
-                  }}
-                >
-                  {l}
-                </button>
-              ))}
-            </Question>
-            <Question label={`Is there a stoma (a bag)?`}>
-              {(
-                [
-                  ["none", "No stoma"],
-                  ["jejunostomy", "From the upper small bowel (jejunostomy)"],
-                  ["ileostomy", "From the lower small bowel (ileostomy)"],
-                  ["colostomy", "From the colon (colostomy)"],
-                ] as const
-              ).map(([v, l]) => (
-                <button key={v} className={chip(stoma === v)} aria-pressed={stoma === v} onClick={() => setStoma(v)}>
-                  {l}
-                </button>
-              ))}
-            </Question>
-          </section>
+      {step === "colon" &&
+        options(
+          [
+            ["all", "All of it"],
+            ["part", "Part of it"],
+            ["none", "No"],
+            ["unsure", "Not sure"],
+          ] as const,
+          colon,
+          (v) => {
+            setColon(v);
+            applyGuides({ colon: v });
+            next();
+          },
+        )}
 
+      {step === "smallBowel" &&
+        options(
+          [
+            ["most", "Most of it"],
+            ["some", "Some"],
+            ["none", "None or a little"],
+            ["unsure", "Not sure"],
+          ] as const,
+          smallBowel,
+          (v) => {
+            setSmallBowel(v);
+            applyGuides({ smallBowel: v });
+            next();
+          },
+        )}
+
+      {step === "stoma" &&
+        options(
+          [
+            ["none", "No stoma"],
+            ["jejunostomy", "From the upper small bowel (jejunostomy)"],
+            ["ileostomy", "From the lower small bowel (ileostomy)"],
+            ["colostomy", "From the colon (colostomy)"],
+            ["unsure", "Not sure"],
+          ] as const,
+          stoma,
+          (v) => {
+            setStoma(v);
+            next();
+          },
+        )}
+
+      {(step === "colon" || step === "smallBowel" || step === "stoma") && (
+        <p className="flex items-center gap-3 rounded-xl bg-surface-2 p-3 text-sm">
+          <GutDiagram size="badge" removed={removed} stoma={stomaAfter ? { afterSegment: stomaAfter } : null} />
+          <span>
+            So far: <span className="font-bold">{describeAnatomy(anatomy)}</span>
+          </span>
+        </p>
+      )}
+
+      {step === "check" && (
+        <>
           <section className="rounded-2xl border border-border bg-surface p-4">
             <p className="mb-2 text-sm text-muted">Tap any part to mark it removed, or tap again to put it back.</p>
             <GutDiagram removed={removed} stoma={stomaAfter ? { afterSegment: stomaAfter } : null} interactive onToggle={toggle} />
@@ -223,7 +273,7 @@ function Onboarding({ anonId }: { anonId: string }) {
             <select
               value={length}
               onChange={(e) => setLength(e.target.value as BowelLengthBand | "from-diagram")}
-              className="w-full rounded-xl border border-border bg-surface px-3 py-3"
+              className="min-h-12 w-full rounded-xl border border-border bg-surface px-3"
             >
               <option value="from-diagram">I don&apos;t know, roughly what I tapped</option>
               <option value="<100cm">Less than 100 cm</option>
@@ -236,10 +286,7 @@ function Onboarding({ anonId }: { anonId: string }) {
           <p className="rounded-xl bg-surface-2 p-3 text-sm">
             Villi will use: <span className="font-bold">{describeAnatomy(anatomy)}</span>
           </p>
-          <button
-            onClick={() => setStep("language")}
-            className="min-h-12 w-full rounded-xl bg-accent px-4 text-lg font-bold text-accent-ink"
-          >
+          <button onClick={next} className="min-h-12 w-full rounded-xl bg-accent px-4 text-lg font-bold text-accent-ink">
             Looks right
           </button>
           <button onClick={() => setStep("describe")} className="min-h-11 w-full text-sm font-bold text-accent underline">
@@ -248,9 +295,11 @@ function Onboarding({ anonId }: { anonId: string }) {
         </>
       )}
 
+      {step === "describe" && <QuickProfileForm anonId={anonId} onDone={() => setStep("meds")} />}
+
       {step === "language" && (
         <section className="space-y-3">
-          <div className="grid grid-cols-2 gap-2">
+          <div role="group" aria-labelledby="step-title" className="grid grid-cols-2 gap-2">
             {LANGUAGES.map((l) => (
               <button key={l.code} onClick={() => setLanguage(l.code)} aria-pressed={language === l.code} className={chip(language === l.code)}>
                 {l.label}
@@ -264,13 +313,18 @@ function Onboarding({ anonId }: { anonId: string }) {
           >
             {saving ? "Saving…" : "Save"}
           </button>
+          {error && (
+            <p role="alert" className="text-sm text-flag">
+              {error}
+            </p>
+          )}
         </section>
       )}
 
       {step === "meds" && (
         <section className="space-y-4">
           <p className="text-muted">
-            Optional. Add {they ? "their" : "your"} medicines so Villi can check each one against this anatomy.
+            Optional. Add {their} medicines so Villi can check each one against this anatomy.
           </p>
           {profile && <MedsEditor anonId={anonId} meds={profile.meds} />}
           <button onClick={() => router.push("/")} className="min-h-12 w-full rounded-xl bg-accent px-4 text-lg font-bold text-accent-ink">
@@ -282,17 +336,14 @@ function Onboarding({ anonId }: { anonId: string }) {
   );
 }
 
-function Question({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <fieldset>
-      <legend className="mb-2 font-bold">{label}</legend>
-      <div className="grid gap-2">{children}</div>
-    </fieldset>
-  );
+function OnboardingLoader({ anonId }: { anonId: string }) {
+  const profile = useQuery(api.profiles.me, { anonId });
+  if (profile === undefined) return <p className="pt-10 text-center text-muted">Loading…</p>;
+  return <Onboarding anonId={anonId} profile={profile} />;
 }
 
 export default function OnboardingPage() {
   const anonId = useAnonId();
   if (!anonId) return <p className="pt-10 text-center text-muted">Loading…</p>;
-  return <Onboarding anonId={anonId} />;
+  return <OnboardingLoader anonId={anonId} />;
 }
