@@ -18,6 +18,7 @@ import type { CareOutcomes, StratifiedCounts } from "./community";
 import type { Canonical } from "./canonicalize";
 
 const MAX_TURNS = 8;
+const REFUSAL_MESSAGE = "The model declined to answer this one. Try rephrasing, or ask your pharmacist directly.";
 const DEADLINE_MS = 4 * 60_000;
 
 type Profile = {
@@ -677,7 +678,7 @@ export const run = internalAction({
           messages,
         });
         if (res.stop_reason === "refusal") {
-          throw new Error("The model declined to answer this one. Try rephrasing, or ask your pharmacist directly.");
+          throw new Error(REFUSAL_MESSAGE);
         }
         if (res.stop_reason === "max_tokens") throw new Error("answer ran too long");
         messages.push({ role: "assistant", content: res.content });
@@ -703,10 +704,15 @@ export const run = internalAction({
       const raw = (e as Error).message;
       // Upstream outages read as a busy service, not a stack trace.
       const busy = /^(429|5\d\d)\b|overloaded|rate.?limit|ECONN|fetch failed|timed? ?out/i.test(raw);
-      await ctx.runMutation(internal.answers.fail, {
-        answerId: args.answerId,
-        error: busy ? "The AI service is busy right now. Please try again in a minute." : raw,
-      });
+      // Only sentences written for the user are shown; anything else (an API 4xx body,
+      // an internal error) gets a plain sentence and stays in the logs.
+      const error = busy
+        ? "The AI service is busy right now. Please try again in a minute."
+        : raw === REFUSAL_MESSAGE
+          ? raw
+          : "Villi couldn't finish this check. Please try again in a few minutes.";
+      if (error !== raw) console.error("agent failed", raw);
+      await ctx.runMutation(internal.answers.fail, { answerId: args.answerId, error });
       return null;
     }
   },
