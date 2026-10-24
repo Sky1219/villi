@@ -8,6 +8,7 @@ import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import type { Answer } from "@convex/lib/answerSchema";
 import { useAnonId } from "@/lib/anon";
+import { citationLabel } from "@/lib/citations";
 import { GutDiagram } from "@/components/GutDiagram";
 import { CommunityCounts } from "@/components/CommunityCounts";
 import { LogCard } from "@/components/LogCard";
@@ -56,19 +57,6 @@ function TraceList({ trace, status }: { trace: Trace[]; status: string }) {
       </ol>
     </section>
   );
-}
-
-function citationLabel(kind: string, ref: string): string {
-  if (kind === "G") {
-    const src = ref.split("#")[0];
-    return (
-      { "aga-sbs": "AGA 2022", pg139: "Pract Gastro 2015", "pd-2017": "Parrish & DiBaise 2017", "remane-2025": "Remane 2025", "sood-2013": "Aust Prescr 2013", "hong-2021": "Hong 2021", "who-ors": "WHO ORS" }[src] ??
-      src
-    );
-  }
-  if (kind === "L") return `FDA label: ${ref.replace(/_/g, " ")}`;
-  if (kind === "C") return `Community ${ref}`;
-  return "Another user's care team";
 }
 
 function Citations({ citation, final, titles }: { citation: string; final: FinalAnswer; titles: Record<string, string> }) {

@@ -75,6 +75,15 @@ function Home({ anonId }: { anonId: string }) {
         </Link>
       </section>
 
+      <nav className="grid grid-cols-2 gap-2">
+        <Link href="/community" className="flex min-h-12 items-center justify-center rounded-xl border border-border bg-surface font-bold">
+          Community
+        </Link>
+        <Link href="/sheet" className="flex min-h-12 items-center justify-center rounded-xl border border-border bg-surface font-bold">
+          Appointment sheet{questions && questions.filter((q) => !q.resolved).length ? ` (${questions.filter((q) => !q.resolved).length})` : ""}
+        </Link>
+      </nav>
+
       <ScanBox anonId={anonId} />
 
       <QuickLog anonId={anonId} />
@@ -94,20 +103,6 @@ function Home({ anonId }: { anonId: string }) {
                   <span className="block font-bold">{a.title}</span>
                   <span className="block text-sm text-muted">{a.verdict ?? a.status}</span>
                 </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {questions && questions.length > 0 && (
-        <section>
-          <h2 className="mb-2 font-bold">For your next appointment</h2>
-          <ul className="space-y-2">
-            {questions.map((q) => (
-              <li key={q._id} className="rounded-xl border border-border bg-surface px-4 py-3">
-                <span className="block">{q.text}</span>
-                {q.itemName && <span className="block text-xs text-muted">about {q.itemName}</span>}
               </li>
             ))}
           </ul>

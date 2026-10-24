@@ -31,7 +31,28 @@ const CanonSchema = z.object({
   lactose: z.boolean(),
 });
 
-const CANON_SYSTEM = `You map what a user typed (in any language) to a canonical item for an app about short bowel syndrome and ostomies. Choose matchCanonicalName ONLY from the catalog when it is the same thing (aliases, brands, translations, spelling). A medicine with different release wording (ER/XL/SR vs immediate-release, DR/EC) is a DIFFERENT item: never match across release forms. Otherwise set matchCanonicalName=null and give a new canonicalName: short, lowercase, English, generic (e.g. "cola", "sports drink", "metoprolol succinate er"). Fill the attributes from general knowledge of the item; use "none"/false when not applicable.`;
+const CANON_SYSTEM = `You map what a user typed (in any language) to a canonical item for an app about short bowel syndrome and ostomies. Choose matchCanonicalName ONLY from the catalog when it is the same thing (aliases, brands, translations, spelling). A medicine with different release wording (ER/XL/SR vs immediate-release, DR/EC) is a DIFFERENT item: never match across release forms. Preparations and serving forms of a catalog item are that item: frozen, chilled, flavored, homemade, diluted, "ice pops", "over ice", a brand of it (e.g. "ORS ice pops" and "Pedialyte popsicles" -> oral rehydration solution; "Coca-Cola" -> cola; "jasmine rice" -> white rice). Otherwise set matchCanonicalName=null and give a new canonicalName: short, lowercase, English, generic (e.g. "cola", "sports drink", "metoprolol succinate er"). Fill the attributes from general knowledge of the item; simpleSugar means a lot of added or free sugar (soda, juice, candy), not small amounts in ORS or fruit; use "none"/false when not applicable.`;
+
+// Builder-only cleanup for a bad catalog entry and anything pointing at it.
+export const removeItem = internalMutation({
+  args: { canonicalName: v.string() },
+  handler: async (ctx, args) => {
+    const item = await ctx.db
+      .query("items")
+      .withIndex("by_canonicalName", (q) => q.eq("canonicalName", args.canonicalName))
+      .unique();
+    if (!item) return { removed: 0 };
+    let removed = 0;
+    for await (const s of ctx.db.query("swaps")) {
+      if ((s.useItemId === item._id || s.insteadOfItemId === item._id) && !s.synthetic) {
+        await ctx.db.delete("swaps", s._id);
+        removed++;
+      }
+    }
+    await ctx.db.delete("items", item._id);
+    return { removed };
+  },
+});
 
 export const catalog = internalQuery({
   args: {},

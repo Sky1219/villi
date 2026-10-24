@@ -11,6 +11,7 @@
 import type * as agent from "../agent.js";
 import type * as answers from "../answers.js";
 import type * as canonicalize from "../canonicalize.js";
+import type * as careTeam from "../careTeam.js";
 import type * as community from "../community.js";
 import type * as fda from "../fda.js";
 import type * as guidelines from "../guidelines.js";
@@ -25,6 +26,7 @@ import type * as lib_prompts from "../lib/prompts.js";
 import type * as lib_retrier from "../lib/retrier.js";
 import type * as lib_safety from "../lib/safety.js";
 import type * as lib_seedData from "../lib/seedData.js";
+import type * as lib_swapCheck from "../lib/swapCheck.js";
 import type * as lib_vision from "../lib/vision.js";
 import type * as logs from "../logs.js";
 import type * as meds from "../meds.js";
@@ -33,6 +35,7 @@ import type * as profiles from "../profiles.js";
 import type * as questions from "../questions.js";
 import type * as reviewer from "../reviewer.js";
 import type * as seed from "../seed.js";
+import type * as swaps from "../swaps.js";
 
 import type {
   ApiFromModules,
@@ -44,6 +47,7 @@ declare const fullApi: ApiFromModules<{
   agent: typeof agent;
   answers: typeof answers;
   canonicalize: typeof canonicalize;
+  careTeam: typeof careTeam;
   community: typeof community;
   fda: typeof fda;
   guidelines: typeof guidelines;
@@ -58,6 +62,7 @@ declare const fullApi: ApiFromModules<{
   "lib/retrier": typeof lib_retrier;
   "lib/safety": typeof lib_safety;
   "lib/seedData": typeof lib_seedData;
+  "lib/swapCheck": typeof lib_swapCheck;
   "lib/vision": typeof lib_vision;
   logs: typeof logs;
   meds: typeof meds;
@@ -66,6 +71,7 @@ declare const fullApi: ApiFromModules<{
   questions: typeof questions;
   reviewer: typeof reviewer;
   seed: typeof seed;
+  swaps: typeof swaps;
 }>;
 
 /**

@@ -10,12 +10,12 @@ import { applyPooledTransition } from "./community";
 import type { Canonical } from "./canonicalize";
 import { MODERATION_FIXTURES } from "./lib/moderationFixtures";
 
-export async function claudeModerate(text: string): Promise<ModerationDecision> {
+export async function claudeModerate(text: string, system: string = MODERATION_SYSTEM): Promise<ModerationDecision> {
   const client = anthropicClient(env);
   const res = await client.messages.parse({
     model: fastModel(env),
     max_tokens: 1000,
-    system: MODERATION_SYSTEM,
+    system,
     output_config: { effort: "low", format: zodOutputFormat(ModerationSchema) },
     messages: [{ role: "user", content: `<entry>\n${text.slice(0, 600)}\n</entry>` }],
   });
@@ -69,7 +69,7 @@ export const moderateLog = internalAction({
     }
     const text = [log.itemText, log.note].filter(Boolean).join("\n");
     // A bare outcome on a known item has no free text to screen.
-    const d = text ? await moderateText(text, claudeModerate) : { pooled: true, reason: null, nudgeUser: null };
+    const d = text ? await moderateText(text, (t) => claudeModerate(t)) : { pooled: true, reason: null, nudgeUser: null };
     await ctx.runMutation(internal.moderation.applyLog, {
       logId: args.logId,
       itemId,

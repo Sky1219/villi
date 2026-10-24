@@ -3,18 +3,10 @@
 import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
-import { ANATOMY_KEY_EXAMPLE, defaultDiagram, type AnatomyKey } from "@convex/lib/anatomy";
-import { GutDiagram } from "@/components/GutDiagram";
+import { AnatomyBadge } from "@/components/AnatomyBadge";
 
 // Below this many reports a cell is shown as "too few to say", not a percentage.
 const MIN_N = 5;
-
-function AnatomyBadge({ anatomyKey }: { anatomyKey: string }) {
-  const example = ANATOMY_KEY_EXAMPLE[anatomyKey as AnatomyKey];
-  if (!example) return null;
-  const d = defaultDiagram(example);
-  return <GutDiagram size="badge" removed={d.removed} stoma={d.stomaAfter ? { afterSegment: d.stomaAfter } : null} />;
-}
 
 function Bar({ helped, neutral, hurt }: { helped: number; neutral: number; hurt: number }) {
   const total = helped + neutral + hurt;

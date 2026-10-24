@@ -161,6 +161,8 @@ export default defineSchema({
     note: v.string(),
     pooled,
     moderationReason: v.optional(v.string()),
+    nudgeUser: v.optional(v.string()),
+    moderationRunId: v.optional(v.string()),
     guidelineCheck: v.optional(
       v.object({ passed: v.boolean(), citations: v.array(v.string()) }),
     ),
@@ -172,7 +174,16 @@ export default defineSchema({
     .index("by_insteadOfItemId", ["insteadOfItemId"])
     .index("by_pooled_and_anatomyKey", ["pooled", "anatomyKey"])
     .index("by_profileId", ["profileId"])
+    .index("by_moderationRunId", ["moderationRunId"])
     .index("by_synthetic", ["synthetic"]),
+
+  // One upvote per profile per swap.
+  swap_votes: defineTable({
+    swapId: v.id("swaps"),
+    profileId: v.id("profiles"),
+  })
+    .index("by_swapId_and_profileId", ["swapId", "profileId"])
+    .index("by_profileId", ["profileId"]),
 
   care_team_answers: defineTable({
     profileId: v.id("profiles"),
@@ -185,6 +196,8 @@ export default defineSchema({
     answerText: v.string(),
     pooled,
     moderationReason: v.optional(v.string()),
+    nudgeUser: v.optional(v.string()),
+    moderationRunId: v.optional(v.string()),
     clinicianEndorsements: v.array(v.id("profiles")),
     synthetic: v.boolean(),
     createdAt: v.number(),
@@ -192,6 +205,8 @@ export default defineSchema({
     .index("by_pooled_and_anatomyKey", ["pooled", "anatomyKey"])
     .index("by_itemId", ["itemId"])
     .index("by_profileId", ["profileId"])
+    .index("by_questionId", ["questionId"])
+    .index("by_moderationRunId", ["moderationRunId"])
     .index("by_synthetic", ["synthetic"])
     .searchIndex("search_question", {
       searchField: "questionText",

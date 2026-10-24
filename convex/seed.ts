@@ -41,6 +41,10 @@ export const clearSyntheticBatch = internalMutation({
         .withIndex("by_synthetic", (q) => q.eq("synthetic", true))
         .take(400);
       for (const row of rows) {
+        if (table === "swaps") {
+          const votes = await ctx.db.query("swap_votes").withIndex("by_swapId_and_profileId", (q) => q.eq("swapId", row._id as Id<"swaps">)).take(200);
+          for (const vote of votes) await ctx.db.delete("swap_votes", vote._id);
+        }
         if (table === "log_entries") {
           const e = row as unknown as { itemId: Id<"items">; anatomyKey: string; outcome: "helped" | "neutral" | "hurt"; pooled: boolean | null };
           if (e.pooled === true) await applyPooledTransition(ctx, { ...e, synthetic: true }, -1);
