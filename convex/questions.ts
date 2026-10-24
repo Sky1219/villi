@@ -64,6 +64,7 @@ export const addFromReview = mutation({
       context: {
         itemName: med.name,
         citations: Array.from(new Set((row?.flags ?? []).flatMap((f) => f.citations.map((c) => c.key)))),
+        fromReview: row?.state === "flagged",
       },
       resolved: false,
       status: "open",

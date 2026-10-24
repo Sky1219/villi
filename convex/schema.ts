@@ -277,6 +277,8 @@ export default defineSchema({
       answerId: v.optional(v.id("answers")),
       itemName: v.optional(v.string()),
       citations: v.optional(v.array(v.string())),
+      // Added from a flagged row of the medicine list review.
+      fromReview: v.optional(v.boolean()),
     }),
     // `resolved` is kept in step with status === "answered" for older rows.
     resolved: v.boolean(),
