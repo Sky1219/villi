@@ -1,10 +1,40 @@
 import { ConvexError, v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, type MutationCtx } from "./_generated/server";
+import type { Doc, Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import { outcomeValidator } from "./schema";
 import { requireProfile } from "./profiles";
 import { retrier } from "./lib/retrier";
 import { cardFor, scanWarningSigns } from "./lib/warningSigns";
+
+// Inserts a log entry and schedules its moderation. Every log goes through here.
+export async function insertLog(
+  ctx: MutationCtx,
+  profile: Doc<"profiles">,
+  e: { outcome: Doc<"log_entries">["outcome"]; itemId?: Id<"items">; itemText?: string; answerId?: Id<"answers">; note?: string; synthetic?: boolean },
+) {
+  const note = e.note?.trim().slice(0, 280) || undefined;
+  const scan = scanWarningSigns(note);
+  const logId = await ctx.db.insert("log_entries", {
+    profileId: profile._id,
+    anatomySnapshot: profile.anatomy,
+    anatomyKey: profile.anatomyKey,
+    itemId: e.itemId,
+    itemText: e.itemText,
+    answerId: e.answerId,
+    outcome: e.outcome,
+    note,
+    warning: scan.level ? { level: scan.level, signs: scan.signs } : undefined,
+    pooled: null,
+    synthetic: e.synthetic ?? false,
+    createdAt: Date.now(),
+  });
+  const runId = await retrier.run(ctx, internal.moderation.moderateLog, { logId }, {
+    onComplete: internal.moderation.onLogModerated,
+  });
+  await ctx.db.patch("log_entries", logId, { moderationRunId: runId });
+  return logId;
+}
 
 // Lands with pooled: null; only the scheduled moderation pass can make it
 // visible to others. The client can never set pooled, synthetic or itemId.
@@ -36,27 +66,7 @@ export const create = mutation({
       throw new ConvexError("That's a lot of entries in a minute. Try again shortly.");
     }
 
-    const note = args.note?.trim().slice(0, 280) || undefined;
-    const scan = scanWarningSigns(note);
-    const logId = await ctx.db.insert("log_entries", {
-      profileId: profile._id,
-      anatomySnapshot: profile.anatomy,
-      anatomyKey: profile.anatomyKey,
-      itemId,
-      itemText,
-      answerId: args.answerId,
-      outcome: args.outcome,
-      note,
-      warning: scan.level ? { level: scan.level, signs: scan.signs } : undefined,
-      pooled: null,
-      synthetic: false,
-      createdAt: Date.now(),
-    });
-    const runId = await retrier.run(ctx, internal.moderation.moderateLog, { logId }, {
-      onComplete: internal.moderation.onLogModerated,
-    });
-    await ctx.db.patch("log_entries", logId, { moderationRunId: runId });
-    return logId;
+    return await insertLog(ctx, profile, { outcome: args.outcome, itemId, itemText, answerId: args.answerId, note: args.note });
   },
 });
 

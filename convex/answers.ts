@@ -50,9 +50,14 @@ export const start = mutation({
     category: v.optional(categoryValidator),
     parentId: v.optional(v.id("answers")),
     saw: v.optional(sawValidator),
+    followsQuestionId: v.optional(v.id("questions")),
   },
   handler: async (ctx, args) => {
     const profile = await requireProfile(ctx, args.anonId);
+    if (args.followsQuestionId) {
+      const q = await ctx.db.get("questions", args.followsQuestionId);
+      if (!q || q.profileId !== profile._id) throw new ConvexError("Question not found");
+    }
     const text = args.text?.trim().slice(0, 500);
     if (!text && !args.photoId && !args.saw) throw new ConvexError("Type a name or add a photo.");
     // Follow-ups are questions by nature; a new check must name one item.
@@ -85,6 +90,7 @@ export const start = mutation({
       kind: args.parentId ? "followup" : "scan",
       parentId: args.parentId,
       input: { text, photoId: args.photoId, category: saw ? "pill" : args.category, saw },
+      followsQuestionId: args.followsQuestionId,
       status: "queued",
       toolTrace: [],
       createdAt: Date.now(),

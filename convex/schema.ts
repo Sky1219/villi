@@ -274,6 +274,13 @@ export default defineSchema({
     resolved: v.boolean(),
     status: v.optional(questionStatusValidator),
     askedAt: v.optional(v.number()),
+    // After the care team changed the form: the new form's name, when the
+    // change was logged, and the two-week follow-up (set due by a scheduled mutation).
+    newFormName: v.optional(v.string()),
+    changedAt: v.optional(v.number()),
+    followUpDue: v.optional(v.boolean()),
+    afterChangeOutcome: v.optional(outcomeValidator),
+    afterChangeLogId: v.optional(v.id("log_entries")),
     synthetic: v.boolean(),
     createdAt: v.number(),
   })
@@ -344,6 +351,8 @@ export default defineSchema({
     error: v.optional(v.string()),
     // "Was this useful?" on the answer card.
     useful: v.optional(v.boolean()),
+    // "Check the new form": the question whose form change this check follows.
+    followsQuestionId: v.optional(v.id("questions")),
     createdAt: v.number(),
   })
     .index("by_profileId", ["profileId"])

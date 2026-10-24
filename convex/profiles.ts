@@ -164,6 +164,19 @@ export const cloneDemo = mutation({
       const medId = await ctx.db.insert("meds", { ...rest, profileId, addedAt: Date.now() });
       await ctx.scheduler.runAfter(0, internal.meds.enrich, { medId });
     }
+    // The template's demo follow-up (synthetic, badged) so the two-week card can be shown.
+    const templateQs = await ctx.db
+      .query("questions")
+      .withIndex("by_profileId", (q) => q.eq("profileId", template._id))
+      .take(10);
+    const mine = await ctx.db
+      .query("questions")
+      .withIndex("by_profileId", (q) => q.eq("profileId", profileId))
+      .take(100);
+    for (const { _id, _creationTime, profileId: _tp, ...q } of templateQs) {
+      if (!q.synthetic || !q.followUpDue || mine.some((m) => m.text === q.text)) continue;
+      await ctx.db.insert("questions", { ...q, profileId });
+    }
     return null;
   },
 });

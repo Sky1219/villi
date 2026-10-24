@@ -222,6 +222,14 @@ export const SEED_CARE_TEAM: SeedCareTeam[] = [
   { item: "ondansetron", question: "Will my nausea tablet absorb?", professional: "pharmacist", answer: "My pharmacist said it is an immediate-release tablet absorbed high up, and there is also a dissolving form if needed.", anatomy: "end-jejunostomy" },
 ];
 
+// A demo follow-up on the father template, already due, so the two-week card
+// can be shown. It is synthetic and badged demo data wherever it appears.
+export const TEMPLATE_FOLLOW_UP = {
+  text: "Is the extended-release metoprolol being absorbed with this anatomy, or is there another form we should discuss?",
+  itemName: "Metoprolol succinate ER 50 mg",
+  newFormName: "Metoprolol tartrate",
+};
+
 export const SEED_QUESTIONS: string[] = [
   "Is my extended-release tablet being absorbed with how much bowel I have left?",
   "Does my liquid medicine contain sorbitol?",

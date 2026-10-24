@@ -12,7 +12,7 @@ import { claudeModerate } from "./moderation";
 import type { Canonical } from "./canonicalize";
 import { sheetFor } from "./sheet";
 import { LINK_CHOICES } from "./lib/careFor";
-import { statusOf } from "./questions";
+import { startFollowUp, statusOf } from "./questions";
 
 // Inserts a care-team answer, marks the question answered and schedules the
 // same moderation pass, whoever recorded it.
@@ -43,6 +43,7 @@ async function recordAnswer(
     createdAt: Date.now(),
   });
   await ctx.db.patch("questions", q._id, { resolved: true, status: "answered", askedAt: q.askedAt ?? Date.now() });
+  if (a.resultingChange === "formulation_changed") await startFollowUp(ctx, q._id);
   const runId = await retrier.run(ctx, internal.careTeam.moderate, { id }, { onComplete: internal.careTeam.onModerated });
   await ctx.db.patch("care_team_answers", id, { moderationRunId: runId });
   return id;
@@ -168,6 +169,7 @@ export const linkRespond = mutation({
     professionalType: professionalTypeValidator,
     resultingChange: resultingChangeValidator,
     note: v.optional(v.string()),
+    newFormName: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const found = await linkProfile(ctx, args.token);
@@ -191,6 +193,8 @@ export const linkRespond = mutation({
       resultingChange: args.resultingChange,
       source: "team_link",
     });
+    const newForm = args.newFormName?.trim().slice(0, 80);
+    if (newForm && args.resultingChange === "formulation_changed") await ctx.db.patch("questions", q._id, { newFormName: newForm });
     return null;
   },
 });
@@ -203,6 +207,7 @@ export const setResultingChange = mutation({
     const row = await ctx.db.get("care_team_answers", args.id);
     if (!row || row.profileId !== me._id) throw new ConvexError("Answer not found");
     await ctx.db.patch("care_team_answers", row._id, { resultingChange: args.resultingChange });
+    if (args.resultingChange === "formulation_changed" && row.questionId) await startFollowUp(ctx, row.questionId);
     return null;
   },
 });

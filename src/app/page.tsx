@@ -7,6 +7,7 @@ import { useAnonId } from "@/lib/anon";
 import { GutDiagram } from "@/components/GutDiagram";
 import { MedsEditor } from "@/components/MedsEditor";
 import { MedReview } from "@/components/MedReview";
+import { AfterChangeCards } from "@/components/AfterChange";
 import { QuickLog } from "@/components/QuickLog";
 import { DeleteMyData } from "@/components/DeleteMyData";
 import { ScanBox } from "@/components/ScanBox";
@@ -152,6 +153,8 @@ function Home({ anonId }: { anonId: string }) {
           Is Villi working?
         </Link>
       </nav>
+
+      <AfterChangeCards anonId={anonId} person={personFor(profile.role, profile.caresFor)} />
 
       <ScanBox anonId={anonId} initialText={prefill} />
 

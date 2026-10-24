@@ -18,6 +18,7 @@ function Respond({ token, questionId }: { token: string; questionId: Id<"questio
   const [pro, setPro] = useState<(typeof PROS)[number]>("pharmacist");
   const [change, setChange] = useState<Change | null>(null);
   const [note, setNote] = useState("");
+  const [newForm, setNewForm] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   if (!open) {
@@ -36,7 +37,14 @@ function Respond({ token, questionId }: { token: string; questionId: Id<"questio
         setBusy(true);
         setError(null);
         try {
-          await respond({ token, questionId, professionalType: pro, resultingChange: change, note: note.trim() || undefined });
+          await respond({
+            token,
+            questionId,
+            professionalType: pro,
+            resultingChange: change,
+            note: note.trim() || undefined,
+            newFormName: change === "formulation_changed" ? newForm.trim() || undefined : undefined,
+          });
         } catch (err) {
           setError(friendlyError(err));
         } finally {
@@ -76,6 +84,17 @@ function Respond({ token, questionId }: { token: string; questionId: Id<"questio
           ))}
         </div>
       </fieldset>
+      {change === "formulation_changed" && (
+        <label className="block text-sm">
+          The new form&apos;s name (optional)
+          <input
+            value={newForm}
+            onChange={(e) => setNewForm(e.target.value)}
+            maxLength={80}
+            className="mt-1 min-h-11 w-full rounded-xl border border-border bg-background px-3"
+          />
+        </label>
+      )}
       <label className="block text-sm">
         A short note for the family (optional)
         <textarea

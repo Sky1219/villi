@@ -13,6 +13,7 @@ import {
   SEED_QUESTIONS,
   SEED_SWAPS,
   SYNTHETIC_GROUPS,
+  TEMPLATE_FOLLOW_UP,
   noteFor,
   outcomeOdds,
 } from "./lib/seedData";
@@ -228,6 +229,27 @@ export const insertCommunity = internalMutation({
   },
 });
 
+export const insertTemplateFollowUp = internalMutation({
+  args: { profileId: v.id("profiles") },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    await ctx.db.insert("questions", {
+      profileId: args.profileId,
+      text: TEMPLATE_FOLLOW_UP.text,
+      context: { itemName: TEMPLATE_FOLLOW_UP.itemName },
+      resolved: true,
+      status: "answered",
+      askedAt: now - 15 * 86_400_000,
+      newFormName: TEMPLATE_FOLLOW_UP.newFormName,
+      changedAt: now - 14 * 86_400_000,
+      followUpDue: true,
+      synthetic: true,
+      createdAt: now - 16 * 86_400_000,
+    });
+    return null;
+  },
+});
+
 // `npm run seed` -> `npx convex run seed:run`. Idempotent: clears synthetic
 // rows, keeps real ones, re-embeds only changed guideline chunks.
 export const run = internalAction({
@@ -253,6 +275,8 @@ export const run = internalAction({
         { anatomy: PEER.anatomy, role: "patient", templateKey: "peer", meds: PEER.meds },
       ],
     });
+
+    await ctx.runMutation(internal.seed.insertTemplateFollowUp, { profileId: fatherId });
 
     const byAnatomy: Record<string, Id<"profiles">[]> = {};
     for (const g of SYNTHETIC_GROUPS) {

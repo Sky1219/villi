@@ -88,6 +88,9 @@ export async function sheetFor(ctx: QueryCtx, me: Doc<"profiles">) {
           const a = answerFor.get(q._id);
           return {
             ...view(q),
+            newFormName: q.newFormName ?? null,
+            afterChangeOutcome: q.afterChangeOutcome ?? null,
+            followUpDue: !!q.followUpDue,
             answer: a
               ? {
                   _id: a._id,

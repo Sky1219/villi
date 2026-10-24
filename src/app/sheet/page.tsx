@@ -8,10 +8,11 @@ import type { Id } from "@convex/_generated/dataModel";
 import { useAnonId } from "@/lib/anon";
 import { friendlyError } from "@/lib/errors";
 import { LogStatus } from "@/components/LogCard";
-import { CHANGE_CHOICES, CHANGE_SHORT, patternSentence, sheetMarkdown, warningSentence, type ResultingChange } from "@/lib/sheet";
+import { CHANGE_CHOICES, CHANGE_SHORT, OUTCOME_WORD, patternSentence, sheetMarkdown, warningSentence, type ResultingChange } from "@/lib/sheet";
 import { personFor, preparedBy } from "@convex/lib/careFor";
 import { MedReview } from "@/components/MedReview";
 import { ShareWithTeam } from "@/components/ShareWithTeam";
+import { CheckNewForm } from "@/components/AfterChange";
 
 const PROS = ["pharmacist", "dietitian", "doctor", "nurse"] as const;
 
@@ -303,6 +304,20 @@ function Sheet({ anonId }: { anonId: string }) {
                   )}
                   <Outcome anonId={anonId} id={q.answer._id} value={q.answer.resultingChange} />
                   <LogStatus status={q.answer.status} nudge={null} />
+                  {q.answer.resultingChange === "formulation_changed" && (
+                    <>
+                      {q.afterChangeOutcome ? (
+                        <p className="mt-2 text-sm">
+                          <span className="font-bold">Two weeks on:</span> {OUTCOME_WORD[q.afterChangeOutcome]}
+                        </p>
+                      ) : (
+                        <p className="mt-2 text-xs text-muted">
+                          {q.followUpDue ? "The two-week check-in is on the home screen." : "Villi will ask how it's going two weeks after the change."}
+                        </p>
+                      )}
+                      <CheckNewForm anonId={anonId} questionId={q._id} initial={q.newFormName} />
+                    </>
+                  )}
                 </>
               )}
             </div>
