@@ -126,12 +126,69 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
+| FND-01 | Phase 1 | Pending |
+| FND-02 | Phase 1 | Pending |
+| FND-03 | Phase 1 | Pending |
+| FND-04 | Phase 1 | Pending |
+| FND-05 | Phase 1 | Pending |
+| FND-06 | Phase 1 | Pending |
+| FND-07 | Phase 1 | Pending |
+| SAFE-07 | Phase 1 | Pending |
+| PILL-01 | Phase 2 | Pending |
+| PILL-02 | Phase 2 | Pending |
+| PILL-03 | Phase 2 | Pending |
+| PILL-04 | Phase 2 | Pending |
+| PILL-05 | Phase 2 | Pending |
+| PILL-06 | Phase 2 | Pending |
+| PILL-07 | Phase 2 | Pending |
+| PILL-08 | Phase 2 | Pending |
+| PILL-09 | Phase 2 | Pending |
+| SAFE-01 | Phase 2 | Pending |
+| SAFE-02 | Phase 2 | Pending |
+| SAFE-03 | Phase 2 | Pending |
+| SAFE-05 | Phase 2 | Pending |
+| SAFE-06 | Phase 2 | Pending |
+| ONB-01 | Phase 3 | Pending |
+| ONB-02 | Phase 3 | Pending |
+| ONB-03 | Phase 3 | Pending |
+| ONB-04 | Phase 3 | Pending |
+| ONB-05 | Phase 3 | Pending |
+| ANS-01 | Phase 3 | Pending |
+| ANS-02 | Phase 3 | Pending |
+| DRNK-01 | Phase 4 | Pending |
+| DRNK-02 | Phase 4 | Pending |
+| LOG-01 | Phase 4 | Pending |
+| LOG-02 | Phase 4 | Pending |
+| SAFE-04 | Phase 4 | Pending |
+| COMM-01 | Phase 4 | Pending |
+| COMM-02 | Phase 4 | Pending |
+| COMM-03 | Phase 5 | Pending |
+| COMM-04 | Phase 5 | Pending |
+| COMM-05 | Phase 5 | Pending |
+| COMM-06 | Phase 5 | Pending |
+| SHEET-03 | Phase 5 | Pending |
+| SAW-01 | Phase 6 | Pending |
+| SAW-02 | Phase 6 | Pending |
+| SHEET-01 | Phase 6 | Pending |
+| SHEET-02 | Phase 6 | Pending |
+| I18N-01 | Phase 7 | Pending |
+| POL-01 | Phase 7 | Pending |
+| POL-02 | Phase 7 | Pending |
+| POL-03 | Phase 7 | Pending |
+| DOC-01 | Phase 7 | Pending |
+| DOC-02 | Phase 7 | Pending |
+| TEST-01 | Phase 7 | Pending |
+
+Mapping notes:
+- SAFE-05 lands with the reviewer in Phase 2; Phase 4 moderation writes to the same decision log.
+- SHEET-03 ships with COMM-04 in Phase 5 (log the answer from saved questions); Phase 6 grows that list into the full sheet.
+- TEST-01 fixtures are written alongside their features (Phases 2, 4, 5) and verified together as one suite in Phase 7.
 
 **Coverage:**
 - v1 requirements: 52 total
-- Mapped to phases: 0
-- Unmapped: 52 ⚠️
+- Mapped to phases: 52
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-10-23*
-*Last updated: 2026-10-23 after initial definition*
+*Last updated: 2026-10-23 after roadmap creation (traceability mapped)*
