@@ -209,7 +209,10 @@ function Team({ token }: { token: string }) {
           <ul className="space-y-2 text-sm">
             {d.answered.map((q) => (
               <li key={q._id} className="rounded-xl bg-surface-2 p-3">
-                <p className="font-bold">{q.text}</p>
+                <p className="font-bold">
+                  {q.text}
+                  {q.synthetic && <span className="ml-2 rounded-full bg-surface-2 px-2.5 py-1 text-xs font-bold text-muted">demo data</span>}
+                </p>
                 {q.answer?.resultingChange && <p>Outcome: {CHANGE_SHORT[q.answer.resultingChange]}</p>}
                 {q.answer?.source === "team_link" && <p className="text-xs text-muted">Recorded through this care-team link.</p>}
               </li>

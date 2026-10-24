@@ -97,6 +97,13 @@ const labelCite = (section: string, text: string): ReviewCitation => ({
   text,
 });
 
+// "Best Practice Advice 7: Drug Dosing" -> "BPA 7"; long headings cut at a word.
+function shortSection(section: string): string {
+  const s = section.replace(/^Best Practice Advice (\d+).*/, "BPA $1");
+  if (s.length <= 24) return s;
+  return `${s.slice(0, 24).replace(/\s+\S*$/, "")}…`;
+}
+
 export function reviewMed(m: MedReviewInput): MedReview {
   if (!m.label) {
     return { state: "cant-tell", summary: "Label not checked yet.", flags: [], sectionsChecked: [] };
@@ -142,6 +149,14 @@ export function reviewMed(m: MedReviewInput): MedReview {
         text: `The label says: "${f.evidence}"`,
         citations: [labelCite("dosage_and_administration", f.evidence), ...guideline(FLAG_CHUNKS["swallow-whole"], m.scopeTags)],
       });
+    }
+  }
+  // Two chips from the same source get their section, so they don't read the same.
+  for (const f of flags) {
+    const seen = new Map<string, number>();
+    for (const c of f.citations) seen.set(c.label, (seen.get(c.label) ?? 0) + 1);
+    for (const c of f.citations) {
+      if ((seen.get(c.label) ?? 0) > 1 && c.section) c.label = `${c.label} · ${shortSection(c.section)}`;
     }
   }
   const sectionsChecked = ["dosage_form", "dosage_and_administration", "spl_product_data_elements", "inactive_ingredient", "description"]

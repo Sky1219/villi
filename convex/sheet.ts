@@ -74,6 +74,8 @@ export async function sheetFor(ctx: QueryCtx, me: Doc<"profiles">) {
       text: q.text,
       itemName: q.context.itemName ?? null,
       status: statusOf(q),
+      // Seeded demo questions (the demo follow-up) are badged wherever they show.
+      synthetic: q.synthetic,
     });
     return {
       anatomyText: describeAnatomy(me.anatomy),

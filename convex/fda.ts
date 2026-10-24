@@ -81,6 +81,16 @@ export function coreName(name: string): string {
     .trim();
 }
 
+// Label prose carries section numbers and table headers ("2.4 Administration",
+// "Table 2: Administration Instructions Formulation Route Instructions"); drop
+// them so a quoted sentence starts where the sentence does.
+export function labelSentence(raw: string): string {
+  let s = raw.trim().replace(/^\d+(?:\.\d+)*\s+/, "");
+  s = s.replace(/^Table \d+[:.][^.]*?(?=\b(?:Do not|Swallow|Tablets?|Capsules?|Take|Patients?)\b)/i, "");
+  s = s.replace(/^(?:[A-Z][a-z]+\s){1,3}(?=[A-Z][a-z]+\s+[a-z])/, (m) => (/Administration|Instructions|Dosage|Recommended|Important/.test(m) ? "" : m));
+  return s.trim();
+}
+
 export function computeFlags(sections: Record<string, string>, releaseForm: ReleaseForm) {
   const flags: LabelResult["flags"] = [];
   if (releaseForm === "extended-release" || releaseForm === "delayed-release") {
@@ -97,7 +107,7 @@ export function computeFlags(sections: Record<string, string>, releaseForm: Rele
   }
   const da = sections.dosage_and_administration ?? "";
   const sw = da.match(/[^.]*\b(swallow(ed)?(\s+\w+){0,2}\s+whole|do not (crush|chew|split|break)|not be (crushed|chewed|split))[^.]*\./i);
-  if (sw) flags.push({ flag: "swallow-whole", section: "dosage_and_administration", evidence: sw[0].trim().slice(0, 240) });
+  if (sw) flags.push({ flag: "swallow-whole", section: "dosage_and_administration", evidence: labelSentence(sw[0]).slice(0, 240) });
   return flags;
 }
 

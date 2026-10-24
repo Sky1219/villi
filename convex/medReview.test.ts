@@ -132,3 +132,22 @@ describe("medicine list review", () => {
     expect(sheet.meds[0].flags[0].citation).toBe("G:aga-sbs#medications-release-forms");
   });
 });
+
+describe("label quotes", () => {
+  it("drop section numbers and table headers so the quote starts with the sentence", async () => {
+    const { labelSentence } = await import("./fda");
+    expect(labelSentence("2.4 Administration Metoprolol succinate extended-release tablets are scored and can be divided; however, do not crush or chew the whole or half tablet.")).toBe(
+      "Metoprolol succinate extended-release tablets are scored and can be divided; however, do not crush or chew the whole or half tablet.",
+    );
+    expect(labelSentence("Table 2: Administration Instructions Formulation Route Instructions Do not split, chew, or crush PROTONIX Delayed-Release Tablets.")).toBe(
+      "Do not split, chew, or crush PROTONIX Delayed-Release Tablets.",
+    );
+    expect(labelSentence("Swallow tablets whole.")).toBe("Swallow tablets whole.");
+  });
+
+  it("chips from the same source carry their section", () => {
+    const m = review("metoprolol", JEJ);
+    const labels = m.flags[0].citations.map((c) => c.label);
+    expect(new Set(labels).size).toBe(labels.length);
+  });
+});

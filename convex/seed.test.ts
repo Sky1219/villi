@@ -21,7 +21,9 @@ describe("seed", () => {
     // Every synthetic profile logs each item at most once, so counted people = pooled logs.
     const counted = aggregates.reduce((n, a) => n + a.helped + a.neutral + a.hurt, 0);
     expect(counted).toBe(logs.filter((l) => l.pooled === true).length);
-    expect(outcomes.reduce((n, o) => n + o.formulation_changed + o.dose_monitored + o.no_change + o.pending, 0)).toBeGreaterThan(40);
+    // Every seeded care-team answer about an item is a different person, so all of them count.
+    const seededWithItem = await t.run(async (ctx) => (await ctx.db.query("care_team_answers").take(500)).filter((c) => c.itemId && c.resultingChange).length);
+    expect(outcomes.reduce((n, o) => n + o.formulation_changed + o.dose_monitored + o.no_change + o.pending, 0)).toBe(seededWithItem);
 
     const anonId = "overnight-seed-clone-0000000001";
     await t.mutation(api.profiles.cloneDemo, { anonId, as: "father" });

@@ -202,8 +202,15 @@ export const insertCommunity = internalMutation({
         createdAt: Date.now() - i * 3_600_000,
       });
     }
+    // Each care-team answer about an item comes from a different synthetic
+    // person, so the care_outcomes counts (one per profile and item) match the seed.
+    const usedFor = new Map<string, Set<string>>();
     for (const c of [...SEED_CARE_TEAM, ...seedCareOutcomes()]) {
-      const profileId = pick(c.anatomy, i++);
+      const used = usedFor.get(`${c.item}|${c.anatomy}`) ?? new Set<string>();
+      let profileId = pick(c.anatomy, i++);
+      for (let k = 0; k < args.byAnatomy[c.anatomy].length && used.has(profileId); k++) profileId = pick(c.anatomy, i++);
+      used.add(profileId);
+      usedFor.set(`${c.item}|${c.anatomy}`, used);
       const p = (await ctx.db.get("profiles", profileId))!;
       const careId = await ctx.db.insert("care_team_answers", {
         profileId,
@@ -341,7 +348,7 @@ export const run = internalAction({
       templates: { fatherId, peerId },
       logEntries: rows.length,
       swaps: SEED_SWAPS.length,
-      careTeamAnswers: SEED_CARE_TEAM.length,
+      careTeamAnswers: SEED_CARE_TEAM.length + seedCareOutcomes().length,
       questions: SEED_QUESTIONS.length,
       seconds: (Date.now() - started) / 1000,
     };

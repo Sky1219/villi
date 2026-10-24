@@ -292,7 +292,10 @@ function Sheet({ anonId }: { anonId: string }) {
           <h2 className="font-bold">Answered</h2>
           {d.answered.map((q) => (
             <div key={q._id} className="rounded-2xl border border-border bg-surface-2 p-4">
-              <p className="font-bold">{q.text}</p>
+              <p className="font-bold">
+                {q.text}
+                {q.synthetic && <span className="ml-2 rounded-full bg-surface-2 px-2.5 py-1 text-xs font-bold text-muted">demo data</span>}
+              </p>
               {q.answer && (
                 <>
                   <p className="mt-1">
