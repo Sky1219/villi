@@ -88,7 +88,7 @@
       "sourceId": "aga-sbs",
       "locator": "fluids-hypertonic",
       "text": "Hypertonic, sugary drinks such as fruit juice and regular soda pull water into the gut and can raise stoma output or diarrhea in short bowel syndrome; they are best limited regardless of anatomy.",
-      "tags": ["hypertonic", "juice", "soda", "sports-drink", "sugar", "drink", "fluids"],
+      "tags": ["hypertonic", "juice", "soda", "sugar", "drink", "fluids"],
       "anatomyScope": ["short-bowel", "ileostomy"],
       "diagram": {
         "segmentIds": ["jejunum", "ileum"],
@@ -276,7 +276,7 @@
       "sourceId": "pd-2017",
       "locator": "sports-drinks",
       "text": "Typical sports drinks are low in sodium and high in sugar compared with an SBS oral rehydration solution, so they are not a substitute for it.",
-      "tags": ["sports-drink", "gatorade", "drink", "hypertonic", "sugar", "ors"],
+      "tags": ["sports-drink", "gatorade", "drink", "isotonic", "low-sodium", "sugar", "ors"],
       "anatomyScope": ["short-bowel", "ileostomy"]
     },
     {

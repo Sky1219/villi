@@ -9,6 +9,10 @@ import { MODERATION_SYSTEM, ModerationSchema, moderateText, type ModerationDecis
 import { applyPooledTransition } from "./community";
 import type { Canonical } from "./canonicalize";
 import { MODERATION_FIXTURES } from "./lib/moderationFixtures";
+import { retrier } from "./lib/retrier";
+
+const NEW_PROFILE_MS = 10 * 60_000;
+const NEW_PROFILE_NOTE_FREE = 3;
 
 export async function claudeModerate(text: string, system: string = MODERATION_SYSTEM): Promise<ModerationDecision> {
   const client = anthropicClient(env);
@@ -41,6 +45,24 @@ export const applyLog = internalMutation({
     const log = await ctx.db.get("log_entries", args.logId);
     if (!log || log.pooled !== null) return null; // idempotent under retries
     const itemId = log.itemId ?? args.itemId;
+    // A brand-new profile can share only a few note-free entries before its
+    // first ten minutes are up; the rest wait for a re-check after the window.
+    if (args.pooled && itemId && !log.note && !log.synthetic) {
+      const p = await ctx.db.get("profiles", log.profileId);
+      const age = p ? Date.now() - p.createdAt : Infinity;
+      if (p && age < NEW_PROFILE_MS) {
+        const recent = await ctx.db
+          .query("log_entries")
+          .withIndex("by_profileId", (q) => q.eq("profileId", p._id))
+          .order("desc")
+          .take(50);
+        if (recent.filter((l) => l.pooled === true && !l.note).length >= NEW_PROFILE_NOTE_FREE) {
+          await ctx.db.patch("log_entries", log._id, { itemId, moderationReason: "waiting: new profile" });
+          await ctx.scheduler.runAfter(NEW_PROFILE_MS - age + 1000, internal.moderation.recheckLog, { logId: log._id });
+          return null;
+        }
+      }
+    }
     // Without a canonical item it cannot be counted, so it stays with the author.
     const pooled = args.pooled && !!itemId;
     await ctx.db.patch("log_entries", log._id, {
@@ -50,8 +72,22 @@ export const applyLog = internalMutation({
       nudgeUser: pooled ? undefined : (args.nudge ?? undefined),
     });
     if (pooled && itemId) {
-      await applyPooledTransition(ctx, { itemId, anatomyKey: log.anatomyKey, outcome: log.outcome, synthetic: log.synthetic }, 1);
+      await applyPooledTransition(ctx, { ...log, itemId }, 1);
     }
+    return null;
+  },
+});
+
+// Runs the normal moderation pass again once a new profile's window is over.
+export const recheckLog = internalMutation({
+  args: { logId: v.id("log_entries") },
+  handler: async (ctx, args) => {
+    const log = await ctx.db.get("log_entries", args.logId);
+    if (!log || log.pooled !== null) return null;
+    const runId = await retrier.run(ctx, internal.moderation.moderateLog, { logId: log._id }, {
+      onComplete: internal.moderation.onLogModerated,
+    });
+    await ctx.db.patch("log_entries", log._id, { moderationRunId: runId });
     return null;
   },
 });
@@ -65,7 +101,7 @@ export const moderateLog = internalAction({
     let itemId: Id<"items"> | undefined = log.itemId;
     if (!itemId && log.itemText) {
       const c: Canonical = await ctx.runAction(internal.canonicalize.run, { text: log.itemText });
-      itemId = c.itemId;
+      itemId = c.itemId ?? undefined;
     }
     const text = [log.itemText, log.note].filter(Boolean).join("\n");
     // A bare outcome on a known item has no free text to screen.

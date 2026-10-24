@@ -179,7 +179,7 @@ export const deleteMine = mutation({
     const logs = await ctx.db.query("log_entries").withIndex("by_profileId", (q) => q.eq("profileId", p._id)).take(BATCH);
     for (const l of logs) {
       if (l.pooled === true && l.itemId) {
-        await applyPooledTransition(ctx, { itemId: l.itemId, anatomyKey: l.anatomyKey, outcome: l.outcome, synthetic: l.synthetic }, -1);
+        await applyPooledTransition(ctx, { ...l, itemId: l.itemId }, -1);
       }
       await ctx.db.delete("log_entries", l._id);
     }

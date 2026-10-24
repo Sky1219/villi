@@ -23,7 +23,7 @@ const CONFLICTS: Rule[] = [
   {
     when: (u) => u.category === "drink" && (u.attributes.tonicity === "hypertonic" || u.attributes.simpleSugar === true),
     chunkId: "aga-sbs#fluids-hypertonic",
-    reason: (u) => `${u.canonicalName} is a sugary, hypertonic drink, which guidelines say to limit`,
+    reason: (u) => `${u.canonicalName} is a sugary drink, which guidelines say to limit`,
   },
   {
     when: (u) => u.category !== "drink" && u.attributes.simpleSugar === true,

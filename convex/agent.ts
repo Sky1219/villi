@@ -145,7 +145,7 @@ class Agent {
   reg: Registry = { ...emptyRegistry(), evidence: {}, diagrams: {} };
   submitted: Answer | null = null;
   lintRetries = 0;
-  item: Canonical | null = null;
+  item: (Canonical & { itemId: Id<"items"> }) | null = null;
   itemName = "";
 
   constructor(
@@ -250,6 +250,10 @@ class Agent {
           for (const t of [c.matchingAnatomy.total, c.other.total, ...c.byAnatomy.map((b) => b.total)]) {
             if (t > 0 && !this.reg.communityTotals.includes(t)) this.reg.communityTotals.push(t);
           }
+          this.reg.communityCells ??= [];
+          for (const b of [...c.byAnatomy.map((r) => ({ ...r, key: r.anatomyKey })), { ...c.other, key: "other" }]) {
+            if (b.total > 0) this.reg.communityCells.push({ key: b.key, total: b.total, counts: [b.helped, b.neutral, b.hurt] });
+          }
           this.reg.evidence[`C:${res.item.canonicalName}`] = JSON.stringify(c.byAnatomy);
           await this.trace(
             "query_community",
@@ -292,6 +296,7 @@ class Agent {
             anatomyKey: this.profile.anatomyKey,
             anatomy: this.profile.anatomy,
           });
+          this.reg.communitySwaps = swaps.map((s) => s.use);
           const chunkIds = Array.from(new Set(swaps.flatMap((s) => s.guidelineChunkIds)));
           const chunks: ChunkView[] = chunkIds.length ? await this.ctx.runQuery(internal.guidelines.byChunkIds, { chunkIds }) : [];
           const scope = scopeTagsFor(this.profile.anatomy);
@@ -571,16 +576,20 @@ export const run = internalAction({
           text: itemName,
           categoryHint: answer.input.category ?? (answer.input.photoId ? category : undefined),
         });
-        agent.item = canon;
         if (!answer.input.category && !answer.input.photoId) category = canon.category;
-        await ctx.runMutation(internal.answers.setItem, { answerId: args.answerId, itemId: canon.itemId });
-        const attrs = [canon.attributes.tonicity, canon.attributes.releaseForm].filter(Boolean).join(", ");
-        await agent.trace(
-          "canonicalize_item",
-          `${canon.canonicalName} (${canon.category}${attrs ? `, ${attrs}` : ""})${
-            canon.path === "exact" ? "" : canon.path === "model-match" ? ", closest known match" : ", new item"
-          }`,
-        );
+        if (canon.itemId) {
+          agent.item = { ...canon, itemId: canon.itemId };
+          await ctx.runMutation(internal.answers.setItem, { answerId: args.answerId, itemId: canon.itemId });
+          const attrs = [canon.attributes.tonicity, canon.attributes.releaseForm].filter(Boolean).join(", ");
+          await agent.trace(
+            "canonicalize_item",
+            `${canon.canonicalName} (${canon.category}${attrs ? `, ${attrs}` : ""})${
+              canon.path === "exact" ? "" : canon.path === "model-match" ? ", closest known match" : ", new item"
+            }`,
+          );
+        } else {
+          await agent.trace("canonicalize_item", "no FDA label under this name, so it isn't added to Villi's list of items", false);
+        }
       } catch (e) {
         await agent.trace("canonicalize_item", "couldn't match this to a known item", false);
       }

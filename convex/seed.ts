@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { internalAction, internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import { anatomyValidator, outcomeValidator } from "./schema";
 import { anatomyKeyOf, type AnatomyKey } from "./lib/anatomy";
 import { applyPooledTransition } from "./community";
@@ -49,8 +49,8 @@ export const clearSyntheticBatch = internalMutation({
           for (const vote of votes) await ctx.db.delete("swap_votes", vote._id);
         }
         if (table === "log_entries") {
-          const e = row as unknown as { itemId: Id<"items">; anatomyKey: string; outcome: "helped" | "neutral" | "hurt"; pooled: boolean | null };
-          if (e.pooled === true) await applyPooledTransition(ctx, { ...e, synthetic: true }, -1);
+          const e = row as Doc<"log_entries">;
+          if (e.pooled === true && e.itemId) await applyPooledTransition(ctx, { ...e, itemId: e.itemId }, -1);
         }
         await ctx.db.delete(table, row._id);
         deleted++;
@@ -146,7 +146,7 @@ export const insertLogs = internalMutation({
     for (const r of args.rows) {
       const p = await ctx.db.get("profiles", r.profileId);
       if (!p) continue;
-      await ctx.db.insert("log_entries", {
+      const logId = await ctx.db.insert("log_entries", {
         ...r,
         anatomySnapshot: p.anatomy,
         anatomyKey: p.anatomyKey,
@@ -154,7 +154,8 @@ export const insertLogs = internalMutation({
         pooled: true,
         synthetic: true,
       });
-      await applyPooledTransition(ctx, { itemId: r.itemId, anatomyKey: p.anatomyKey, outcome: r.outcome, synthetic: true }, 1);
+      const entry = (await ctx.db.get("log_entries", logId))!;
+      await applyPooledTransition(ctx, { ...entry, itemId: r.itemId }, 1);
     }
     return null;
   },

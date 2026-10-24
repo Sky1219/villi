@@ -19,7 +19,28 @@ export type CitationRegistry = {
   otherMedWords?: string[];
   // Whether any community count retrieved in this run included synthetic rows.
   communitySynthetic?: boolean;
+  // Swap groups query_swaps returned (what other users switched to). A swap
+  // labeled "community" needs one; otherwise it is a guideline swap.
+  communitySwaps?: string[];
+  // Every count cell retrieved in this run, so a [C:n/total, anatomy] citation's
+  // numerator and denominator both have to match one cell for that anatomy.
+  communityCells?: CommunityCell[];
 };
+
+// `key` is an anatomy key, or "other" for the pooled other-anatomies cell.
+export type CommunityCell = { key: string; total: number; counts: number[] };
+
+// Which anatomy a citation's free-text label names, if any. Jejunostomy is
+// checked first because its label says "no colon".
+export function anatomyKeyInCitation(text: string): string | null {
+  const t = text.toLowerCase();
+  if (/jejunostomy/.test(t)) return "end-jejunostomy";
+  if (/ileostomy/.test(t)) return "ileostomy";
+  if (/colostomy/.test(t)) return "colostomy";
+  if (/colon|continuity/.test(t)) return "colon-in-continuity";
+  if (/other|everyone|all anatom/.test(t)) return "other";
+  return null;
+}
 
 // First distinctive word of each medicine on file that isn't the item being checked.
 export function otherMedWords(meds: string[], checked: string[]): string[] {
@@ -44,7 +65,12 @@ export function extractCitations(text: string): { kind: string; ref: string }[] 
 }
 
 // Returns null when valid, otherwise a reason.
-export function checkCitation(citation: string, reg: CitationRegistry): string | null {
+// Bare counts in a claim ("5 of 13 people"), not lengths, percentages or concentrations.
+function countsInClaim(claim: string): number[] {
+  return Array.from(claim.matchAll(/\b(\d+)\b(?!\s*(?:cm|%|mmol|mg|mcg|ml|mL|g\b|percent))/g), (m) => Number(m[1]));
+}
+
+export function checkCitation(citation: string, reg: CitationRegistry, claim = ""): string | null {
   const cites = extractCitations(citation);
   if (cites.length === 0) return `no citation in "${citation}"`;
   for (const { kind, ref } of cites) {
@@ -52,12 +78,23 @@ export function checkCitation(citation: string, reg: CitationRegistry): string |
     if (kind === "L" && !reg.labelSections.includes(ref)) return `label section ${ref} was not retrieved`;
     if (kind === "T" && !reg.careTeamIds.includes(ref)) return `unknown care-team answer ${ref}`;
     if (kind === "C") {
-      const m = ref.match(/^(\d+)\s*\/\s*(\d+)\s*,\s*.+$/);
+      const m = ref.match(/^(\d+)\s*\/\s*(\d+)\s*,\s*(.+)$/);
       if (!m) return `community citation "${ref}" needs n/total and anatomy`;
       const n = Number(m[1]);
       const total = Number(m[2]);
       if (n > total || total === 0) return `community citation "${ref}" is not a valid fraction`;
       if (!reg.communityTotals.includes(total)) return `community total ${total} does not match retrieved counts`;
+      if (reg.communityCells) {
+        const key = anatomyKeyInCitation(m[3]);
+        const cells = reg.communityCells.filter((c) => c.total === total && (!key || c.key === key));
+        if (!cells.some((c) => c.counts.includes(n) || n === total)) {
+          return `community count ${n}/${total} does not match a retrieved count for that anatomy`;
+        }
+        // The claim's own numbers must come from the same cells (it once said 5/5/3 under [C:13/13]).
+        const allowed = new Set(cells.flatMap((c) => [...c.counts, c.total]));
+        const stray = countsInClaim(claim).find((x) => !allowed.has(x));
+        if (stray !== undefined) return `claim number ${stray} does not match the cited community counts`;
+      }
     }
   }
   return null;
@@ -102,7 +139,7 @@ export function lintAnswer(input: Answer, reg: CitationRegistry): LintResult {
 
   // 1. Uncited or mis-cited claims are deleted, not repaired.
   answer.why = answer.why.filter((w) => {
-    const bad = checkCitation(w.citation, reg);
+    const bad = checkCitation(w.citation, reg, w.claim);
     if (bad) issues.push(`removed claim: ${bad}`);
     return !bad;
   });
@@ -124,6 +161,14 @@ export function lintAnswer(input: Answer, reg: CitationRegistry): LintResult {
         label: fixed.label,
         citation: `[G:${g.ref}]`,
       };
+    }
+  }
+  if (answer.swapToAskAbout?.source === "community" && !(reg.communitySwaps ?? []).length) {
+    issues.push("swap relabeled as a guideline swap: no community swap group was retrieved");
+    answer.swapToAskAbout = { ...answer.swapToAskAbout, source: "guideline" };
+    if (!extractCitations(answer.swapToAskAbout.citation).some((c) => c.kind === "G")) {
+      issues.push("removed swap: a guideline swap needs a guideline citation");
+      answer.swapToAskAbout = null;
     }
   }
   if (answer.swapToAskAbout) {

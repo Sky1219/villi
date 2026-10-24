@@ -17,7 +17,7 @@ export const SEED_ITEMS: SeedItem[] = [
   { canonicalName: "apple juice", category: "drink", aliases: ["juice", "fruit juice"], attributes: { tonicity: "hypertonic", simpleSugar: true } },
   { canonicalName: "orange juice", category: "drink", aliases: ["oj"], attributes: { tonicity: "hypertonic", simpleSugar: true } },
   { canonicalName: "cola", category: "drink", aliases: ["soda", "coke", "pop", "soft drink"], attributes: { tonicity: "hypertonic", simpleSugar: true, caffeine: true } },
-  { canonicalName: "sports drink", category: "drink", aliases: ["gatorade", "powerade", "electrolyte drink"], attributes: { tonicity: "hypertonic", simpleSugar: true, lowSodium: true } },
+  { canonicalName: "sports drink", category: "drink", aliases: ["gatorade", "powerade", "electrolyte drink"], attributes: { tonicity: "isotonic", simpleSugar: true, lowSodium: true } },
   { canonicalName: "oral rehydration solution", category: "drink", aliases: ["ors", "rehydration salts", "st mark's solution", "electrolyte solution"], attributes: { tonicity: "ors", sodiumBand: "sbs-range" } },
   { canonicalName: "broth", category: "drink", aliases: ["bouillon", "chicken broth", "soup broth"], attributes: { tonicity: "salty" } },
   { canonicalName: "milk", category: "drink", aliases: ["dairy milk"], attributes: { lactose: true } },

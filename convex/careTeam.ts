@@ -101,7 +101,7 @@ export const moderate = internalAction({
     let itemId: Id<"items"> | undefined;
     if (data.itemName) {
       const c: Canonical = await ctx.runAction(internal.canonicalize.run, { text: data.itemName });
-      itemId = c.itemId;
+      itemId = c.itemId ?? undefined;
     }
     // Rules screen only what the user wrote; the question is our own reviewed
     // ASK line (it may carry the product's printed strength) and is context for Claude.

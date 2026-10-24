@@ -73,11 +73,14 @@ export const submit = action({
       ctx.runAction(internal.canonicalize.run, { text: insteadOf }),
       ctx.runAction(internal.canonicalize.run, { text: use }),
     ]);
+    for (const [c, typed] of [[a, insteadOf], [b, use]] as const) {
+      if (!c.itemId) throw new ConvexError(`Villi couldn't find "${typed}" in the FDA label list. Check the spelling on the label.`);
+    }
     if (a.itemId === b.itemId) throw new ConvexError("Those look like the same thing.");
     return await ctx.runMutation(internal.swaps.insertSwap, {
       profileId: profile._id,
-      insteadOfItemId: a.itemId,
-      useItemId: b.itemId,
+      insteadOfItemId: a.itemId!,
+      useItemId: b.itemId!,
       note: args.note.trim().slice(0, 280),
     });
   },

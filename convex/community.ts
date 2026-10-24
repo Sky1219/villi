@@ -1,20 +1,16 @@
 import { v } from "convex/values";
 import { internalQuery, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { requireProfile } from "./profiles";
-import type { Id } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import { ANATOMY_KEYS, ANATOMY_LABELS, type AnatomyKey } from "./lib/anatomy";
 import { checkSwap } from "./lib/swapCheck";
 import { anatomyValidator } from "./schema";
 
 type Outcome = "helped" | "neutral" | "hurt";
 
-// The only path that changes counters. Call it in the same mutation that flips
-// a log entry's `pooled` to true (delta 1) or back from true (delta -1).
-export async function applyPooledTransition(
-  ctx: MutationCtx,
-  entry: { itemId: Id<"items">; anatomyKey: string; outcome: Outcome; synthetic: boolean },
-  delta: 1 | -1,
-) {
+type CountedEntry = { itemId: Id<"items">; anatomyKey: string; outcome: Outcome; synthetic: boolean };
+
+async function bump(ctx: MutationCtx, entry: CountedEntry, delta: 1 | -1) {
   const row = await ctx.db
     .query("aggregates")
     .withIndex("by_itemId_and_anatomyKey", (q) =>
@@ -39,6 +35,31 @@ export async function applyPooledTransition(
     [entry.outcome]: Math.max(0, row[entry.outcome] + delta),
     syntheticCount: Math.max(0, row.syntheticCount + synth),
   });
+}
+
+// The only path that changes counters. Call it in the same mutation that flips
+// a log entry's `pooled` to true (delta 1) or back from true (delta -1).
+// Counters count people, not entries: one pooled entry per profile and item,
+// the latest outcome wins, so five logs from one person count once.
+export async function applyPooledTransition(
+  ctx: MutationCtx,
+  entry: Pick<Doc<"log_entries">, "_id" | "profileId" | "anatomyKey" | "outcome" | "synthetic" | "createdAt"> & { itemId: Id<"items"> },
+  delta: 1 | -1,
+) {
+  const siblings = await ctx.db
+    .query("log_entries")
+    .withIndex("by_profileId_and_itemId", (q) => q.eq("profileId", entry.profileId).eq("itemId", entry.itemId))
+    .order("desc")
+    .take(200);
+  const latestOther = siblings
+    .filter((l) => l._id !== entry._id && l.pooled === true)
+    .reduce<Doc<"log_entries"> | null>((best, l) => (!best || l.createdAt > best.createdAt ? l : best), null);
+  const counted = (l: Doc<"log_entries">): CountedEntry => ({ itemId: entry.itemId, anatomyKey: l.anatomyKey, outcome: l.outcome, synthetic: l.synthetic });
+  // Ties go to the entry being applied, which is the newer write.
+  const isLatest = !latestOther || entry.createdAt >= latestOther.createdAt;
+  if (!isLatest) return;
+  if (latestOther) await bump(ctx, counted(latestOther), delta === 1 ? -1 : 1);
+  await bump(ctx, { itemId: entry.itemId, anatomyKey: entry.anatomyKey, outcome: entry.outcome, synthetic: entry.synthetic }, delta);
 }
 
 export type StratifiedCounts = {

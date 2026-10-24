@@ -6,14 +6,16 @@ import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { categoryValidator } from "./schema";
 import { anthropicClient, fastModel } from "./lib/llm";
+import type { LabelResult } from "./fda";
 
 type Category = "pill" | "drink" | "food" | "action";
 export type Canonical = {
-  itemId: Id<"items">;
+  // null for a pill with no FDA label: it is answered but never added to the catalog.
+  itemId: Id<"items"> | null;
   canonicalName: string;
   category: Category;
   attributes: Doc<"items">["attributes"];
-  path: "exact" | "model-match" | "created";
+  path: "exact" | "model-match" | "created" | "unlisted";
 };
 
 const RELEASE_WORDS = /\b(er|xl|xr|sr|cr|dr|ec|extended|sustained|delayed|enteric)\b/i;
@@ -22,7 +24,7 @@ const CanonSchema = z.object({
   matchCanonicalName: z.string().nullable(),
   canonicalName: z.string(),
   category: z.enum(["pill", "drink", "food", "action"]),
-  tonicity: z.enum(["hypotonic", "hypertonic", "ors", "salty", "none"]),
+  tonicity: z.enum(["hypotonic", "isotonic", "hypertonic", "ors", "salty", "none"]),
   simpleSugar: z.boolean(),
   sugarAlcohol: z.string().nullable(),
   caffeine: z.boolean(),
@@ -31,7 +33,7 @@ const CanonSchema = z.object({
   lactose: z.boolean(),
 });
 
-const CANON_SYSTEM = `You map what a user typed (in any language) to a canonical item for an app about short bowel syndrome and ostomies. Choose matchCanonicalName ONLY from the catalog when it is the same thing (aliases, brands, translations, spelling). A medicine with different release wording (ER/XL/SR vs immediate-release, DR/EC) is a DIFFERENT item: never match across release forms. Preparations and serving forms of a catalog item are that item: frozen, chilled, flavored, homemade, diluted, "ice pops", "over ice", a brand of it (e.g. "ORS ice pops" and "Pedialyte popsicles" -> oral rehydration solution; "Coca-Cola" -> cola; "jasmine rice" -> white rice). Otherwise set matchCanonicalName=null and give a new canonicalName: short, lowercase, English, generic (e.g. "cola", "sports drink", "metoprolol succinate er"). Fill the attributes from general knowledge of the item; simpleSugar means a lot of added or free sugar (soda, juice, candy), not small amounts in ORS or fruit; use "none"/false when not applicable.`;
+const CANON_SYSTEM = `You map what a user typed (in any language) to a canonical item for an app about short bowel syndrome and ostomies. Choose matchCanonicalName ONLY from the catalog when it is the same thing (aliases, brands, translations, spelling). A medicine with different release wording (ER/XL/SR vs immediate-release, DR/EC) is a DIFFERENT item: never match across release forms. Preparations and serving forms of a catalog item are that item: frozen, chilled, flavored, homemade, diluted, "ice pops", "over ice", a brand of it (e.g. "ORS ice pops" and "Pedialyte popsicles" -> oral rehydration solution; "Coca-Cola" -> cola; "jasmine rice" -> white rice). Otherwise set matchCanonicalName=null and give a new canonicalName: short, lowercase, English, generic (e.g. "cola", "sports drink", "metoprolol succinate er"). Fill the attributes from general knowledge of the item. Tonicity: plain water, tea and coffee are hypotonic; sports drinks (Gatorade, Powerade) are roughly isotonic but low in sodium and sugary, so "isotonic" with simpleSugar; juice and regular soda are hypertonic. For a pill, releaseForm comes only from release wording in what was typed or a well-known product; when unsure use "none". simpleSugar means a lot of added or free sugar (soda, juice, candy), not small amounts in ORS or fruit; use "none"/false when not applicable.`;
 
 // Builder-only cleanup for a bad catalog entry and anything pointing at it.
 export const removeItem = internalMutation({
@@ -138,6 +140,15 @@ export const run = internalAction({
     if (match && (match.category !== "pill" || typedRelease === matchRelease)) {
       await ctx.runMutation(internal.canonicalize.addAlias, { itemId: match._id, alias: text });
       return { itemId: match._id, canonicalName: match.canonicalName, category: match.category, attributes: match.attributes, path: "model-match" };
+    }
+
+    // A medicine with no FDA label match is answered as unidentified, but never
+    // enters the catalog, autocomplete, community counts or swaps.
+    if (out.category === "pill") {
+      const label: LabelResult = await ctx.runAction(internal.fda.fetchLabel, { name: args.text });
+      if (!label.found) {
+        return { itemId: null, canonicalName: text, category: "pill", attributes: {}, path: "unlisted" };
+      }
     }
 
     const attributes: Doc<"items">["attributes"] = {};
