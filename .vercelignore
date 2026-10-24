@@ -1,0 +1,9 @@
+# The Vercel build only needs the Next.js app and convex/_generated + lib types.
+.env*
+!.env.example
+.planning
+.agents
+.claude
+prompt.md
+skills-lock.json
+coverage
