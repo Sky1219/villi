@@ -204,8 +204,10 @@ export const deleteMine = mutation({
     for (const q of questions) await ctx.db.delete("questions", q._id);
     const meds = await ctx.db.query("meds").withIndex("by_profileId", (q) => q.eq("profileId", p._id)).take(50);
     for (const m of meds) await ctx.db.delete("meds", m._id);
+    const links = await ctx.db.query("team_links").withIndex("by_profileId", (q) => q.eq("profileId", p._id)).take(BATCH);
+    for (const l of links) await ctx.db.delete("team_links", l._id);
 
-    const more = logs.length === BATCH || answers.length === 50 || votes.length === BATCH || swaps.length === BATCH || care.length === BATCH || questions.length === BATCH;
+    const more = logs.length === BATCH || answers.length === 50 || votes.length === BATCH || swaps.length === BATCH || care.length === BATCH || questions.length === BATCH || links.length === BATCH;
     if (more) return { done: false };
     await ctx.db.delete("profiles", p._id);
     return { done: true };

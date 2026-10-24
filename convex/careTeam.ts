@@ -1,6 +1,6 @@
 import { ConvexError, v } from "convex/values";
 import { runIdValidator, runResultValidator } from "@convex-dev/action-retrier";
-import { internalAction, internalMutation, internalQuery, mutation, query } from "./_generated/server";
+import { internalAction, internalMutation, internalQuery, mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { professionalTypeValidator, resultingChangeValidator } from "./schema";
@@ -10,6 +10,43 @@ import { CARE_TEAM_MODERATION_SYSTEM, prefilter } from "./lib/moderation";
 import { ANATOMY_KEYS, ANATOMY_LABELS, type AnatomyKey } from "./lib/anatomy";
 import { claudeModerate } from "./moderation";
 import type { Canonical } from "./canonicalize";
+import { sheetFor } from "./sheet";
+import { LINK_CHOICES } from "./lib/careFor";
+import { statusOf } from "./questions";
+
+// Inserts a care-team answer, marks the question answered and schedules the
+// same moderation pass, whoever recorded it.
+async function recordAnswer(
+  ctx: MutationCtx,
+  me: Doc<"profiles">,
+  q: Doc<"questions">,
+  a: {
+    professionalType: Doc<"care_team_answers">["professionalType"];
+    answerText: string;
+    resultingChange: NonNullable<Doc<"care_team_answers">["resultingChange"]>;
+    source: "self" | "team_link";
+  },
+) {
+  const id = await ctx.db.insert("care_team_answers", {
+    profileId: me._id,
+    anatomySnapshot: me.anatomy,
+    anatomyKey: me.anatomyKey,
+    questionId: q._id,
+    questionText: q.text,
+    professionalType: a.professionalType,
+    answerText: a.answerText,
+    resultingChange: a.resultingChange,
+    source: a.source,
+    pooled: null,
+    clinicianEndorsements: [],
+    synthetic: false,
+    createdAt: Date.now(),
+  });
+  await ctx.db.patch("questions", q._id, { resolved: true, status: "answered", askedAt: q.askedAt ?? Date.now() });
+  const runId = await retrier.run(ctx, internal.careTeam.moderate, { id }, { onComplete: internal.careTeam.onModerated });
+  await ctx.db.patch("care_team_answers", id, { moderationRunId: runId });
+  return id;
+}
 
 // "Log the answer" from the appointment sheet. Hidden until moderated.
 export const logAnswer = mutation({
@@ -26,24 +63,135 @@ export const logAnswer = mutation({
     if (!q || q.profileId !== me._id) throw new ConvexError("Question not found");
     const answerText = args.answerText.trim().slice(0, 500);
     if (!answerText) throw new ConvexError("What did they say?");
-    const id = await ctx.db.insert("care_team_answers", {
-      profileId: me._id,
-      anatomySnapshot: me.anatomy,
-      anatomyKey: me.anatomyKey,
-      questionId: q._id,
-      questionText: q.text,
+    return await recordAnswer(ctx, me, q, { professionalType: args.professionalType, answerText, resultingChange: args.resultingChange, source: "self" });
+  },
+});
+
+// ---- Care-team link: /team/<token>
+
+const LINK_DAYS = 14;
+const MAX_ACTIVE_LINKS = 3;
+
+// 24 random bytes (192 bits) as base64url.
+function newToken(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(24));
+  return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+const isActive = (l: Doc<"team_links">) => !l.revokedAt && !l.expiredAt;
+
+export const createLink = mutation({
+  args: { anonId: v.string() },
+  handler: async (ctx, args) => {
+    const me = await requireProfile(ctx, args.anonId);
+    const links = await ctx.db
+      .query("team_links")
+      .withIndex("by_profileId", (q) => q.eq("profileId", me._id))
+      .order("desc")
+      .take(20);
+    const now = Date.now();
+    if (links.filter((l) => isActive(l) && l.expiresAt > now).length >= MAX_ACTIVE_LINKS) {
+      throw new ConvexError("There are already 3 active links. Revoke one first.");
+    }
+    if (links.filter((l) => l.createdAt > now - 3_600_000).length >= 6) {
+      throw new ConvexError("That's a lot of links in an hour. Try again later.");
+    }
+    const expiresAt = now + LINK_DAYS * 86_400_000;
+    const token = newToken();
+    const id = await ctx.db.insert("team_links", { profileId: me._id, token, createdAt: now, expiresAt });
+    // Time-based state is written by a scheduled mutation, never read from the clock in a query.
+    await ctx.scheduler.runAt(expiresAt, internal.careTeam.expireLink, { id });
+    return { token, expiresAt };
+  },
+});
+
+export const expireLink = internalMutation({
+  args: { id: v.id("team_links") },
+  handler: async (ctx, args) => {
+    const l = await ctx.db.get("team_links", args.id);
+    if (l && !l.expiredAt) await ctx.db.patch("team_links", l._id, { expiredAt: Date.now() });
+    return null;
+  },
+});
+
+export const revokeLink = mutation({
+  args: { anonId: v.string(), token: v.string() },
+  handler: async (ctx, args) => {
+    const me = await requireProfile(ctx, args.anonId);
+    const l = await ctx.db.query("team_links").withIndex("by_token", (q) => q.eq("token", args.token)).unique();
+    if (!l || l.profileId !== me._id) throw new ConvexError("Link not found");
+    if (!l.revokedAt) await ctx.db.patch("team_links", l._id, { revokedAt: Date.now() });
+    return null;
+  },
+});
+
+export const myLinks = query({
+  args: { anonId: v.string() },
+  handler: async (ctx, args) => {
+    const me = await requireProfile(ctx, args.anonId);
+    const links = await ctx.db
+      .query("team_links")
+      .withIndex("by_profileId", (q) => q.eq("profileId", me._id))
+      .order("desc")
+      .take(20);
+    return links.filter(isActive).map((l) => ({ token: l.token, createdAt: l.createdAt, expiresAt: l.expiresAt }));
+  },
+});
+
+async function linkProfile(ctx: QueryCtx | MutationCtx, token: string) {
+  if (token.length < 30) return null;
+  const l = await ctx.db.query("team_links").withIndex("by_token", (q) => q.eq("token", token)).unique();
+  if (!l || !isActive(l)) return null;
+  const p = await ctx.db.get("profiles", l.profileId);
+  return p ? { link: l, profile: p } : null;
+}
+
+// The read-only view behind /team/<token>: the sheet, in the third person.
+// Never returns the anonId or any other profile's data.
+export const linkView = query({
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const found = await linkProfile(ctx, args.token);
+    if (!found) return { expired: true as const };
+    const sheet = await sheetFor(ctx, found.profile);
+    return { expired: false as const, expiresAt: found.link.expiresAt, ...sheet };
+  },
+});
+
+// The link holder records what happened to one question. Same answer row and
+// outcome as the patient's own flow, marked source "team_link", moderated the
+// same way before it can ever be shared.
+export const linkRespond = mutation({
+  args: {
+    token: v.string(),
+    questionId: v.id("questions"),
+    professionalType: professionalTypeValidator,
+    resultingChange: resultingChangeValidator,
+    note: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const found = await linkProfile(ctx, args.token);
+    if (!found || found.link.expiresAt < Date.now()) throw new ConvexError("This link has expired");
+    const { profile } = found;
+    const q = await ctx.db.get("questions", args.questionId);
+    if (!q || q.profileId !== profile._id) throw new ConvexError("Question not found");
+    if (statusOf(q) === "answered") throw new ConvexError("This question already has an answer.");
+    const recent = await ctx.db
+      .query("care_team_answers")
+      .withIndex("by_profileId", (x) => x.eq("profileId", profile._id))
+      .order("desc")
+      .take(10);
+    if (recent.filter((r) => r.source === "team_link" && r.createdAt > Date.now() - 60_000).length >= 5) {
+      throw new ConvexError("That's a lot of answers in a minute. Try again shortly.");
+    }
+    const note = args.note?.trim().slice(0, 280);
+    await recordAnswer(ctx, profile, q, {
       professionalType: args.professionalType,
-      answerText,
+      answerText: note ? note : `${LINK_CHOICES[args.resultingChange]}.`,
       resultingChange: args.resultingChange,
-      pooled: null,
-      clinicianEndorsements: [],
-      synthetic: false,
-      createdAt: Date.now(),
+      source: "team_link",
     });
-    await ctx.db.patch("questions", q._id, { resolved: true, status: "answered", askedAt: q.askedAt ?? Date.now() });
-    const runId = await retrier.run(ctx, internal.careTeam.moderate, { id }, { onComplete: internal.careTeam.onModerated });
-    await ctx.db.patch("care_team_answers", id, { moderationRunId: runId });
-    return id;
+    return null;
   },
 });
 

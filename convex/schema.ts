@@ -226,6 +226,9 @@ export default defineSchema({
     professionalType: professionalTypeValidator,
     answerText: v.string(),
     resultingChange: v.optional(resultingChangeValidator),
+    // Who recorded it: the patient or caregiver ("self", the default) or the
+    // holder of a care-team link. The link holder is not identity-verified.
+    source: v.optional(v.union(v.literal("self"), v.literal("team_link"))),
     pooled,
     moderationReason: v.optional(v.string()),
     nudgeUser: v.optional(v.string()),
@@ -244,6 +247,20 @@ export default defineSchema({
       searchField: "questionText",
       filterFields: ["pooled", "anatomyKey"],
     }),
+
+  // "Share with the care team": a read-only capability link to the sheet, where
+  // the holder can record what happened to each question. Unguessable token,
+  // 14-day expiry (set by a scheduled mutation), revocable.
+  team_links: defineTable({
+    profileId: v.id("profiles"),
+    token: v.string(),
+    createdAt: v.number(),
+    expiresAt: v.number(),
+    expiredAt: v.optional(v.number()),
+    revokedAt: v.optional(v.number()),
+  })
+    .index("by_token", ["token"])
+    .index("by_profileId", ["profileId"]),
 
   questions: defineTable({
     profileId: v.id("profiles"),

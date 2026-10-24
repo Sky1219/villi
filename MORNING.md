@@ -17,7 +17,8 @@ Started 05:52 PDT (H0). Updated after every task. Broken things first.
 | A4 cut features out of the agent | 6cccf84 | Done (code read + tsc/tests) |
 | A5 end-to-end pipeline test | a3d0261 | Done; `convex/pipeline.test.ts` (3 tests) |
 | B1 medicine list review | 00ee2d2 | Done, tests only; UI not opened in a browser |
-| B2 warning-sign escalation | (next commit) | Done, tests only; UI not opened in a browser |
+| B2 warning-sign escalation | 7c12637 | Done, tests only; UI not opened in a browser |
+| B3 care-team link | (next commit) | Done, tests only; UI not opened in a browser |
 
 ## Decisions to check
 
@@ -51,6 +52,8 @@ Started 05:52 PDT (H0). Updated after every task. Broken things first.
 - `convex codegen` can't run here, so I added the two lines for `convex/lib/medReview.ts` to `convex/_generated/api.d.ts` by hand, exactly as codegen writes them. Your next `npx convex dev` or deploy regenerates the file.
 
 - B2: `convex/lib/warningSigns.ts` scans a log note for dehydration signs (thirst, dark or less urine, dizziness or lightheadedness, much higher output, dry mouth) and emergency phrases (fainting/passing out, confusion, chest pain, blood/bleeding, but not "blood pressure/sugar/test"). Negations count as matches. Emergency outranks dehydration. The card shows on the client the moment the entry is saved (Quick log on home, and the log card on an answer), and stays until "Got it" (`logs.ackWarning`). A "worse" drink with no signs gets the softer card (no "today/now"); on Quick log that one appears once moderation has identified the item as a drink, a few seconds later, because the client doesn't know the category. The cards cite `uoaa-2025#dehydration-signs` (see the corpus note about Takeda sponsorship). The sheet, print and Markdown get "Warning signs logged": date + signs, never the note. Log notes are never shown to other users anyway; emergency words are now in the shared-entry prefilter, and a swap note with any warning sign stays private.
+
+- B3: "Share with the care team" on the sheet creates `/team/<token>`: 24 random bytes (192-bit) base64url from `crypto.getRandomValues` inside the mutation (Convex seeds randomness per execution; if you'd rather mint tokens in an action with Node crypto, that's a 10-line change). New table `team_links` (index on `token`). Expiry is 14 days and is written by a scheduled `careTeam.expireLink` at `expiresAt` (no wall clock in the query); `linkRespond` also checks the clock. Max 3 active links, max 6 created per hour, max 5 link answers per minute, one answer per question. All link functions live in `convex/careTeam.ts`; `sheet.get` became `sheetFor()` so the team view shows exactly the sheet. The link holder picks their role (pharmacist/dietitian/doctor/nurse) and one of "Reviewed: form changed / Monitoring started / No change needed / Will discuss at a visit", which map to the existing `resultingChange` values; an optional note (≤280) becomes the answer text, else the choice's label does. It writes the same `care_team_answers` row with new `source: "team_link"`, goes through the same care-team moderation, and the patient's sheet says "Recorded through the care-team link (the person with the link, not identity-checked)". Delete my data removes the links.
 
 ## Couldn't do
 

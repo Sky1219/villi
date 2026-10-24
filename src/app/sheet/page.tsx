@@ -11,6 +11,7 @@ import { LogStatus } from "@/components/LogCard";
 import { CHANGE_CHOICES, CHANGE_SHORT, patternSentence, sheetMarkdown, warningSentence, type ResultingChange } from "@/lib/sheet";
 import { personFor, preparedBy } from "@convex/lib/careFor";
 import { MedReview } from "@/components/MedReview";
+import { ShareWithTeam } from "@/components/ShareWithTeam";
 
 const PROS = ["pharmacist", "dietitian", "doctor", "nurse"] as const;
 
@@ -233,6 +234,8 @@ function Sheet({ anonId }: { anonId: string }) {
         </button>
       </div>
 
+      <ShareWithTeam anonId={anonId} />
+
       <section className="space-y-3">
         <h2 className="font-bold">Questions to ask ({d.open.length})</h2>
         {d.open.length === 0 && <p className="text-muted">No open questions. Add one from any answer&apos;s question card.</p>}
@@ -295,6 +298,9 @@ function Sheet({ anonId }: { anonId: string }) {
                     <span className="text-xs font-bold uppercase text-muted">{q.answer.professionalType}: </span>
                     {q.answer.text}
                   </p>
+                  {q.answer.source === "team_link" && (
+                    <p className="mt-1 text-xs font-bold text-info">Recorded through the care-team link (the person with the link, not identity-checked).</p>
+                  )}
                   <Outcome anonId={anonId} id={q.answer._id} value={q.answer.resultingChange} />
                   <LogStatus status={q.answer.status} nudge={null} />
                 </>

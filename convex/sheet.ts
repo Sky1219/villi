@@ -1,6 +1,6 @@
 import { v } from "convex/values";
-import { query } from "./_generated/server";
-import type { Id } from "./_generated/dataModel";
+import { query, type QueryCtx } from "./_generated/server";
+import type { Doc, Id } from "./_generated/dataModel";
 import { requireProfile } from "./profiles";
 import { statusOf } from "./questions";
 import { describeAnatomy } from "./lib/anatomy";
@@ -10,8 +10,12 @@ import { scanWarningSigns } from "./lib/warningSigns";
 // Everything the appointment sheet shows, in one reactive query.
 export const get = query({
   args: { anonId: v.string() },
-  handler: async (ctx, args) => {
-    const me = await requireProfile(ctx, args.anonId);
+  handler: async (ctx, args) => sheetFor(ctx, await requireProfile(ctx, args.anonId)),
+});
+
+// Shared by the patient's sheet and the read-only care-team link view.
+export async function sheetFor(ctx: QueryCtx, me: Doc<"profiles">) {
+  {
 
     // Questions, with the care-team answer the user logged for each.
     const questions = await ctx.db
@@ -91,6 +95,8 @@ export const get = query({
                   text: a.answerText,
                   resultingChange: a.resultingChange ?? null,
                   status: a.pooled === null ? "checking" : a.pooled ? "shared" : "private",
+                  // "team_link" when the person holding the care-team link recorded it.
+                  source: a.source ?? "self",
                 }
               : null,
           };
@@ -99,5 +105,5 @@ export const get = query({
       warnings,
       meds: medRows,
     };
-  },
-});
+  }
+}

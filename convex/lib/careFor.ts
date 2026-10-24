@@ -35,3 +35,12 @@ export function preparedBy(role: string, caresFor: CaresFor | null | undefined):
   if (role !== "caregiver") return "the patient";
   return `a family caregiver (${caresFor ? CAREGIVER[caresFor] : "a family member"})`;
 }
+
+// What the holder of a care-team link can record for a question, mapped to the
+// same outcome the patient's "What did they say?" flow uses.
+export const LINK_CHOICES = {
+  formulation_changed: "Reviewed: form changed",
+  dose_monitored: "Monitoring started",
+  no_change: "No change needed",
+  pending: "Will discuss at a visit",
+} as const;
