@@ -175,7 +175,6 @@ function Onboarding({ anonId, profile }: { anonId: string; profile: Profile | nu
             [
               ["patient", "Me, I'm the patient"],
               ["caregiver", "Someone I care for"],
-              ["clinician", "I'm a clinician"],
             ] as const,
             profile ? role : null,
             (v) => {

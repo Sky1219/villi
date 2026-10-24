@@ -40,8 +40,8 @@ export function ScanBox({ anonId, initialText = "" }: { anonId: string; initialT
 
   return (
     <section className="rounded-2xl border border-border bg-surface p-4 shadow-sm">
-      <h2 className="text-lg font-bold">Check a medicine, drink or food</h2>
-      <p className="mb-3 text-sm text-muted">Photograph a medicine or drink label, or type the name as it&apos;s printed.</p>
+      <h2 className="text-lg font-bold">Check a medicine or drink</h2>
+      <p className="mb-3 text-sm text-muted">Photograph a medicine or drink label, or type the name as it&apos;s printed. Villi checks pills and drinks; the community teaches food, so log how a food went below.</p>
       <button
         type="button"
         onClick={() => fileRef.current?.click()}

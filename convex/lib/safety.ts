@@ -1,7 +1,7 @@
 // Deterministic safety checks that run before (and regardless of) the Claude
 // reviewer. Pure functions: unit-testable with no API key, and they fail closed.
 import { AnswerSchema, type Answer, type ReviewerDecision } from "./answerSchema";
-import { captionFor, type PermeabilityClass } from "./cat";
+import type { PermeabilityClass } from "./cat";
 import type { DiagramState } from "./anatomy";
 
 // Everything the agent actually retrieved during this run. Citations must point here.
@@ -177,34 +177,9 @@ export function lintAnswer(input: Answer, reg: CitationRegistry): LintResult {
       answer.swapToAskAbout = null;
     }
   }
-  // The illustration's caption is a factual claim: fixed text chosen by rule, cited
-  // to a guideline or this item's label, and never a number.
   const english = !reg.language || reg.language.startsWith("en");
-  if (answer.simulation) {
-    const sim = answer.simulation;
-    const kinds = extractCitations(sim.citation).map((c) => c.kind);
-    const bad =
-      checkCitation(sim.citation, reg) ??
-      (kinds.every((k) => k === "G" || k === "L") ? null : "needs a guideline or label citation");
-    const ctx = reg.simulation;
-    const expected = ctx && english ? captionFor(sim.formulation, ctx.diagram) : null;
-    if (sim.caption !== undefined && /\d|percent|fraction absorbed/i.test(sim.caption)) {
-      blocking.push(`numeric language in the illustration caption: "${sim.caption}"`);
-    } else if (sim.caption !== undefined && sim.caption !== expected) {
-      blocking.push("illustration caption is not the fixed caption for this formulation and anatomy");
-    } else if (bad) {
-      issues.push(`removed illustration: ${bad}`);
-      answer.simulation = null;
-    } else if (!ctx || ctx.releaseForm !== sim.formulation) {
-      issues.push("removed illustration: formulation does not match the label's release form");
-      answer.simulation = null;
-    } else if (!expected) {
-      issues.push("removed illustration: nothing to illustrate for this anatomy or language");
-      answer.simulation = null;
-    } else {
-      answer.simulation = { ...sim, permeabilityClass: ctx.permeabilityClass, caption: expected };
-    }
-  }
+  // The release illustration is cut from this build: never shown, whatever the draft says.
+  answer.simulation = null;
   if (answer.swapToAskAbout) {
     const bad = checkCitation(answer.swapToAskAbout.citation, reg);
     if (bad) {

@@ -62,8 +62,8 @@ export function QuickProfileForm({ anonId, onDone }: { anonId: string; onDone?: 
     >
       <fieldset>
         <legend className="mb-2 font-bold">I am</legend>
-        <div className="grid grid-cols-3 gap-2">
-          {(["patient", "caregiver", "clinician"] as const).map((r) => (
+        <div className="grid grid-cols-2 gap-2">
+          {(["patient", "caregiver"] as const).map((r) => (
             <button
               type="button"
               key={r}
@@ -73,7 +73,7 @@ export function QuickProfileForm({ anonId, onDone }: { anonId: string; onDone?: 
                 role === r ? "border-accent bg-accent-soft font-bold" : "border-border bg-surface"
               }`}
             >
-              {r === "patient" ? "the patient" : r === "caregiver" ? "a caregiver" : "a clinician"}
+              {r === "patient" ? "the patient" : "a caregiver"}
             </button>
           ))}
         </div>

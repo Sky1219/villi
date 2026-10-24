@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
-import type { Answer } from "@convex/lib/answerSchema";
+import { FOOD_MESSAGE, type Answer } from "@convex/lib/answerSchema";
 import { useAnonId } from "@/lib/anon";
 import { citationLabel } from "@/lib/citations";
 import { friendlyError } from "@/lib/errors";
@@ -102,7 +102,6 @@ function Receipt({
             </div>
           )}
           <p className="text-muted">
-            Confidence: {final.confidence}.{" "}
             {edited ? "A second reviewer checked this answer and edited it before you saw it." : "A second reviewer checked this answer before you saw it."}
           </p>
         </div>
@@ -213,7 +212,6 @@ function AnswerCard({
   );
   const style = STATE_STYLE[final.state] ?? STATE_STYLE["cant-tell"];
   // Only a caption the review filled in by rule is ever drawn.
-  const simulation = final.simulation?.caption ? { ...final.simulation, caption: final.simulation.caption } : null;
 
   const lang = profile?.language ?? "en";
   // Reading order: verdict, the reasoning behind it, the question to take away, then supporting evidence.
@@ -228,7 +226,7 @@ function AnswerCard({
 
       {profile && (
         <section className="rounded-2xl border border-border bg-surface p-4">
-          <h2 className="mb-2 font-bold">{final.diagram || simulation ? "Where this matters in your gut" : "Your anatomy"}</h2>
+          <h2 className="mb-2 font-bold">{final.diagram ? "Where this matters in your gut" : "Your anatomy"}</h2>
           <GutDiagram
             removed={profile.diagram.removed}
             stoma={profile.diagram.stomaAfter ? { afterSegment: profile.diagram.stomaAfter } : null}
@@ -237,8 +235,6 @@ function AnswerCard({
                 ? { segmentIds: final.diagram.segmentIds as SegmentId[], mode: final.diagram.mode, label: final.diagram.label }
                 : null
             }
-            simulation={simulation}
-            citations={simulation && <Citations citation={simulation.citation} final={final} titles={titles} />}
           />
           {final.diagram && <Citations citation={final.diagram.citation} final={final} titles={titles} />}
         </section>
@@ -562,9 +558,20 @@ function AnswerView({ anonId, answerId }: { anonId: string; answerId: Id<"answer
 
       {(a.status === "failed" || a.status === "blocked") && (
         <section className="rounded-2xl border border-border bg-surface-2 p-4">
-          <p className="font-bold">{a.status === "blocked" ? "This answer didn't pass the safety check." : "Something went wrong."}</p>
+          <p className="font-bold">
+            {a.status === "blocked"
+              ? "This answer didn't pass the safety check."
+              : a.error === FOOD_MESSAGE
+                ? "Villi checks pills and drinks."
+                : "Something went wrong."}
+          </p>
           <p className="mt-1 text-sm text-muted">{a.error}</p>
-          {retryText && !a.isSaw && (
+          {a.error === FOOD_MESSAGE && (
+            <Link href="/" className="mt-3 inline-flex min-h-12 items-center font-bold text-accent underline">
+              Log how a food went
+            </Link>
+          )}
+          {retryText && !a.isSaw && a.error !== FOOD_MESSAGE && (
             <button
               onClick={async () => {
                 try {

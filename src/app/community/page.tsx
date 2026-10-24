@@ -13,14 +13,9 @@ import { CareOutcomesList } from "@/components/CareOutcomes";
 
 const FILTERS = [{ key: "mine", label: "Like me" }, { key: "all", label: "Everyone" }, ...ANATOMY_KEYS.map((k) => ({ key: k, label: ANATOMY_LABELS[k] }))];
 
-function Badges({ synthetic, endorsements }: { synthetic: boolean; endorsements: number }) {
+function Badges({ synthetic }: { synthetic: boolean }) {
   return (
     <span className="flex flex-wrap gap-1">
-      {endorsements > 0 && (
-        <span className="rounded-full bg-info-soft px-2.5 py-1 text-xs font-bold text-info">
-          Clinician endorsed{endorsements > 1 ? ` ×${endorsements}` : ""} · demo verification
-        </span>
-      )}
       {synthetic && <span className="rounded-full bg-surface-2 px-2.5 py-1 text-xs font-bold text-muted">demo data</span>}
     </span>
   );
@@ -98,7 +93,6 @@ function SwapForm({ anonId }: { anonId: string }) {
 function Swaps({ anonId, filter }: { anonId: string; filter: string }) {
   const data = useQuery(api.swaps.list, { anonId, anatomy: filter });
   const upvote = useMutation(api.swaps.upvote);
-  const endorse = useMutation(api.swaps.endorse);
   const [error, setError] = useState<string | null>(null);
   const run = (p: Promise<unknown>) => p.catch((e) => setError(friendlyError(e)));
   if (!data) return <p className="text-muted">Loading…</p>;
@@ -140,7 +134,7 @@ function Swaps({ anonId, filter }: { anonId: string; filter: string }) {
                 <p className="text-lg font-bold leading-snug">{s.use}</p>
                 {s.note && <p className="mt-1">{s.note}</p>}
                 <p className="mt-1 text-xs text-muted">Posted by someone with {s.anatomyLabel}</p>
-                <Badges synthetic={s.synthetic} endorsements={s.endorsements} />
+                <Badges synthetic={s.synthetic} />
                 <Cites citations={s.citations} />
               </div>
             </div>
@@ -158,15 +152,6 @@ function Swaps({ anonId, filter }: { anonId: string; filter: string }) {
                   <span className="sr-only"> upvotes. Upvote this swap</span>
                 </span>
               </button>
-              {data.canEndorse && (
-                <button
-                  onClick={() => run(endorse({ anonId, swapId: s._id }))}
-                  aria-pressed={s.youEndorsed}
-                  className={`min-h-11 rounded-xl border px-3 text-sm font-bold ${s.youEndorsed ? "border-info bg-info-soft text-info" : "border-border"}`}
-                >
-                  {s.youEndorsed ? "Endorsed ✓" : "Endorse as clinician"}
-                </button>
-              )}
             </div>
           </li>
         ))}
@@ -178,7 +163,6 @@ function Swaps({ anonId, filter }: { anonId: string; filter: string }) {
 
 function CareTeam({ anonId, filter }: { anonId: string; filter: string }) {
   const data = useQuery(api.careTeam.list, { anonId, anatomy: filter });
-  const endorse = useMutation(api.careTeam.endorse);
   const [error, setError] = useState<string | null>(null);
   const run = (p: Promise<unknown>) => p.catch((e) => setError(friendlyError(e)));
   if (!data) return <p className="text-muted">Loading…</p>;
@@ -210,18 +194,9 @@ function CareTeam({ anonId, filter }: { anonId: string; filter: string }) {
                 <p className="font-bold">{a.question}</p>
                 <p className="mt-1">{a.answer}</p>
                 <p className="mt-1 text-xs text-muted">Reported by someone with {a.anatomyLabel}</p>
-                <Badges synthetic={a.synthetic} endorsements={a.endorsements} />
+                <Badges synthetic={a.synthetic} />
               </div>
             </div>
-            {data.canEndorse && (
-              <button
-                onClick={() => run(endorse({ anonId, id: a._id }))}
-                aria-pressed={a.youEndorsed}
-                className={`mt-3 min-h-11 rounded-xl border px-3 text-sm font-bold ${a.youEndorsed ? "border-info bg-info-soft text-info" : "border-border"}`}
-              >
-                {a.youEndorsed ? "Endorsed ✓" : "Endorse as clinician"}
-              </button>
-            )}
           </li>
         ))}
         {data.answers.length === 0 && <li className="text-muted">No care-team answers for this anatomy yet.</li>}

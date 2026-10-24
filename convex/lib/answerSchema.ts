@@ -18,7 +18,10 @@ export const SEGMENT_IDS = [
 // is refused too: Villi never gives doses. Follow-ups are handled by the agent and reviewer.
 export const AMOUNT_QUESTION_RE = /\b(?:what|which)\s+(?:dose|dosage|amount)\b|\bhow\s+(?:much|many|often)\b/i;
 export const OPEN_QUESTION_RE = /\?\s*$|^(what|which|can i|could i|is there|are there|qu[eé]|cu[aá]l)\b|\b(?:what|which)\s+(?:dose|dosage|amount)\b|\bhow\s+(?:much|many|often)\b/i;
-export const OPEN_QUESTION_MESSAGE = "Villi checks one named item at a time. Type the name of a medicine, drink or food.";
+export const OPEN_QUESTION_MESSAGE = "Villi checks one named item at a time. Type the name of a medicine or drink.";
+// Villi checks pills and drinks; foods are logged, so the community pool still learns them.
+export const FOOD_MESSAGE =
+  "Villi checks pills and drinks. The community teaches food: log how a food went from the home screen, and people with the same anatomy see the counts.";
 export const AMOUNT_QUESTION_MESSAGE =
   "Villi doesn't give doses or amounts; that's a question for the pharmacist or doctor. Type just the name to check the medicine.";
 
