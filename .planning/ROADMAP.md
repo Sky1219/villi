@@ -37,7 +37,16 @@ Decimal phases appear between their surrounding integers in numeric order.
   5. `.env.example` lists every key, secrets live only in Convex env (dev and prod), and no secret is committed
 **Checkpoint**: Real phone opens the deployed URL, `/demo?as=father` shows his profile, seed counts shown in the Convex dashboard; commit
 **Research flag**: Spike first: Voyage endpoint and account limits, Anthropic SDK in Convex default runtime vs `"use node"` (15-minute cap), Convex env wiring for dev and prod
-**Plans**: TBD
+**Plans:** 7 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Walking skeleton: legitimacy check, pinned toolchain, full schema, tracer quick-profile round trip pushed to dev
+- [ ] 01-02-PLAN.md — Profile contract tests (SAFE-07 allow-list, pooled tri-state, anatomy table) and the home screen (demo buttons, dropdown form, palette)
+- [ ] 01-03-PLAN.md — `/demo?as=father|peer` clone gated by DEMO_MODE
+- [ ] 01-04-PLAN.md — Cited guideline corpus (51 chunks, 10 sources) with the Part A correction suite
+- [ ] 01-05-PLAN.md — Voyage embeddings (hash-gated embed:run) and guideline search with automatic full-text fallback
+- [ ] 01-06-PLAN.md — Idempotent synthetic seed under 60 s: items, chunks, father/peer templates, community, aggregates
+- [ ] 01-07-PLAN.md — Env and public-surface tests, README, builder to-do, Vercel + Convex prod deploy, phone check, runtime spike
 **UI hint**: yes
 
 ### Phase 2: Pill Answers End to End
@@ -155,7 +164,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/TBD | Not started | - |
+| 1. Foundation | 0/7 | Planned | - |
 | 2. Pill Answers End to End | 0/TBD | Not started | - |
 | 3. Anatomy Onboarding & Answer Diagram | 0/TBD | Not started | - |
 | 4. Drinks, Logging & Community Counts | 0/TBD | Not started | - |
