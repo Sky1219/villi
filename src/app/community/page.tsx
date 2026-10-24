@@ -85,7 +85,11 @@ function SwapForm({ anonId }: { anonId: string }) {
       <button disabled={busy} className="min-h-12 w-full rounded-xl bg-accent px-4 font-bold text-accent-ink disabled:opacity-60">
         {busy ? "Checking…" : "Share swap"}
       </button>
-      {error && <p className="text-sm text-flag">{error}</p>}
+      {error && (
+        <p role="alert" className="text-sm text-flag">
+          {error}
+        </p>
+      )}
     </form>
   );
 }
@@ -94,9 +98,16 @@ function Swaps({ anonId, filter }: { anonId: string; filter: string }) {
   const data = useQuery(api.swaps.list, { anonId, anatomy: filter });
   const upvote = useMutation(api.swaps.upvote);
   const endorse = useMutation(api.swaps.endorse);
+  const [error, setError] = useState<string | null>(null);
+  const run = (p: Promise<unknown>) => p.catch((e) => setError(friendlyError(e)));
   if (!data) return <p className="text-muted">Loading…</p>;
   return (
     <div className="space-y-4">
+      {error && (
+        <p role="alert" className="text-sm text-flag">
+          {error}
+        </p>
+      )}
       <details className="group">
         <summary className="flex min-h-12 cursor-pointer list-none items-center justify-center rounded-xl border-2 border-accent font-bold text-accent group-open:mb-3">
           Share a swap that worked for you
@@ -134,7 +145,7 @@ function Swaps({ anonId, filter }: { anonId: string; filter: string }) {
             </div>
             <div className="mt-3 flex gap-2">
               <button
-                onClick={() => upvote({ anonId, swapId: s._id })}
+                onClick={() => run(upvote({ anonId, swapId: s._id }))}
                 aria-pressed={s.youVoted}
                 className={`min-h-11 rounded-xl border px-3 text-sm font-bold ${s.youVoted ? "border-accent bg-accent-soft" : "border-border"}`}
               >
@@ -148,9 +159,9 @@ function Swaps({ anonId, filter }: { anonId: string; filter: string }) {
               </button>
               {data.canEndorse && (
                 <button
-                  onClick={() => endorse({ anonId, swapId: s._id })}
+                  onClick={() => run(endorse({ anonId, swapId: s._id }))}
                   aria-pressed={s.youEndorsed}
-                  className={`min-h-11 rounded-xl border px-3 text-sm font-bold ${s.youEndorsed ? "border-ok bg-ok-soft text-ok" : "border-border"}`}
+                  className={`min-h-11 rounded-xl border px-3 text-sm font-bold ${s.youEndorsed ? "border-info bg-info-soft text-info" : "border-border"}`}
                 >
                   {s.youEndorsed ? "Endorsed ✓" : "Endorse as clinician"}
                 </button>
@@ -167,9 +178,16 @@ function Swaps({ anonId, filter }: { anonId: string; filter: string }) {
 function CareTeam({ anonId, filter }: { anonId: string; filter: string }) {
   const data = useQuery(api.careTeam.list, { anonId, anatomy: filter });
   const endorse = useMutation(api.careTeam.endorse);
+  const [error, setError] = useState<string | null>(null);
+  const run = (p: Promise<unknown>) => p.catch((e) => setError(friendlyError(e)));
   if (!data) return <p className="text-muted">Loading…</p>;
   return (
     <div className="space-y-3">
+      {error && (
+        <p role="alert" className="text-sm text-flag">
+          {error}
+        </p>
+      )}
       <p className="text-sm text-muted">
         What other users&apos; own pharmacists, dietitians, doctors and nurses told them. Reported by another user from
         their own care team, not advice from yours. Log your own from the{" "}
@@ -196,9 +214,9 @@ function CareTeam({ anonId, filter }: { anonId: string; filter: string }) {
             </div>
             {data.canEndorse && (
               <button
-                onClick={() => endorse({ anonId, id: a._id })}
+                onClick={() => run(endorse({ anonId, id: a._id }))}
                 aria-pressed={a.youEndorsed}
-                className={`mt-3 min-h-11 rounded-xl border px-3 text-sm font-bold ${a.youEndorsed ? "border-ok bg-ok-soft text-ok" : "border-border"}`}
+                className={`mt-3 min-h-11 rounded-xl border px-3 text-sm font-bold ${a.youEndorsed ? "border-info bg-info-soft text-info" : "border-border"}`}
               >
                 {a.youEndorsed ? "Endorsed ✓" : "Endorse as clinician"}
               </button>

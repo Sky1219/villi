@@ -21,7 +21,39 @@ export function MedsEditor({ anonId, meds, checkable = false }: { anonId: string
   const [busy, setBusy] = useState(false);
   const [reading, setReading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [removedName, setRemovedName] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // A single tap removes; undo re-adds by name (the label lookup runs again).
+  async function removeMed(m: Med) {
+    setError(null);
+    try {
+      await remove({ anonId, medId: m._id });
+      setRemovedName(m.name);
+    } catch (e) {
+      setError(friendlyError(e));
+    }
+  }
+
+  async function undoRemove() {
+    if (!removedName) return;
+    try {
+      await add({ anonId, name: removedName });
+      setRemovedName(null);
+    } catch (e) {
+      setError(friendlyError(e));
+    }
+  }
+
+  async function check(m: Med) {
+    setError(null);
+    try {
+      const id = await start({ anonId, text: m.name, category: "pill" });
+      router.push(`/answer/${id}`);
+    } catch (e) {
+      setError(friendlyError(e));
+    }
+  }
 
   async function onPhoto(file: File) {
     setError(null);
@@ -51,18 +83,12 @@ export function MedsEditor({ anonId, meds, checkable = false }: { anonId: string
               <span className="block text-xs text-muted">{m.dosageForm ? m.dosageForm.toLowerCase() : "looking up the FDA label…"}</span>
             </span>
             {checkable && (
-              <button
-                onClick={async () => {
-                  const id = await start({ anonId, text: m.name, category: "pill" });
-                  router.push(`/answer/${id}`);
-                }}
-                className="min-h-11 rounded-lg px-2 text-sm font-bold text-accent"
-              >
+              <button onClick={() => check(m)} className="min-h-11 rounded-lg px-2 text-sm font-bold text-accent">
                 Check
               </button>
             )}
             <button
-              onClick={() => remove({ anonId, medId: m._id })}
+              onClick={() => removeMed(m)}
               aria-label={`Remove ${m.name}`}
               className="min-h-11 min-w-11 rounded-lg text-muted"
             >
@@ -72,6 +98,14 @@ export function MedsEditor({ anonId, meds, checkable = false }: { anonId: string
         ))}
         {meds.length === 0 && <li className="text-sm text-muted">No medicines yet.</li>}
       </ul>
+      {removedName && (
+        <p role="status" className="flex items-center justify-between gap-2 rounded-xl bg-surface-2 px-3 text-sm">
+          <span>Removed {removedName}.</span>
+          <button onClick={undoRemove} className="min-h-11 font-bold text-accent underline">
+            Undo
+          </button>
+        </p>
+      )}
       <form
         className="flex gap-2"
         onSubmit={async (e) => {
@@ -124,7 +158,11 @@ export function MedsEditor({ anonId, meds, checkable = false }: { anonId: string
           e.target.value = "";
         }}
       />
-      {error && <p className="text-sm text-flag">{error}</p>}
+      {error && (
+        <p role="alert" className="text-sm text-flag">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

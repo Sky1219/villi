@@ -102,7 +102,11 @@ export function ScanBox({ anonId, initialText = "" }: { anonId: string; initialT
       <p className="mt-3 text-xs text-muted">
         Photos are deleted as soon as the name is read. Bottle labels can show your name; Villi never stores them.
       </p>
-      {error && <p className="mt-2 text-sm text-flag">{error}</p>}
+      {error && (
+        <p role="alert" className="mt-2 text-sm text-flag">
+          {error}
+        </p>
+      )}
     </section>
   );
 }

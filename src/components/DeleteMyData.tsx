@@ -33,7 +33,11 @@ export function DeleteMyData({ anonId }: { anonId: string }) {
       >
         {busy ? "Deleting…" : "Delete my data"}
       </button>
-      {error && <p className="text-sm text-flag">{error}</p>}
+      {error && (
+        <p role="alert" className="text-sm text-flag">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

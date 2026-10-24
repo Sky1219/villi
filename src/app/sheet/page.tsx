@@ -6,6 +6,7 @@ import { useState } from "react";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { useAnonId } from "@/lib/anon";
+import { friendlyError } from "@/lib/errors";
 import { LogStatus } from "@/components/LogCard";
 import { citeText, patternSentence, sheetMarkdown } from "@/lib/sheet";
 
@@ -17,10 +18,11 @@ function LogAnswer({ anonId, questionId }: { anonId: string; questionId: Id<"que
   const [pro, setPro] = useState<(typeof PROS)[number]>("pharmacist");
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   if (!open) {
     return (
       <button onClick={() => setOpen(true)} className="mt-2 min-h-11 rounded-xl border border-accent px-3 text-sm font-bold text-accent">
-        Log the answer
+        Log what they told you
       </button>
     );
   }
@@ -30,8 +32,11 @@ function LogAnswer({ anonId, questionId }: { anonId: string; questionId: Id<"que
       onSubmit={async (e) => {
         e.preventDefault();
         setBusy(true);
+        setError(null);
         try {
           await log({ anonId, questionId, professionalType: pro, answerText: text });
+        } catch (err) {
+          setError(friendlyError(err));
         } finally {
           setBusy(false);
         }
@@ -71,6 +76,11 @@ function LogAnswer({ anonId, questionId }: { anonId: string; questionId: Id<"que
       <button disabled={busy || !text.trim()} className="min-h-12 w-full rounded-xl bg-accent font-bold text-accent-ink disabled:opacity-60">
         Save answer
       </button>
+      {error && (
+        <p role="alert" className="text-sm text-flag">
+          {error}
+        </p>
+      )}
     </form>
   );
 }

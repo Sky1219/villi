@@ -9,6 +9,7 @@ import type { Id } from "@convex/_generated/dataModel";
 import type { Answer } from "@convex/lib/answerSchema";
 import { useAnonId } from "@/lib/anon";
 import { citationLabel } from "@/lib/citations";
+import { friendlyError } from "@/lib/errors";
 import { GutDiagram } from "@/components/GutDiagram";
 import { CommunityCounts } from "@/components/CommunityCounts";
 import { LogCard } from "@/components/LogCard";
@@ -310,6 +311,7 @@ function Counts({ c }: { c: { helped: number; neutral: number; hurt: number } })
 function QuestionCard({ ask, answerId, anonId }: { ask: string; answerId: Id<"answers">; anonId: string }) {
   const add = useMutation(api.questions.addFromAnswer);
   const [added, setAdded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   return (
     <section className="rounded-2xl border-2 border-accent bg-accent-soft p-4">
       <h2 className="mb-1 text-sm font-bold uppercase tracking-wide text-accent">Ask your pharmacist or doctor</h2>
@@ -317,13 +319,23 @@ function QuestionCard({ ask, answerId, anonId }: { ask: string; answerId: Id<"an
       <button
         disabled={added}
         onClick={async () => {
-          await add({ anonId, answerId });
-          setAdded(true);
+          setError(null);
+          try {
+            await add({ anonId, answerId });
+            setAdded(true);
+          } catch (e) {
+            setError(friendlyError(e));
+          }
         }}
         className="mt-3 min-h-12 w-full rounded-xl bg-accent px-4 font-bold text-accent-ink disabled:opacity-70"
       >
         {added ? "Added to appointment sheet ✓" : "Add to appointment sheet"}
       </button>
+      {error && (
+        <p role="alert" className="mt-2 text-sm text-flag">
+          {error}
+        </p>
+      )}
     </section>
   );
 }
@@ -333,6 +345,7 @@ function FollowUp({ anonId, parentId }: { anonId: string; parentId: Id<"answers"
   const router = useRouter();
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   return (
     <form
       className="rounded-2xl border border-border bg-surface p-4"
@@ -340,8 +353,14 @@ function FollowUp({ anonId, parentId }: { anonId: string; parentId: Id<"answers"
         e.preventDefault();
         if (!text.trim()) return;
         setBusy(true);
-        const id = await start({ anonId, text: text.trim(), parentId });
-        router.push(`/answer/${id}`);
+        setError(null);
+        try {
+          const id = await start({ anonId, text: text.trim(), parentId });
+          router.push(`/answer/${id}`);
+        } catch (err) {
+          setError(friendlyError(err));
+          setBusy(false);
+        }
       }}
     >
       <label htmlFor="followup" className="mb-2 block font-bold">
@@ -359,6 +378,11 @@ function FollowUp({ anonId, parentId }: { anonId: string; parentId: Id<"answers"
           Ask
         </button>
       </div>
+      {error && (
+        <p role="alert" className="mt-2 text-sm text-flag">
+          {error}
+        </p>
+      )}
     </form>
   );
 }
@@ -367,6 +391,7 @@ function AnswerView({ anonId, answerId }: { anonId: string; answerId: Id<"answer
   const a = useQuery(api.answers.get, { anonId, answerId });
   const start = useMutation(api.answers.start);
   const router = useRouter();
+  const [retryError, setRetryError] = useState<string | null>(null);
   if (a === undefined) return <p className="pt-10 text-center text-muted">Loading…</p>;
   if (a === null) return <p className="pt-10 text-center">Answer not found on this device.</p>;
   const final = a.final as FinalAnswer | null;
@@ -427,13 +452,22 @@ function AnswerView({ anonId, answerId }: { anonId: string; answerId: Id<"answer
           {retryText && !a.isSaw && (
             <button
               onClick={async () => {
-                const id = await start({ anonId, text: retryText });
-                router.push(`/answer/${id}`);
+                try {
+                  const id = await start({ anonId, text: retryText });
+                  router.push(`/answer/${id}`);
+                } catch (e) {
+                  setRetryError(friendlyError(e));
+                }
               }}
               className="mt-3 min-h-12 w-full rounded-xl border border-accent px-4 font-bold text-accent"
             >
               Try again
             </button>
+          )}
+          {retryError && (
+            <p role="alert" className="mt-2 text-sm text-flag">
+              {retryError}
+            </p>
           )}
         </section>
       )}

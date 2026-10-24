@@ -49,13 +49,7 @@ export function QuickLog({ anonId }: { anonId: string }) {
         className="mb-2 min-h-12 w-full rounded-xl border border-border bg-background px-3"
         autoComplete="off"
       />
-      <div className="grid grid-cols-3 gap-2">
-        {OUTCOMES.map((o) => (
-          <button key={o.value} onClick={() => log(o.value)} className="min-h-12 rounded-xl border border-border bg-background font-bold">
-            {o.label}
-          </button>
-        ))}
-      </div>
+      {/* The note comes before the outcome: tapping an outcome saves the entry. */}
       <label htmlFor="quick-note" className="sr-only">
         Optional note
       </label>
@@ -65,9 +59,23 @@ export function QuickLog({ anonId }: { anonId: string }) {
         onChange={(e) => setNote(e.target.value)}
         maxLength={280}
         placeholder="Optional note"
-        className="mt-2 min-h-11 w-full rounded-xl border border-border bg-background px-3 text-sm"
+        className="mb-3 min-h-11 w-full rounded-xl border border-border bg-background px-3 text-sm"
       />
-      {error && <p className="mt-2 text-sm text-flag">{error}</p>}
+      <p id="quick-outcome" className="mb-2 text-sm font-bold">
+        How did it go?
+      </p>
+      <div role="group" aria-labelledby="quick-outcome" className="grid grid-cols-3 gap-2">
+        {OUTCOMES.map((o) => (
+          <button key={o.value} onClick={() => log(o.value)} className="min-h-12 rounded-xl border border-border bg-background font-bold">
+            {o.label}
+          </button>
+        ))}
+      </div>
+      {error && (
+        <p role="alert" className="mt-2 text-sm text-flag">
+          {error}
+        </p>
+      )}
 
       {mine && mine.length > 0 && (
         <ul className="mt-4 space-y-2 border-t border-border pt-3">

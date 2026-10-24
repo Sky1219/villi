@@ -4,6 +4,7 @@ import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
+import { friendlyError } from "@/lib/errors";
 
 const OUTCOMES = [
   { value: "helped", label: "Helped" },
@@ -23,6 +24,7 @@ export function LogCard({ anonId, answerId, itemName }: { anonId: string; answer
   const mine = useQuery(api.logs.listMine, { anonId });
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const logged = mine?.find((l) => l.answerId === answerId);
 
   if (logged) {
@@ -38,16 +40,33 @@ export function LogCard({ anonId, answerId, itemName }: { anonId: string; answer
 
   return (
     <section className="rounded-2xl border border-border bg-surface p-4">
-      <h2 className="mb-2 font-bold">Had it? How did it go?</h2>
-      <div className="grid grid-cols-3 gap-2">
+      <h2 id="log-outcome" className="mb-2 font-bold">
+        Had it? How did it go?
+      </h2>
+      {/* The note comes before the outcome: tapping an outcome saves the entry. */}
+      <label htmlFor="log-note" className="sr-only">
+        Optional note
+      </label>
+      <input
+        id="log-note"
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        maxLength={280}
+        placeholder="Optional note, e.g. output went up after"
+        className="mb-2 min-h-11 w-full rounded-xl border border-border bg-background px-3 text-sm"
+      />
+      <div role="group" aria-labelledby="log-outcome" className="grid grid-cols-3 gap-2">
         {OUTCOMES.map((o) => (
           <button
             key={o.value}
             disabled={busy}
             onClick={async () => {
               setBusy(true);
+              setError(null);
               try {
                 await create({ anonId, answerId, outcome: o.value, note: note || undefined });
+              } catch (e) {
+                setError(friendlyError(e));
               } finally {
                 setBusy(false);
               }
@@ -58,17 +77,11 @@ export function LogCard({ anonId, answerId, itemName }: { anonId: string; answer
           </button>
         ))}
       </div>
-      <label htmlFor="log-note" className="sr-only">
-        Optional note
-      </label>
-      <input
-        id="log-note"
-        value={note}
-        onChange={(e) => setNote(e.target.value)}
-        maxLength={280}
-        placeholder="Optional note, e.g. output went up after"
-        className="mt-2 min-h-11 w-full rounded-xl border border-border bg-background px-3 text-sm"
-      />
+      {error && (
+        <p role="alert" className="mt-2 text-sm text-flag">
+          {error}
+        </p>
+      )}
       <p className="mt-2 text-xs text-muted">Shared anonymously, by anatomy only, after a safety check. No names.</p>
     </section>
   );

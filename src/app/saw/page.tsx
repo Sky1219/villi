@@ -158,7 +158,11 @@ function Saw({ anonId }: { anonId: string }) {
       >
         {busy ? "Checking…" : "Check against my medicines"}
       </button>
-      {error && <p className="text-sm text-flag">{error}</p>}
+      {error && (
+        <p role="alert" className="text-sm text-flag">
+          {error}
+        </p>
+      )}
     </main>
   );
 }

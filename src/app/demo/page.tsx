@@ -26,7 +26,7 @@ function DemoClone() {
 
   return (
     <main className="flex flex-1 items-center justify-center text-center">
-      {error ? <p className="text-flag">{error}</p> : <p className="text-muted">Loading the demo profile…</p>}
+      {error ? <p role="alert" className="text-flag">{error}</p> : <p className="text-muted">Loading the demo profile…</p>}
     </main>
   );
 }
