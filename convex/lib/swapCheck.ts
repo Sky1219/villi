@@ -27,23 +27,18 @@ const CONFLICTS: Rule[] = [
   },
   {
     when: (u) => u.category !== "drink" && u.attributes.simpleSugar === true,
-    chunkId: "aga-sbs#diet-simple-sugars",
+    chunkId: "pd-2017#simple-sugars",
     reason: (u) => `${u.canonicalName} is high in simple sugars, which guidelines say to limit`,
   },
   {
     when: (u) => !!u.attributes.sugarAlcohol,
-    chunkId: "pg139#sugar-alcohols",
+    chunkId: "pd-2017#simple-sugars",
     reason: (u) => `${u.canonicalName} contains sugar alcohols (${u.attributes.sugarAlcohol}), which can raise output`,
   },
   {
     when: (u) => u.attributes.tonicity === "hypotonic",
-    chunkId: "pd-2017#hypotonic-jejunostomy",
-    reason: (u) => `${u.canonicalName} is a low-sodium drink, which is usually limited with an end-jejunostomy`,
-  },
-  {
-    when: (u) => u.attributes.caffeine === true,
-    chunkId: "pd-2017#caffeine-alcohol",
-    reason: (u) => `${u.canonicalName} contains caffeine, which can raise output`,
+    chunkId: "aga-sbs#fluids-hypotonic",
+    reason: (u) => `${u.canonicalName} is a low-sodium drink, which guidance says to limit with a high-output jejunostomy`,
   },
   {
     when: (u) => u.attributes.releaseForm === "extended-release" || u.attributes.releaseForm === "delayed-release",
@@ -60,9 +55,8 @@ const CONFLICTS: Rule[] = [
 const SUPPORT: Rule[] = [
   { when: (u) => u.attributes.tonicity === "ors", chunkId: "aga-sbs#fluids-ors", reason: () => "ORS is the preferred drink" },
   { when: (u) => u.attributes.tonicity === "ors", chunkId: "pd-2017#ors-sodium", reason: () => "SBS ORS sodium range" },
-  { when: (u) => u.attributes.thickening === true, chunkId: "pd-2017#thickening-foods", reason: () => "thickening food" },
   { when: (u) => u.attributes.tonicity === "salty" || u.attributes.salty === true, chunkId: "pd-2017#salt", reason: () => "salty" },
-  { when: (u) => u.attributes.lactose === true && u.canonicalName !== "milk", chunkId: "pd-2017#lactose", reason: () => "dairy often tolerated" },
+  { when: (u) => u.attributes.lactose === true, chunkId: "pd-2017#lactose", reason: () => "lactose may be tolerated" },
   {
     when: (u) => u.attributes.releaseForm === "immediate-release" || u.attributes.releaseForm === "liquid",
     chunkId: "pg139#extended-release-avoid",

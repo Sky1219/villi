@@ -78,13 +78,22 @@ export const citationsFor = query({
   args: { anonId: v.string(), chunkIds: v.array(v.string()) },
   handler: async (ctx, args) => {
     await requireProfile(ctx, args.anonId);
-    const out: { chunkId: string; sourceTitle: string; sourceUrl: string; text: string }[] = [];
+    const out: { chunkId: string; sourceTitle: string; sourceUrl: string; text: string; section: string | null; verifiedAgainst: string | null }[] = [];
     for (const chunkId of args.chunkIds.slice(0, 30)) {
       const c = await ctx.db
         .query("guideline_chunks")
         .withIndex("by_chunkId", (q) => q.eq("chunkId", chunkId))
         .unique();
-      if (c) out.push({ chunkId, sourceTitle: c.sourceTitle, sourceUrl: c.sourceUrl, text: c.text });
+      if (c) {
+        out.push({
+          chunkId,
+          sourceTitle: c.sourceTitle,
+          sourceUrl: c.sourceUrl,
+          text: c.text,
+          section: c.section ?? null,
+          verifiedAgainst: c.verified ? (c.verifiedAgainst ?? null) : null,
+        });
+      }
     }
     return out;
   },

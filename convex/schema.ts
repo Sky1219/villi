@@ -279,6 +279,10 @@ export default defineSchema({
       }),
     ),
     verified: v.boolean(),
+    // Where in the source the statement comes from (heading, Best Practice Advice, table).
+    section: v.optional(v.string()),
+    // What `verified` was checked against: "abstract" or "full text". Checked by Claude, not a clinician.
+    verifiedAgainst: v.optional(v.string()),
     contentHash: v.string(),
     embedding: v.optional(v.array(v.float64())),
   })

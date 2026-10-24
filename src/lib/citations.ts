@@ -6,6 +6,7 @@ const SOURCE_SHORT: Record<string, string> = {
   "sood-2013": "Aust Prescr 2013",
   "hong-2021": "Hong 2021",
   "who-ors": "WHO ORS",
+  "uoaa-2025": "UOAA 2025",
 };
 
 export function citationLabel(kind: string, ref: string): string {

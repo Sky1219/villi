@@ -25,7 +25,7 @@ afterEach(() => {
 const base: Answer = {
   state: "flagged",
   verdict: "This is a sugary drink with little salt.",
-  why: [{ claim: "Sports drinks are low in sodium compared with an SBS ORS.", citation: "[G:pd-2017#sports-drinks]" }],
+  why: [{ claim: "Sports drinks are low in sodium compared with an SBS ORS.", citation: "[G:aga-sbs#fluids-sports-drinks]" }],
   swapToAskAbout: null,
   community: null,
   careTeamAnswers: [],
@@ -38,7 +38,7 @@ const base: Answer = {
 };
 
 const reg: CitationRegistry = {
-  guidelineIds: ["pd-2017#sports-drinks"],
+  guidelineIds: ["aga-sbs#fluids-sports-drinks"],
   labelSections: [],
   communityTotals: [13, 40],
   careTeamIds: [],
@@ -72,7 +72,7 @@ describe("community fraction numerator", () => {
 });
 
 describe("swap source", () => {
-  const swap = { text: "Ask whether an oral rehydration solution would suit better.", source: "community" as const, citation: "[G:pd-2017#sports-drinks]" };
+  const swap = { text: "Ask whether an oral rehydration solution would suit better.", source: "community" as const, citation: "[G:aga-sbs#fluids-sports-drinks]" };
   it("relabels a community swap as a guideline swap when no swap group was retrieved", () => {
     const out = lintAnswer({ ...base, swapToAskAbout: swap }, reg).answer;
     expect(out.swapToAskAbout?.source).toBe("guideline");

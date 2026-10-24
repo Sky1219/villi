@@ -1,413 +1,1050 @@
 {
-  "_note": "Rule-level statements written in our own words from openly available abstracts, full text and secondary summaries. No full article text. `verified: false` means the locator and wording were not checked against the publisher's full text in this build; treat as needing clinician review before production. Chunk ids are `sourceId#locator` and are stable citation keys.",
+  "_note": "Rule-level statements written in our own words from text we opened. No article text is reproduced beyond short phrases. `section` is where in the source the statement comes from. `verified: true` means Claude checked the wording against the `verifiedAgainst` text (abstract or full text) on 2026-10-24; no clinician has reviewed the corpus yet. Chunk ids are `sourceId#locator` and are stable citation keys.",
   "sources": {
     "aga-sbs": {
-      "title": "Iyer K, DiBaise JK, Rubio-Tapia A. AGA Clinical Practice Update on Management of Short Bowel Syndrome: Expert Review. Clin Gastroenterol Hepatol. 2022.",
+      "title": "Iyer K, DiBaise JK, Rubio-Tapia A. AGA Clinical Practice Update on Management of Short Bowel Syndrome: Expert Review. Clin Gastroenterol Hepatol. 2022;20(10):2185-2194.e2.",
       "url": "https://doi.org/10.1016/j.cgh.2022.05.032"
     },
     "pg139": {
-      "title": "Chan LN, DiBaise JK, Parrish CR. Short Bowel Syndrome in Adults, Part 4A: A Guide to Front Line Drugs Used in the Treatment of SBS. Practical Gastroenterology, Nutrition Issues in Gastroenterology #139. 2015.",
-      "url": "https://med.virginia.edu/ginutrition/practical-gastroenterology-articles/"
+      "title": "Chan LN, DiBaise JK, Parrish CR. Short Bowel Syndrome in Adults, Part 4A: A Guide to Front Line Drugs Used in the Treatment of Short Bowel Syndrome. Practical Gastroenterology. 2015;39(3). Nutrition Issues in Gastroenterology, Series #139.",
+      "url": "https://practicalgastro.com/wp-content/uploads/2019/11/Short-Bowel-Syndrome-in-Adults-Guide-Front-Line-Drugs-Used-in-the-Treatment-of-Short-Bowel-Syndrome.pdf"
     },
     "pd-2017": {
       "title": "Parrish CR, DiBaise JK. Managing the Adult Patient With Short Bowel Syndrome. Gastroenterol Hepatol (N Y). 2017;13(10):600-608.",
-      "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5718176/"
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5718176/"
     },
     "remane-2025": {
-      "title": "Remane et al. Drug dissolution problems in patients with an ostomy (pilot study: 50 patient interviews, 85 chart reviews). Int J Colorectal Dis. 2025.",
-      "url": "https://link.springer.com/journal/384"
+      "title": "Remane Y, Stolz MA, Heinitz K, Hoffmeister A, Mehdorn M, Niebisch S, Lincke K, Huke A, Seehofer D, Bertsche T. Drug dissolution problems in ostomy patients: a chart review and patient interview analysis. Int J Colorectal Dis. 2025;40(1):113.",
+      "url": "https://doi.org/10.1007/s00384-025-04907-9"
     },
     "sood-2013": {
-      "title": "Sood A, Tanner F, Testro A. Medicines in patients with a stoma. Australian Prescriber. 2013.",
-      "url": "https://australianprescriber.tg.org.au/"
+      "title": "Sood S, Tanner F, Testro A. Prescribing for a patient with reduced intestinal length. Aust Prescr. 2013;36:136-8.",
+      "url": "https://doi.org/10.18773/austprescr.2013.048"
     },
     "hong-2021": {
-      "title": "Hong et al. Oral drug absorption after intestinal resection or in short bowel syndrome: a systematic review. Eur J Drug Metab Pharmacokinet. 2021.",
-      "url": "https://link.springer.com/journal/13318"
+      "title": "Hong WB, Tan WK, Law LS, Ong DE, Lo EA. Changes of Drug Pharmacokinetics in Patients with Short Bowel Syndrome: A Systematic Review. Eur J Drug Metab Pharmacokinet. 2021;46(4):465-478.",
+      "url": "https://doi.org/10.1007/s13318-021-00696-y"
     },
     "who-ors": {
-      "title": "WHO/UNICEF. Oral Rehydration Salts: production of the new ORS (reduced-osmolarity formula). WHO/FCH/CAH/06.1. 2006 (formula adopted 2003).",
+      "title": "WHO/UNICEF. Oral Rehydration Salts: production of the new ORS (reduced-osmolarity formula). WHO/FCH/CAH/06.1. 2006 (formula recommended since 2003).",
       "url": "https://www.who.int/publications/i/item/WHO-FCH-CAH-06.1"
+    },
+    "uoaa-2025": {
+      "title": "Rubin E (Thomas Jefferson University Hospital). Maintaining Nutrition and Hydration in the Management of Short Bowel Syndrome. United Ostomy Associations of America, 2025 (patient education article sponsored by Takeda).",
+      "url": "https://www.ostomy.org/maintaining-nutrition-and-hydration-in-the-management-of-short-bowel-syndrome-2/"
     }
   },
   "chunks": [
     {
       "sourceId": "aga-sbs",
       "locator": "medications-release-forms",
-      "text": "After extensive small-bowel resection, sustained-release and delayed-release (including enteric-coated) medicines are generally avoided because they depend on a long, normal transit to release the drug.",
-      "tags": ["extended-release", "sustained-release", "delayed-release", "enteric-coated", "pill", "release-form"],
-      "anatomyScope": ["short-bowel"],
+      "text": "Solid medicines have to disintegrate and dissolve before they can be absorbed, and most oral medicines are absorbed in the proximal jejunum, so many can be used in short bowel syndrome; sustained-release and delayed-release medicines, however, should be avoided.",
+      "tags": [
+        "extended-release",
+        "sustained-release",
+        "delayed-release",
+        "enteric-coated",
+        "pill",
+        "release-form"
+      ],
+      "anatomyScope": [
+        "short-bowel"
+      ],
       "appliesTo": "extended-release",
       "diagram": {
-        "segmentIds": ["jejunum", "ileum", "cecum", "ascending-colon", "transverse-colon", "descending-sigmoid"],
+        "segmentIds": [
+          "jejunum",
+          "ileum",
+          "cecum",
+          "ascending-colon",
+          "transverse-colon",
+          "descending-sigmoid"
+        ],
         "mode": "releases-here",
-        "label": "Timed-release and coated designs expect a long intestine; a shorter gut gives them less time"
-      }
+        "label": "Guidance says to avoid sustained- and delayed-release forms after major resection"
+      },
+      "section": "Best Practice Advice 7: Drug Dosing",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "aga-sbs",
       "locator": "medications-alternatives",
-      "text": "When a medicine may be poorly absorbed after resection, the care team may consider liquid, dissolvable, topical, or non-oral forms of the same drug instead.",
-      "tags": ["liquid", "alternative-form", "pill", "swap"],
-      "anatomyScope": ["short-bowel"]
+      "text": "When applicable, other ways of giving a medicine, such as liquids or topical forms, should be considered in short bowel syndrome. If a medicine is not working, the options include a different formulation or a different route, such as intravenous, subcutaneous or transdermal.",
+      "tags": [
+        "liquid",
+        "alternative-form",
+        "pill",
+        "swap"
+      ],
+      "anatomyScope": [
+        "short-bowel"
+      ],
+      "section": "Best Practice Advice 7: Drug Dosing",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "aga-sbs",
       "locator": "medications-monitoring",
-      "text": "For drugs with a narrow therapeutic range, clinicians may check drug blood levels or watch the clinical effect closely, because absorption after resection is hard to predict.",
-      "tags": ["monitoring", "drug-levels", "pill"],
-      "anatomyScope": ["short-bowel"]
+      "text": "Monitoring medication levels in the blood should be considered in short bowel syndrome.",
+      "tags": [
+        "monitoring",
+        "drug-levels",
+        "pill"
+      ],
+      "anatomyScope": [
+        "short-bowel"
+      ],
+      "section": "Best Practice Advice 7: Drug Dosing",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "aga-sbs",
       "locator": "medications-proximal-absorption",
-      "text": "Most oral medicines are absorbed in the upper small bowel (the first part of the jejunum), so many plain immediate-release drugs can still be absorbed when that segment remains.",
-      "tags": ["immediate-release", "absorption", "jejunum", "pill"],
-      "anatomyScope": ["all"],
+      "text": "Most oral medicines are absorbed in the upper small bowel, so many medicines can still be used in short bowel syndrome when they are not sustained- or delayed-release forms.",
+      "tags": [
+        "immediate-release",
+        "absorption",
+        "jejunum",
+        "pill"
+      ],
+      "anatomyScope": [
+        "short-bowel"
+      ],
       "diagram": {
-        "segmentIds": ["duodenum", "jejunum"],
+        "segmentIds": [
+          "duodenum",
+          "jejunum"
+        ],
         "mode": "absorbs-here",
         "label": "Most medicines are absorbed in the upper small bowel"
-      }
+      },
+      "section": "Best Practice Advice 7: Drug Dosing",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "aga-sbs",
       "locator": "anatomy-groups",
-      "text": "Short bowel syndrome is described in three anatomy groups: end-jejunostomy (no colon), jejuno-colic (small bowel joined to part of the colon), and jejuno-ileo-colic (some ileum kept, joined to the colon). Advice on fluids and diet differs between these groups.",
-      "tags": ["anatomy", "classification"],
-      "anatomyScope": ["all"]
+      "text": "By whether colon remains, short bowel syndrome is classified into three groups: end-jejunostomy; jejunum joined to part of the colon (jejunocolonic); and jejuno-ileo-colic, keeping the whole colon and the ileocecal valve. The end-jejunostomy group is the most severe.",
+      "tags": [
+        "anatomy",
+        "classification"
+      ],
+      "anatomyScope": [
+        "all"
+      ],
+      "section": "Best Practice Advice 1: Bowel Anatomy",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "aga-sbs",
       "locator": "anatomy-residual-length",
-      "text": "Remaining small-bowel length bands (for example under 100 cm with an end-jejunostomy) describe risk of needing nutrition or fluid support; they are risk bands, not a line above which everything is safe.",
-      "tags": ["anatomy", "bowel-length", "risk"],
-      "anatomyScope": ["all"]
+      "text": "A remaining small-bowel length of 200 cm or less is generally agreed to meet criteria for short bowel syndrome. People without a colon who have under 100 cm of jejunum tend to be net secretors, losing more water and sodium from the stoma than they take in by mouth.",
+      "tags": [
+        "anatomy",
+        "bowel-length",
+        "risk"
+      ],
+      "anatomyScope": [
+        "all"
+      ],
+      "section": "Introduction; Best Practice Advice 5: Oral Rehydration Solution",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "aga-sbs",
       "locator": "fluids-hypertonic",
-      "text": "Hypertonic, sugary drinks such as fruit juice and regular soda pull water into the gut and can raise stoma output or diarrhea in short bowel syndrome; they are best limited regardless of anatomy.",
-      "tags": ["hypertonic", "juice", "soda", "sugar", "drink", "fluids"],
-      "anatomyScope": ["short-bowel", "ileostomy"],
+      "text": "In short bowel syndrome, hypertonic drinks such as fruit juices and sodas should be limited to reduce output, particularly with net secretion and a high-output jejunostomy.",
+      "tags": [
+        "hypertonic",
+        "juice",
+        "soda",
+        "sugar",
+        "drink",
+        "fluids"
+      ],
+      "anatomyScope": [
+        "short-bowel"
+      ],
       "diagram": {
-        "segmentIds": ["jejunum", "ileum"],
+        "segmentIds": [
+          "jejunum",
+          "ileum"
+        ],
         "mode": "absorbs-here",
-        "label": "Fluid and salt balance is set in the small bowel"
-      }
+        "label": "Water and sodium handling differs along the small bowel"
+      },
+      "section": "Best Practice Advice 5: Oral Rehydration Solution",
+      "verified": true,
+      "verifiedAgainst": "full text"
+    },
+    {
+      "sourceId": "aga-sbs",
+      "locator": "fluids-hypotonic",
+      "text": "In short bowel syndrome, low-sodium hypotonic drinks such as water, tea, coffee and alcohol should be limited to reduce output, particularly with net secretion and a high-output jejunostomy; drinking large quantities of water generally increases ostomy output.",
+      "tags": [
+        "hypotonic",
+        "water",
+        "tea",
+        "coffee",
+        "caffeine",
+        "alcohol",
+        "drink",
+        "fluids",
+        "jejunostomy"
+      ],
+      "anatomyScope": [
+        "end-jejunostomy"
+      ],
+      "section": "Best Practice Advice 5: Oral Rehydration Solution",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "aga-sbs",
       "locator": "fluids-ors",
-      "text": "A glucose-electrolyte oral rehydration solution (ORS) is the preferred drink to replace fluid and sodium losses in short bowel syndrome, especially with a jejunostomy.",
-      "tags": ["ors", "rehydration", "sodium", "drink", "fluids", "swap"],
-      "anatomyScope": ["short-bowel", "ileostomy"],
+      "text": "Instead of large amounts of water, a glucose-electrolyte oral rehydration solution (ORS) is preferred in short bowel syndrome to enhance absorption and reduce secretion, because glucose in the gut stimulates sodium absorption, which water follows.",
+      "tags": [
+        "ors",
+        "rehydration",
+        "sodium",
+        "drink",
+        "fluids",
+        "swap"
+      ],
+      "anatomyScope": [
+        "short-bowel"
+      ],
       "diagram": {
-        "segmentIds": ["jejunum", "ileum"],
+        "segmentIds": [
+          "jejunum",
+          "ileum"
+        ],
         "mode": "absorbs-here",
-        "label": "Salt and glucose together help the small bowel absorb water"
-      }
+        "label": "Glucose and sodium together help the small bowel absorb water"
+      },
+      "section": "Best Practice Advice 5: Oral Rehydration Solution",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "aga-sbs",
-      "locator": "fluids-sipping",
-      "text": "Fluids are generally sipped through the day rather than taken in large amounts at once, and many teams suggest separating drinks from meals.",
-      "tags": ["fluids", "drink", "timing"],
-      "anatomyScope": ["short-bowel"]
+      "locator": "fluids-sports-drinks",
+      "text": "Oral rehydration solutions differ from commercial sports drinks: an ORS has considerably more sodium and less sugar.",
+      "tags": [
+        "sports-drink",
+        "gatorade",
+        "isotonic",
+        "low-sodium",
+        "sugar",
+        "drink",
+        "ors"
+      ],
+      "anatomyScope": [
+        "short-bowel"
+      ],
+      "section": "Best Practice Advice 5: Oral Rehydration Solution",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "aga-sbs",
       "locator": "diet-meals",
-      "text": "People with short bowel syndrome are usually encouraged to eat about six small meals or snacks a day rather than three large meals.",
-      "tags": ["meals", "food", "diet"],
-      "anatomyScope": ["short-bowel"]
+      "text": "In short bowel syndrome, the larger amount of food that is needed is best tolerated spread through the day over several meals.",
+      "tags": [
+        "meals",
+        "food",
+        "diet"
+      ],
+      "anatomyScope": [
+        "short-bowel"
+      ],
+      "section": "Best Practice Advice 3: Diet",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "aga-sbs",
       "locator": "diet-hyperphagia",
-      "text": "The goal is to eat more than before surgery to make up for losses (compensatory hyperphagia), not to restrict intake; amounts are set individually by the care team.",
-      "tags": ["meals", "food", "diet", "intake"],
-      "anatomyScope": ["short-bowel"]
+      "text": "Diet in short bowel syndrome should focus on maintaining compensatory hyperphagia (eating more than estimated needs) rather than on excessive dietary restrictions, guided by an experienced dietitian.",
+      "tags": [
+        "meals",
+        "food",
+        "diet",
+        "intake"
+      ],
+      "anatomyScope": [
+        "short-bowel"
+      ],
+      "section": "Best Practice Advice 3: Diet",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "aga-sbs",
       "locator": "diet-colon-carbohydrate",
-      "text": "When the colon is in continuity, complex carbohydrates can be partly salvaged by colonic bacteria, so a diet richer in complex carbohydrates is usually favored for this group.",
-      "tags": ["carbohydrate", "food", "diet", "colon", "starch"],
-      "anatomyScope": ["colon-in-continuity"],
+      "text": "With the colon in continuity, a diet high in complex carbohydrates and relatively low in fat is advised; it tends to reduce calorie loss in stool and improve energy absorption.",
+      "tags": [
+        "carbohydrate",
+        "food",
+        "diet",
+        "colon",
+        "starch"
+      ],
+      "anatomyScope": [
+        "colon-in-continuity"
+      ],
       "diagram": {
-        "segmentIds": ["cecum", "ascending-colon", "transverse-colon"],
+        "segmentIds": [
+          "cecum",
+          "ascending-colon",
+          "transverse-colon"
+        ],
         "mode": "absorbs-here",
-        "label": "A colon can recover some energy from starches"
-      }
+        "label": "With a colon, a diet high in complex carbohydrates improves energy absorption"
+      },
+      "section": "Best Practice Advice 3: Diet",
+      "verified": true,
+      "verifiedAgainst": "full text"
+    },
+    {
+      "sourceId": "aga-sbs",
+      "locator": "diet-fat-jejunostomy",
+      "text": "People with an end-jejunostomy do not appear to benefit from fat restriction; more fat is absorbed when more is eaten.",
+      "tags": [
+        "fat",
+        "food",
+        "diet",
+        "jejunostomy"
+      ],
+      "anatomyScope": [
+        "end-jejunostomy"
+      ],
+      "section": "Best Practice Advice 3: Diet",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "aga-sbs",
       "locator": "diet-colon-oxalate",
-      "text": "With the colon in continuity, fat malabsorption raises oxalate absorption and kidney stone risk; many teams advise limiting high-oxalate foods for this group.",
-      "tags": ["oxalate", "kidney-stone", "food", "colon", "spinach", "nuts"],
-      "anatomyScope": ["colon-in-continuity"]
-    },
-    {
-      "sourceId": "aga-sbs",
-      "locator": "diet-simple-sugars",
-      "text": "Concentrated simple sugars (sweets, syrups, sweetened drinks) draw water into the bowel and are generally limited in short bowel syndrome.",
-      "tags": ["sugar", "sweets", "food", "drink", "dessert"],
-      "anatomyScope": ["short-bowel", "ileostomy"]
+      "text": "With a colon, oxalate restriction (for example peanuts and baked beans) is essential for people at risk of high urinary oxalate and oxalate kidney stones.",
+      "tags": [
+        "oxalate",
+        "kidney-stone",
+        "food",
+        "colon",
+        "nuts"
+      ],
+      "anatomyScope": [
+        "colon-in-continuity"
+      ],
+      "section": "Best Practice Advice 3: Diet",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "aga-sbs",
       "locator": "antimotility",
-      "text": "Antimotility medicines (for example loperamide) are a mainstay to slow transit and reduce output; timing relative to meals is set by the care team.",
-      "tags": ["loperamide", "antimotility", "pill", "output"],
-      "anatomyScope": ["short-bowel", "ileostomy"]
+      "text": "Antidiarrheal medicines that slow the gut, such as loperamide, are commonly used to control stool losses in short bowel syndrome; loperamide is preferred to opiate drugs, and their use should be guided by objective measurements of stool output.",
+      "tags": [
+        "loperamide",
+        "antimotility",
+        "pill",
+        "output"
+      ],
+      "anatomyScope": [
+        "short-bowel"
+      ],
+      "section": "Best Practice Advice 6: Pharmacologic Therapy",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "aga-sbs",
       "locator": "acid-suppression",
-      "text": "Gastric acid hypersecretion is common early after major resection, and acid-suppressing medicines are often used to reduce output; their release form still matters for absorption.",
-      "tags": ["ppi", "acid", "pantoprazole", "omeprazole", "pill", "delayed-release"],
-      "anatomyScope": ["short-bowel"]
+      "text": "Massive bowel resection is associated with gastric acid hypersecretion that may last 6 to 12 months; acid-suppressing medicines such as proton pump inhibitors or H2 blockers are beneficial in reducing gastric secretions. It has been suggested they be used sparingly beyond 12 months unless there is clear benefit.",
+      "tags": [
+        "ppi",
+        "acid",
+        "pantoprazole",
+        "omeprazole",
+        "pill",
+        "delayed-release"
+      ],
+      "anatomyScope": [
+        "short-bowel"
+      ],
+      "section": "Best Practice Advice 6: Pharmacologic Therapy",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "aga-sbs",
       "locator": "dehydration-signs",
-      "text": "Thirst, dark or reduced urine, dizziness on standing, and rising stoma output are warning signs of dehydration that should be raised with the care team promptly.",
-      "tags": ["dehydration", "warning", "output", "fluids"],
-      "anatomyScope": ["all"]
+      "text": "People with short bowel syndrome should be taught to measure their daily urine output; urine output, stool or ostomy output, weight and complaints of thirst are watched to guide fluid needs.",
+      "tags": [
+        "dehydration",
+        "warning",
+        "output",
+        "fluids",
+        "urine"
+      ],
+      "anatomyScope": [
+        "short-bowel"
+      ],
+      "section": "Best Practice Advice 2: Nutrition Assessment; Best Practice Advice 4: PN",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "pg139",
       "locator": "time-release",
-      "text": "Time-release formulations depend on adequate small-bowel transit time to release their drug; with a shortened bowel or rapid transit, part of the dose may leave the body before it is released.",
-      "tags": ["extended-release", "sustained-release", "time-release", "pill", "release-form", "transit"],
-      "anatomyScope": ["short-bowel", "ileostomy"],
+      "text": "Time-release formulations, such as extended-release or controlled-release tablets, are designed to make the drug available for absorption over an extended period, especially in the small intestine.",
+      "tags": [
+        "extended-release",
+        "sustained-release",
+        "time-release",
+        "pill",
+        "release-form",
+        "transit"
+      ],
+      "anatomyScope": [
+        "short-bowel"
+      ],
       "appliesTo": "extended-release",
       "diagram": {
-        "segmentIds": ["jejunum", "ileum", "cecum", "ascending-colon", "transverse-colon", "descending-sigmoid"],
+        "segmentIds": [
+          "jejunum",
+          "ileum"
+        ],
         "mode": "releases-here",
-        "label": "This design needs time in a gut that is now shorter"
-      }
+        "label": "Time-release designs release the drug over time, mainly in the small intestine"
+      },
+      "section": "Understanding the Implications of Drug Formulations",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "pg139",
       "locator": "extended-release-avoid",
-      "text": "Extended-release products are generally avoided after extensive resection; an immediate-release or liquid version of the same drug is often a question worth asking the pharmacist about.",
-      "tags": ["extended-release", "pill", "release-form", "swap", "liquid"],
-      "anatomyScope": ["short-bowel"],
-      "appliesTo": "extended-release"
+      "text": "After extensive resection, sustained-release or extended-release products should generally be avoided, because the extent of drug absorption can be erratic or severely impaired.",
+      "tags": [
+        "extended-release",
+        "pill",
+        "release-form",
+        "swap"
+      ],
+      "anatomyScope": [
+        "short-bowel"
+      ],
+      "appliesTo": "extended-release",
+      "section": "Understanding the Implications of Drug Formulations",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "pg139",
       "locator": "enteric-coating",
-      "text": "Enteric-coated and delayed-release products are designed to pass the stomach before dissolving; with rapid transit, the coating may not dissolve in time, and some pass through intact.",
-      "tags": ["enteric-coated", "delayed-release", "pill", "release-form", "coating"],
-      "anatomyScope": ["short-bowel", "ileostomy"],
-      "appliesTo": "delayed-release"
+      "text": "Delayed-release and enteric-coated tablets have a coating that delays disintegration and dissolution until the tablet has passed through the stomach.",
+      "tags": [
+        "enteric-coated",
+        "delayed-release",
+        "pill",
+        "release-form",
+        "coating"
+      ],
+      "anatomyScope": [
+        "short-bowel"
+      ],
+      "appliesTo": "delayed-release",
+      "section": "Understanding the Implications of Drug Formulations",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "pg139",
       "locator": "liquid-forms",
-      "text": "Liquid forms may be absorbed more reliably than solid tablets in short bowel syndrome, but liquid medicines often contain sugar alcohols that can increase output.",
-      "tags": ["liquid", "pill", "sorbitol", "alternative-form"],
-      "anatomyScope": ["short-bowel", "ileostomy"]
+      "text": "For people whose upper gut was resected, liquid forms such as oral solutions or suspensions can improve absorption, but sugar alcohols such as sorbitol and xylitol in them can make diarrhea worse. People with short bowel syndrome rarely have had upper-gut resections.",
+      "tags": [
+        "liquid",
+        "pill",
+        "sorbitol",
+        "alternative-form"
+      ],
+      "anatomyScope": [
+        "short-bowel"
+      ],
+      "section": "Understanding the Implications of Drug Formulations",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "pg139",
       "locator": "crushing-immediate-release",
-      "text": "For plain immediate-release tablets only, crushing or dissolving may improve absorption in some patients; this is a decision for the pharmacist. Crushing extended-release or enteric-coated products defeats their design and can be dangerous.",
-      "tags": ["crushing", "immediate-release", "pill", "action"],
-      "anatomyScope": ["short-bowel"],
-      "appliesTo": "immediate-release"
+      "text": "If a medicine is not working in short bowel syndrome, the care team may consider changing its formulation (for example a crushed tablet, a capsule or a liquid) or its route.",
+      "tags": [
+        "crushing",
+        "immediate-release",
+        "pill",
+        "action"
+      ],
+      "anatomyScope": [
+        "short-bowel"
+      ],
+      "section": "Introduction",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "pg139",
       "locator": "sugar-alcohols",
-      "text": "Sorbitol, xylitol, mannitol and other sugar alcohols are poorly absorbed, draw water into the gut, and can raise stoma output or diarrhea; they are common inactive ingredients in liquid medicines and sugar-free products.",
-      "tags": ["sorbitol", "xylitol", "mannitol", "sugar-alcohol", "inactive-ingredient", "liquid", "sugar-free", "gum"],
-      "anatomyScope": ["all"]
+      "text": "Sugar alcohols such as sorbitol and xylitol, found as inactive ingredients in some medicines, can make diarrhea worse in short bowel syndrome.",
+      "tags": [
+        "sorbitol",
+        "xylitol",
+        "mannitol",
+        "sugar-alcohol",
+        "inactive-ingredient",
+        "liquid"
+      ],
+      "anatomyScope": [
+        "short-bowel"
+      ],
+      "section": "Understanding the Implications of Drug Formulations; Table 2",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "pg139",
       "locator": "malabsorption-suspect",
-      "text": "If a medicine does not seem to produce its expected effect, malabsorption should be suspected and raised with the prescriber or pharmacist.",
-      "tags": ["malabsorption", "effect", "pill", "monitoring"],
-      "anatomyScope": ["short-bowel", "ileostomy"]
+      "text": "In short bowel syndrome, malabsorption of a medicine is an important consideration, particularly when the expected response to it is not seen.",
+      "tags": [
+        "malabsorption",
+        "effect",
+        "pill",
+        "monitoring"
+      ],
+      "anatomyScope": [
+        "short-bowel"
+      ],
+      "section": "Introduction",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "pg139",
-      "locator": "pharmacist-review",
-      "text": "A pharmacist review of every medicine's form and inactive ingredients is recommended after major bowel resection.",
-      "tags": ["pharmacist", "pill", "review"],
-      "anatomyScope": ["short-bowel", "ileostomy"]
+      "locator": "ppi",
+      "text": "Proton pump inhibitors are the primary medicines used as maintenance therapy for gastric acid hypersecretion in short bowel syndrome. All oral proton pump inhibitors have an enteric coating, so their absorption may be limited in short bowel syndrome; if an oral one is not working early after surgery, a trial of an intravenous one is reasonable.",
+      "tags": [
+        "ppi",
+        "acid",
+        "pantoprazole",
+        "omeprazole",
+        "pill",
+        "delayed-release",
+        "enteric-coated"
+      ],
+      "anatomyScope": [
+        "short-bowel"
+      ],
+      "section": "Proton Pump Inhibitors",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "pd-2017",
       "locator": "hypotonic-jejunostomy",
-      "text": "With an end-jejunostomy, plain water, tea, coffee and other low-sodium (hypotonic) drinks can pull sodium into the gut and increase output, so these drinks are usually limited in favor of an oral rehydration solution.",
-      "tags": ["hypotonic", "water", "tea", "coffee", "drink", "fluids", "jejunostomy"],
-      "anatomyScope": ["end-jejunostomy"],
-      "diagram": {
-        "segmentIds": ["jejunum"],
-        "mode": "absorbs-here",
-        "label": "Without a colon, the remaining jejunum sets your fluid balance"
-      }
+      "text": "Drinking large quantities of water is a major misconception in short bowel syndrome; patients, particularly those with an end jejunostomy, may benefit from a glucose-electrolyte oral rehydration solution instead.",
+      "tags": [
+        "hypotonic",
+        "water",
+        "drink",
+        "fluids",
+        "jejunostomy"
+      ],
+      "anatomyScope": [
+        "end-jejunostomy"
+      ],
+      "section": "Fluids: Oral Rehydration Solution",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "pd-2017",
       "locator": "hypotonic-colon",
-      "text": "Most people with short bowel syndrome whose colon is in continuity tolerate ordinary hypotonic fluids such as water better than people with an end-jejunostomy, because the colon absorbs water and sodium.",
-      "tags": ["hypotonic", "water", "tea", "drink", "fluids", "colon"],
-      "anatomyScope": ["colon-in-continuity", "colostomy"],
+      "text": "Most people with short bowel syndrome who have a colon can usually stay adequately hydrated with hypotonic fluids without excessive fluid loss.",
+      "tags": [
+        "hypotonic",
+        "water",
+        "tea",
+        "drink",
+        "fluids",
+        "colon"
+      ],
+      "anatomyScope": [
+        "colon-in-continuity"
+      ],
       "diagram": {
-        "segmentIds": ["ascending-colon", "transverse-colon", "descending-sigmoid"],
+        "segmentIds": [
+          "ascending-colon",
+          "transverse-colon",
+          "descending-sigmoid"
+        ],
         "mode": "absorbs-here",
-        "label": "A colon absorbs much of the water and salt"
-      }
+        "label": "With a colon, most people stay hydrated with ordinary fluids"
+      },
+      "section": "Fluids: Oral Rehydration Solution",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "pd-2017",
       "locator": "ors-sodium",
-      "text": "For short bowel syndrome, oral rehydration solutions with a sodium concentration of about 90 to 120 mmol/L are generally recommended; this is higher than many commercial rehydration drinks.",
-      "tags": ["ors", "sodium", "rehydration", "drink", "composition", "swap"],
-      "anatomyScope": ["short-bowel", "ileostomy"]
-    },
-    {
-      "sourceId": "pd-2017",
-      "locator": "sports-drinks",
-      "text": "Typical sports drinks are low in sodium and high in sugar compared with an SBS oral rehydration solution, so they are not a substitute for it.",
-      "tags": ["sports-drink", "gatorade", "drink", "isotonic", "low-sodium", "sugar", "ors"],
-      "anatomyScope": ["short-bowel", "ileostomy"]
+      "text": "The optimal sodium concentration of an oral rehydration solution in short bowel syndrome is 90 to 120 mmol/L (mEq/L); the clinician decides who needs one from urine output, low blood pressure, recurrent dehydration and kidney injury.",
+      "tags": [
+        "ors",
+        "sodium",
+        "rehydration",
+        "drink",
+        "composition",
+        "swap"
+      ],
+      "anatomyScope": [
+        "end-jejunostomy"
+      ],
+      "section": "Fluids: Oral Rehydration Solution",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "pd-2017",
       "locator": "salt",
-      "text": "Salting food and choosing salty snacks is commonly encouraged in short bowel syndrome with high output, within the care team's advice for the person's heart and kidney health.",
-      "tags": ["salt", "sodium", "food", "crackers", "snack"],
-      "anatomyScope": ["short-bowel", "ileostomy"]
+      "text": "Salty snacks are encouraged in short bowel syndrome, and liberal use of salt can help replace the sodium lost in stool; the diet guidelines say to increase salt without a colon and keep usual intake with a colon.",
+      "tags": [
+        "salt",
+        "sodium",
+        "food",
+        "crackers",
+        "snack"
+      ],
+      "anatomyScope": [
+        "short-bowel"
+      ],
+      "section": "Diet Therapy: Salt; Table 3",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "pd-2017",
-      "locator": "thickening-foods",
-      "text": "Starchy, low-fiber foods such as white rice, bananas, potatoes, pasta and plain crackers are often reported to thicken output.",
-      "tags": ["rice", "banana", "potato", "pasta", "crackers", "food", "starch", "output"],
-      "anatomyScope": ["short-bowel", "ileostomy", "colostomy"]
+      "locator": "simple-sugars",
+      "text": "In short bowel syndrome, simple sugars and sugar alcohols are limited in both foods and fluids; sodas, fruit juices, fruit drinks and sweet teas are avoided because the sugar in these drinks is related to how much output follows.",
+      "tags": [
+        "sugar",
+        "sweets",
+        "dessert",
+        "sugar-alcohol",
+        "sorbitol",
+        "xylitol",
+        "sugar-free",
+        "gum",
+        "soda",
+        "juice",
+        "drink",
+        "food"
+      ],
+      "anatomyScope": [
+        "short-bowel"
+      ],
+      "section": "Fluids: Oral Rehydration Solution; Table 3",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "pd-2017",
       "locator": "fat",
-      "text": "Fat restriction is mainly useful when the colon is in continuity (because of oxalate and fatty-acid effects in the colon); with an end-jejunostomy, fat is an important energy source and is usually not restricted.",
-      "tags": ["fat", "food", "diet", "colon", "jejunostomy"],
-      "anatomyScope": ["short-bowel"]
+      "text": "Fat restriction is most important in short bowel syndrome with a remaining colon, severe steatorrhea or a history of oxalate kidney stones.",
+      "tags": [
+        "fat",
+        "food",
+        "diet",
+        "colon"
+      ],
+      "anatomyScope": [
+        "short-bowel"
+      ],
+      "section": "Diet Therapy: Fat and Oxalate",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "pd-2017",
       "locator": "lactose",
-      "text": "Lactose does not need to be removed for most people with short bowel syndrome; small portions of dairy, especially cheese and yogurt, are often tolerated.",
-      "tags": ["lactose", "dairy", "milk", "yogurt", "cheese", "food"],
-      "anatomyScope": ["short-bowel"]
-    },
-    {
-      "sourceId": "pd-2017",
-      "locator": "caffeine-alcohol",
-      "text": "Caffeine and alcohol can increase output and fluid losses and are usually limited in short bowel syndrome.",
-      "tags": ["caffeine", "coffee", "alcohol", "beer", "wine", "drink"],
-      "anatomyScope": ["short-bowel", "ileostomy"]
+      "text": "In short bowel syndrome, lactose may be tolerated and does not always need to be avoided.",
+      "tags": [
+        "lactose",
+        "dairy",
+        "milk",
+        "yogurt",
+        "food"
+      ],
+      "anatomyScope": [
+        "short-bowel"
+      ],
+      "section": "Table 3",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "remane-2025",
       "locator": "formulation-classes",
-      "text": "Oral formulations can be grouped by dissolution risk in ostomy patients as noncritical (for example solutions and plain fast-dissolving tablets), potentially critical, and critical (for example extended-release and enteric-coated products).",
-      "tags": ["extended-release", "enteric-coated", "pill", "release-form", "ostomy"],
-      "anatomyScope": ["ileostomy", "colostomy", "end-jejunostomy"]
+      "text": "In this study, oral formulations were grouped by risk in ostomy patients: noncritical (accelerated release, such as chewable or effervescent tablets, granules and liquids), potentially critical (regular release, such as coated tablets and hard capsules) and critical (modified release, such as enteric-coated, matrix and prolonged-release products).",
+      "tags": [
+        "extended-release",
+        "enteric-coated",
+        "pill",
+        "release-form",
+        "ostomy"
+      ],
+      "anatomyScope": [
+        "ileostomy",
+        "colostomy",
+        "end-jejunostomy"
+      ],
+      "section": "Methods: Classification of drugs according to their formulation (Table 1)",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "remane-2025",
       "locator": "tablet-in-pouch",
-      "text": "An intact tablet or shell seen in the pouch can mean the medicine did not dissolve, or it can be an empty shell left after the drug was released. It is worth showing the pharmacist; it is not proof either way.",
-      "tags": ["tablet-in-pouch", "saw-something", "pill", "ghost-tablet", "shell"],
-      "anatomyScope": ["ileostomy", "colostomy", "end-jejunostomy"]
+      "text": "Medicine seen in the ostomy bag can be undissolved, or it can be a tablet shell or insoluble matrix that often remains after the drug has been released; a medicine can also dissolve fully and still not be fully absorbed because transit is short. Seeing it does not show on its own whether the medicine worked.",
+      "tags": [
+        "tablet-in-pouch",
+        "saw-something",
+        "pill",
+        "ghost-tablet",
+        "shell"
+      ],
+      "anatomyScope": [
+        "ileostomy",
+        "colostomy",
+        "end-jejunostomy"
+      ],
+      "section": "Introduction; Discussion",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "remane-2025",
       "locator": "patient-education",
-      "text": "In the pilot study, 11 of 50 interviewed ostomy patients had seen undissolved medicine, and over 60% said they had not been told how an ostomy can affect their medicines.",
-      "tags": ["education", "pill", "ostomy", "tablet-in-pouch"],
-      "anatomyScope": ["ileostomy", "colostomy", "end-jejunostomy"]
+      "text": "In the interviews, 11 of 50 ostomy patients reported seeing undissolved medicine or indigestible material in their stoma bag at least once, and more than 60% said they lacked information that this could happen.",
+      "tags": [
+        "education",
+        "pill",
+        "ostomy",
+        "tablet-in-pouch"
+      ],
+      "anatomyScope": [
+        "ileostomy",
+        "colostomy",
+        "end-jejunostomy"
+      ],
+      "section": "Abstract; Results",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "sood-2013",
       "locator": "colostomy",
-      "text": "With a colostomy, most of the small bowel is usually intact and oral medicines are often absorbed normally; but the stoma type alone does not tell you remaining small-bowel length, so it is not a guarantee.",
-      "tags": ["colostomy", "pill", "absorption"],
-      "anatomyScope": ["colostomy"]
+      "text": "People with a colostomy are unlikely to have significant problems with drug absorption, because most drugs are absorbed in the small intestine; usual formulations can be used for most of them.",
+      "tags": [
+        "colostomy",
+        "pill",
+        "absorption"
+      ],
+      "anatomyScope": [
+        "colostomy"
+      ],
+      "section": "Presence of a stoma",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "sood-2013",
       "locator": "residual-length",
-      "text": "How well oral medicines are absorbed tracks the length and health of the remaining small bowel more than the type of stoma.",
-      "tags": ["absorption", "bowel-length", "pill"],
-      "anatomyScope": ["all"]
+      "text": "In most cases a stoma is not the main factor in drug absorption; absorption correlates with the length of small intestine remaining, and with a jejunostomy or ileostomy, using medicines normally depends largely on that remaining length.",
+      "tags": [
+        "absorption",
+        "bowel-length",
+        "pill"
+      ],
+      "anatomyScope": [
+        "all"
+      ],
+      "section": "Introduction; Presence of a stoma",
+      "verified": true,
+      "verifiedAgainst": "full text"
+    },
+    {
+      "sourceId": "sood-2013",
+      "locator": "absorption-site",
+      "text": "Although drugs can be absorbed along the whole gut, most drug absorption happens in the upper small intestine, where the long villi increase the surface area.",
+      "tags": [
+        "absorption",
+        "jejunum",
+        "pill",
+        "immediate-release"
+      ],
+      "anatomyScope": [
+        "all"
+      ],
+      "diagram": {
+        "segmentIds": [
+          "duodenum",
+          "jejunum"
+        ],
+        "mode": "absorbs-here",
+        "label": "Most drug absorption happens in the upper small intestine"
+      },
+      "section": "Drug absorption in the gastrointestinal tract",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "sood-2013",
       "locator": "colon-slow-release",
-      "text": "The large intestine matters mainly for slow-release products, which may release part of their dose there; without a colon, those products have less time and surface to release.",
-      "tags": ["extended-release", "colon", "pill", "release-form"],
-      "anatomyScope": ["no-colon"],
+      "text": "The large intestine has a minimal role in drug absorption, mainly limited to slow-release drugs and drugs that act in the large intestine.",
+      "tags": [
+        "extended-release",
+        "colon",
+        "pill",
+        "release-form"
+      ],
+      "anatomyScope": [
+        "no-colon"
+      ],
       "appliesTo": "extended-release",
       "diagram": {
-        "segmentIds": ["cecum", "ascending-colon", "transverse-colon", "descending-sigmoid"],
+        "segmentIds": [
+          "cecum",
+          "ascending-colon",
+          "transverse-colon",
+          "descending-sigmoid"
+        ],
         "mode": "missing",
-        "label": "Slow-release products can rely on the colon for part of their release"
-      }
+        "label": "Slow-release products can rely on the colon for part of their absorption"
+      },
+      "section": "Drug absorption in the gastrointestinal tract",
+      "verified": true,
+      "verifiedAgainst": "full text"
+    },
+    {
+      "sourceId": "sood-2013",
+      "locator": "formulation",
+      "text": "When poor absorption is suspected, liquids, capsules and uncoated tablets are likely to be better absorbed, and it may be necessary to avoid modified-release (slow-, controlled- or sustained-release) or enteric-coated formulations.",
+      "tags": [
+        "extended-release",
+        "enteric-coated",
+        "delayed-release",
+        "liquid",
+        "pill",
+        "release-form"
+      ],
+      "anatomyScope": [
+        "short-bowel",
+        "ileostomy"
+      ],
+      "section": "Drug formulation",
+      "verified": true,
+      "verifiedAgainst": "full text"
+    },
+    {
+      "sourceId": "sood-2013",
+      "locator": "liquid-excipients",
+      "text": "Before using a liquid medicine, its osmolarity, inactive ingredients and volume should be considered: high-osmolarity liquids can cause osmotic diarrhoea, and products containing sorbitol can in theory cause diarrhoea.",
+      "tags": [
+        "liquid",
+        "sorbitol",
+        "sugar-alcohol",
+        "inactive-ingredient",
+        "pill"
+      ],
+      "anatomyScope": [
+        "all"
+      ],
+      "section": "Drug formulation",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "sood-2013",
       "locator": "ask-before-changing-form",
-      "text": "Patients should consult a pharmacist before changing the dose form of a medicine, such as crushing, splitting or switching products.",
-      "tags": ["pharmacist", "crushing", "splitting", "pill", "action"],
-      "anatomyScope": ["all"]
+      "text": "If a solid dose form is altered, for example crushed or opened, its tolerability or efficacy can change, so checking the product information or asking a pharmacist is recommended.",
+      "tags": [
+        "pharmacist",
+        "crushing",
+        "splitting",
+        "pill",
+        "action"
+      ],
+      "anatomyScope": [
+        "all"
+      ],
+      "section": "Drug formulation",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "sood-2013",
-      "locator": "ileostomy-dehydration",
-      "text": "People with an ileostomy are at higher risk of dehydration and low sodium, and medicines such as diuretics and laxatives can add to that risk.",
-      "tags": ["ileostomy", "dehydration", "diuretic", "laxative", "pill"],
-      "anatomyScope": ["ileostomy", "end-jejunostomy"]
+      "locator": "ppi",
+      "text": "Proton pump inhibitors are often used in people with a short gut to reduce the volume of upper gut secretions.",
+      "tags": [
+        "ppi",
+        "acid",
+        "pantoprazole",
+        "omeprazole",
+        "pill"
+      ],
+      "anatomyScope": [
+        "short-bowel"
+      ],
+      "section": "pH",
+      "verified": true,
+      "verifiedAgainst": "full text"
+    },
+    {
+      "sourceId": "sood-2013",
+      "locator": "monitoring",
+      "text": "Some medicines have effects that can be monitored, such as heart rate for beta blockers or the INR for warfarin, and some have blood levels that can be measured, such as digoxin and lithium.",
+      "tags": [
+        "monitoring",
+        "drug-levels",
+        "pill",
+        "beta-blocker"
+      ],
+      "anatomyScope": [
+        "short-bowel",
+        "ileostomy"
+      ],
+      "section": "Drug dose",
+      "verified": true,
+      "verifiedAgainst": "full text"
     },
     {
       "sourceId": "hong-2021",
       "locator": "absorption-findings",
-      "text": "Across studies reviewed, absorption was decreased for 29 of 37 drugs after intestinal resection, and 6 drugs lost clinical effect; the effect was drug-specific, so it cannot be turned into a single probability for one person.",
-      "tags": ["absorption", "pill", "evidence", "malabsorption"],
-      "anatomyScope": ["short-bowel"]
+      "text": "Across 50 studies of 37 drugs in short bowel syndrome, decreased absorption was found for 29 drugs, 6 of which lost their therapeutic effect.",
+      "tags": [
+        "absorption",
+        "pill",
+        "evidence",
+        "malabsorption"
+      ],
+      "anatomyScope": [
+        "short-bowel"
+      ],
+      "section": "abstract",
+      "verified": true,
+      "verifiedAgainst": "abstract"
     },
     {
       "sourceId": "hong-2021",
       "locator": "drug-specific",
-      "text": "Because the change in absorption differs from drug to drug, each medicine should be considered individually with the prescriber or pharmacist.",
-      "tags": ["pill", "pharmacist", "evidence"],
-      "anatomyScope": ["short-bowel", "ileostomy"]
+      "text": "The effect of short bowel syndrome on drug absorption appears to be drug-specific and to depend on the location and extent of resection; therapeutic drug monitoring, where available, should be considered, especially for drugs with narrow therapeutic indices.",
+      "tags": [
+        "pill",
+        "pharmacist",
+        "evidence",
+        "monitoring"
+      ],
+      "anatomyScope": [
+        "short-bowel"
+      ],
+      "section": "abstract",
+      "verified": true,
+      "verifiedAgainst": "abstract"
+    },
+    {
+      "sourceId": "hong-2021",
+      "locator": "colon-absorption",
+      "text": "A colon in continuity can contribute significantly to the absorption of some drugs (for example metoprolol), and drugs absorbed in the colon or over a wide window are least likely to be malabsorbed.",
+      "tags": [
+        "colon",
+        "absorption",
+        "pill",
+        "metoprolol",
+        "extended-release"
+      ],
+      "anatomyScope": [
+        "short-bowel"
+      ],
+      "section": "abstract",
+      "verified": true,
+      "verifiedAgainst": "abstract"
     },
     {
       "sourceId": "who-ors",
       "locator": "reduced-osmolarity-composition",
-      "text": "WHO reduced-osmolarity ORS (2003) contains sodium 75 mmol/L, chloride 65, glucose 75, potassium 20 and citrate 10 mmol/L (total 245 mOsm/L). It was designed for acute diarrhea, and its sodium is below the range usually cited for short bowel syndrome.",
-      "tags": ["ors", "composition", "sodium", "drink", "who"],
-      "anatomyScope": ["all"]
+      "text": "WHO reduced-osmolarity ORS contains sodium 75 mmol/L, chloride 65, glucose 75, potassium 20 and citrate 10 mmol/L (total 245 mOsm/L). It was designed for acute diarrhea, and its sodium is below the 90 to 120 mmol/L range given for short bowel syndrome.",
+      "tags": [
+        "ors",
+        "composition",
+        "sodium",
+        "drink",
+        "who"
+      ],
+      "anatomyScope": [
+        "all"
+      ],
+      "verified": false
     },
     {
       "sourceId": "who-ors",
       "locator": "purpose",
       "text": "Oral rehydration solution works because glucose and sodium are absorbed together in the small bowel, carrying water with them.",
-      "tags": ["ors", "rehydration", "drink", "sodium", "glucose"],
-      "anatomyScope": ["all"],
+      "tags": [
+        "ors",
+        "rehydration",
+        "drink",
+        "sodium",
+        "glucose"
+      ],
+      "anatomyScope": [
+        "all"
+      ],
       "diagram": {
-        "segmentIds": ["jejunum", "ileum"],
+        "segmentIds": [
+          "jejunum",
+          "ileum"
+        ],
         "mode": "absorbs-here",
         "label": "Glucose and sodium carry water in together in the small bowel"
-      }
+      },
+      "verified": false
+    },
+    {
+      "sourceId": "uoaa-2025",
+      "locator": "dehydration-signs",
+      "text": "Signs of dehydration include urine darker than pale yellow, urinating less often, thirst, dry mouth, fatigue, lightheadedness or dizziness when standing, rapid weight loss, and stool output higher than total fluid intake; people with high output or symptoms of dehydration are asked to contact their doctor.",
+      "tags": [
+        "dehydration",
+        "warning",
+        "output",
+        "fluids",
+        "urine",
+        "dizziness"
+      ],
+      "anatomyScope": [
+        "all"
+      ],
+      "section": "Urine Color; Signs of dehydration",
+      "verified": true,
+      "verifiedAgainst": "full text"
     }
   ]
 }

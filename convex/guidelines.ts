@@ -13,6 +13,8 @@ import corpus from "../data/guidelines.json";
 type CorpusChunk = (typeof corpus.chunks)[number] & {
   quote?: string;
   appliesTo?: string;
+  section?: string;
+  verifiedAgainst?: string;
   diagram?: { segmentIds: string[]; mode: "absorbs-here" | "releases-here" | "missing"; label: string };
 };
 
@@ -33,7 +35,9 @@ export function corpusChunks() {
       anatomyScope: c.anatomyScope,
       appliesTo: c.appliesTo,
       diagram: c.diagram,
-      verified: false,
+      verified: c.verified,
+      section: c.section,
+      verifiedAgainst: c.verifiedAgainst,
       contentHash: hashText(c.text + c.tags.join(",")),
     };
   });
@@ -65,6 +69,9 @@ export const syncCorpus = internalMutation({
           diagram: c.diagram,
           anatomyScope: c.anatomyScope,
           appliesTo: c.appliesTo,
+          verified: c.verified,
+          section: c.section,
+          verifiedAgainst: c.verifiedAgainst,
         });
       }
     }

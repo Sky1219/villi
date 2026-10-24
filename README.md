@@ -35,25 +35,29 @@ Villi never decides. It never tells anyone to stop, start, crush, split or chang
 
 ## Evidence base
 
-`data/guidelines.json` holds 46 rule-level chunks, written in our own words. Each one has a source, a section locator, an anatomy scope and (for some) a fixed diagram payload. No article text is reproduced.
+`data/guidelines.json` holds 51 rule-level chunks, written in our own words. Each one has a source, a stable id, an anatomy scope, a `section` (the place in the source: a Best Practice Advice number, a heading or a table) and, for some, a fixed diagram payload. No article text is reproduced beyond short phrases.
 
-- Iyer K, DiBaise JK, Rubio-Tapia A. *AGA Clinical Practice Update on Management of Short Bowel Syndrome: Expert Review.* Clin Gastroenterol Hepatol, 2022.
-- Chan LN, DiBaise JK, Parrish CR. *Short Bowel Syndrome in Adults, Part 4A: A Guide to Front Line Drugs Used in the Treatment of SBS.* Practical Gastroenterology, Nutrition Issues in Gastroenterology #139, 2015.
-- Parrish CR, DiBaise JK. *Managing the Adult Patient With Short Bowel Syndrome.* Gastroenterol Hepatol (N Y), 2017;13(10):600-608.
-- Remane et al. *Drug dissolution problems in patients with an ostomy* (pilot: 50 interviews, 85 chart reviews). Int J Colorectal Dis, 2025.
-- Sood A, Tanner F, Testro A. *Medicines in patients with a stoma.* Australian Prescriber, 2013.
-- Hong et al. *Oral drug absorption after intestinal resection: a systematic review.* Eur J Drug Metab Pharmacokinet, 2021.
-- WHO/UNICEF. *Oral Rehydration Salts: reduced-osmolarity formula* (2003/2006).
+- Iyer K, DiBaise JK, Rubio-Tapia A. *AGA Clinical Practice Update on Management of Short Bowel Syndrome: Expert Review.* Clin Gastroenterol Hepatol. 2022;20(10):2185-2194.e2. [doi:10.1016/j.cgh.2022.05.032](https://doi.org/10.1016/j.cgh.2022.05.032)
+- Chan LN, DiBaise JK, Parrish CR. *Short Bowel Syndrome in Adults, Part 4A: A Guide to Front Line Drugs Used in the Treatment of Short Bowel Syndrome.* Practical Gastroenterology, March 2015 (Nutrition Issues in Gastroenterology, Series #139).
+- Parrish CR, DiBaise JK. *Managing the Adult Patient With Short Bowel Syndrome.* Gastroenterol Hepatol (N Y). 2017;13(10):600-608. [PMC5718176](https://pmc.ncbi.nlm.nih.gov/articles/PMC5718176/)
+- Remane Y, Stolz MA, Heinitz K, et al. *Drug dissolution problems in ostomy patients: a chart review and patient interview analysis.* Int J Colorectal Dis. 2025;40(1):113. [doi:10.1007/s00384-025-04907-9](https://doi.org/10.1007/s00384-025-04907-9)
+- Sood S, Tanner F, Testro A. *Prescribing for a patient with reduced intestinal length.* Aust Prescr. 2013;36:136-8. [doi:10.18773/austprescr.2013.048](https://doi.org/10.18773/austprescr.2013.048)
+- Hong WB, Tan WK, Law LS, Ong DE, Lo EA. *Changes of Drug Pharmacokinetics in Patients with Short Bowel Syndrome: A Systematic Review.* Eur J Drug Metab Pharmacokinet. 2021;46(4):465-478. [doi:10.1007/s13318-021-00696-y](https://doi.org/10.1007/s13318-021-00696-y)
+- WHO/UNICEF. *Oral Rehydration Salts: production of the new ORS* (WHO/FCH/CAH/06.1, 2006).
+- Rubin E. *Maintaining Nutrition and Hydration in the Management of Short Bowel Syndrome.* United Ostomy Associations of America, 2025 (a patient-education article sponsored by Takeda). Used only for the list of dehydration signs.
 - **FDA labels** via [openFDA](https://open.fda.gov/) (`/drug/label.json`), plus the NDC directory (`/drug/ndc.json`) for the deterministic dosage form (for example `TABLET, FILM COATED, EXTENDED RELEASE`).
 
-**Corrections applied while writing the corpus:**
-- **Hypotonic fluids:** the water/tea limit is scoped to end-jejunostomy only. People with a colon usually tolerate them.
-- **Crushing:** only described for plain immediate-release tablets.
-- **Tablet in the pouch:** described as "undissolved *or* an empty shell, not proof either way" (Remane), not as proof of malabsorption.
-- **ORS:** both formulas are given, WHO 75 mmol/L Na and the 90-120 mmol/L SBS range, with which one the SBS source supports.
-- **Extended-release diagram:** says "needs time in a gut that is now shorter". It doesn't claim where the drug releases.
+**How the corpus was checked.** In this build the corpus was drafted by Claude and then source-checked **by Claude, not by a clinician**, against openly available text: the full text of the AGA update, Practical Gastroenterology #139, Parrish & DiBaise 2017, Remane 2025, Sood 2013 and the UOAA article, and the PubMed abstract of Hong 2021. 49 of 51 chunks are `verified: true` with `verifiedAgainst: "full text"` or `"abstract"`; the two WHO ORS chunks stay `verified: false` because the WHO page we opened does not show the composition table. In the app a guideline citation opens as "Villi's summary of: <source>, <section>", never as a quotation, and says what it was checked against. Clinician review is still the first production task.
 
-> **Every chunk is marked `verified: false`.** Locators and wording were not checked against the publishers' full text in this build. In the app, a guideline citation opens as "Villi's summary of this source", never as a quotation. The study figures in `remane-2025#patient-education` and `hong-2021#absorption-findings` are unverified too. A clinician review of the corpus is the first production task (see below).
+**What the source check changed** (2026-10-24):
+- Sports drinks: the AGA update, not Parrish & DiBaise, says an ORS has much more sodium and less sugar than sports drinks, so that chunk moved to `aga-sbs#fluids-sports-drinks`.
+- Hypotonic drinks (water, tea, coffee, alcohol) and hypertonic drinks (juice, soda) are limited "particularly with net secretion and a high-output jejunostomy" (AGA). The water/tea limit stays scoped to end-jejunostomy; people with a colon usually stay hydrated with ordinary fluids (Parrish & DiBaise).
+- ORS sodium: 90 to 120 mmol/L for SBS (Parrish & DiBaise), scoped to end-jejunostomy. WHO's reduced-osmolarity ORS has 75.
+- Removed because the cited source doesn't say it: thickening foods, caffeine and alcohol (Parrish & DiBaise), sipping fluids apart from meals (AGA), a pharmacist review of every medicine (PG #139), ileostomy dehydration and diuretics (Sood).
+- Crushing: no source we read says crushing helps. The chunk now says only that a team may consider another formulation when a medicine isn't working; Sood adds that altering a solid form can change how it works, so ask the pharmacist.
+- Acid suppression: proton pump inhibitors are the main maintenance treatment for gastric hypersecretion after resection (PG #139), often used with a short gut (Sood), and all oral ones are enteric-coated (PG #139). So a pantoprazole answer says the team chooses the form rather than "avoid".
+- Tablet in the pouch: it can be undissolved, or a shell or matrix left after release, and a dissolved medicine can still be incompletely absorbed (Remane). Not proof either way.
+- Study figures: Remane reports 11 of 50 interviewed patients had seen undissolved medicine and more than 60% lacked information about it (the paper's Discussion says 10 of 50 in one place); Hong found decreased absorption for 29 of 37 drugs, 6 of which lost effect.
 
 ## Architecture: Convex is the backend
 
@@ -66,7 +70,7 @@ Next.js (App Router) is a thin client: every page is a client component using `u
 | **Safety passes are scheduled functions** | The draft and its reviewer job are committed in one transaction (`answers.saveDraft`). The reviewer, log moderation, swap checks and care-team moderation run through `@convex-dev/action-retrier`, and every `onComplete` fails closed: an unreviewed draft never becomes final, and an unmoderated entry stays author-only. A watchdog marks stuck answers failed. |
 | **Community is live queries** | `community.liveCounts`, `swaps.list`, `careTeam.list`, `sheet.get`. A log from a second device changes the counts on the first without a reload. |
 | **Aggregates** | One counter row per (item × anatomy), changed only in the same mutation that pools or unpools an entry (`applyPooledTransition`), so `query_community` is O(1). |
-| **Guidelines are a vector index** | `guideline_chunks.by_embedding` (1024-d, Voyage `voyage-4-lite`; the 46 chunks are embedded by `guidelines.embedMissing` during the seed), searched with `ctx.vectorSearch` and filtered by anatomy scope after hydration. Any embedding error falls back to a Convex `searchIndex`, and the trace says "(keyword search)" when it does. This is what matches "slow-release heart pill" to the extended-release guidance. `items.by_embedding` is defined but not populated yet; item matching uses the text index and the model. |
+| **Guidelines are a vector index** | `guideline_chunks.by_embedding` (1024-d, Voyage `voyage-4-lite`; the 51 chunks are embedded by `guidelines.embedMissing` during the seed), searched with `ctx.vectorSearch` and filtered by anatomy scope after hydration. Any embedding error falls back to a Convex `searchIndex`, and the trace says "(keyword search)" when it does. This is what matches "slow-release heart pill" to the extended-release guidance. `items.by_embedding` is defined but not populated yet; item matching uses the text index and the model. |
 | **Photos are Convex storage** | `generateUploadUrl` → client upload (downscaled and EXIF-stripped on the device) → storage URL to Claude vision → `ctx.storage.delete` right after reading. |
 
 Other pieces:
@@ -89,7 +93,7 @@ Patients teach each other through structured, moderated artifacts: tolerance log
 | **Medication advice leaking** | Prompt rules, code lint for directives and quantities, LLM reviewer for paraphrases, and fixture tests. |
 | **Small-n, self-selected community data** | Always split by anatomy, with denominators; "too few to say" under 5; "self-reported, not a trial"; a demo badge whenever synthetic rows are counted; never overrides a guideline. |
 | **Bad advice entering the pool** | Scheduled moderation (rule pre-filter + Claude), guideline check on swaps, counters only move on approval, fail-closed retries. |
-| **Stale corpus** | Stable `sourceId#locator` ids, content hashes and re-embedding on change; every chunk marked unverified until clinician review. |
+| **Stale corpus** | Stable `sourceId#locator` ids, content hashes and re-embedding on change; each chunk records the section it comes from and whether Claude checked it against the abstract or full text; no clinician review yet. |
 | **Overconfidence** | A confidence field, the three-state UI, and every answer ending in a question for a professional. |
 | **Honor-system clinician verification** | The clinician role is self-declared in this build and always badged "demo verification". |
 | **Model refusal / outage** | Refusal is a first-class outcome; outages read "busy, try again", never a stack trace; nothing unreviewed is shown. |
@@ -115,7 +119,7 @@ All community data in this demo is **synthetic** and generated by `npm run seed`
 
 ## Path to production
 
-1. **Clinician review of the corpus.** A GI pharmacist and an intestinal-rehabilitation dietitian verify every chunk's locator and wording, and the `verified` flag becomes real.
+1. **Clinician review of the corpus.** A GI pharmacist and an intestinal-rehabilitation dietitian review every chunk's section and wording. Today `verified` means Claude checked it against source text, not that a clinician did.
 2. **Pilot** with an intestinal-rehabilitation clinic: patients use Villi before appointments, clinicians see the sheet, and real clinician verification replaces the honor system.
 3. **Privacy:** a real auth option with export, a retention policy, a regional data residency choice, a DPIA, and no third-party analytics.
 4. **Impact:** the primary metric is the share of flagged checks whose question reaches a care team and ends in a logged change (`resultingChange`), split by anatomy. In a clinic pilot, the clinic confirms a sample of those changes.

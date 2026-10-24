@@ -114,7 +114,9 @@ function Receipt({
   );
 }
 
-function Citations({ citation, final, titles }: { citation: string; final: FinalAnswer; titles: Record<string, string> }) {
+type SourceInfo = { title: string; section: string | null; verifiedAgainst: string | null };
+
+function Citations({ citation, final, titles }: { citation: string; final: FinalAnswer; titles: Record<string, SourceInfo> }) {
   const [open, setOpen] = useState<string | null>(null);
   const cites = Array.from(citation.matchAll(/\[(G|L|C|T):([^\]]+)\]/g), (m) => ({ kind: m[1], ref: m[2].trim() }));
   return (
@@ -145,14 +147,20 @@ function Citations({ citation, final, titles }: { citation: string; final: Final
             // Guideline chunks are our own summaries of the source, so they are not shown as quotes.
             <>
               <span className="block text-foreground">{final.evidence[open].text}</span>
-              <span className="mt-1 block text-xs text-muted">Villi&apos;s summary of this source, not yet checked by a clinician.</span>
+              <span className="mt-1 block text-xs text-muted">
+                Villi&apos;s summary of: {titles[open]?.title ?? "this source"}
+                {titles[open]?.section ? `, ${titles[open].section}` : ""}.{" "}
+                {titles[open]?.verifiedAgainst
+                  ? `Wording checked by Claude against the ${titles[open].verifiedAgainst}; not yet reviewed by a clinician.`
+                  : "Not yet checked against the source text or by a clinician."}
+              </span>
             </>
           ) : final.evidence?.[open] ? (
             <mark className="bg-transparent text-foreground">&ldquo;{final.evidence[open].text}&rdquo;</mark>
           ) : (
             <span className="text-muted">{open.startsWith("C:") ? "Self-reported by other users, not a trial." : "Source text not available."}</span>
           )}
-          {titles[open] && <span className="mt-1 block text-xs text-muted">{titles[open]}</span>}
+          {titles[open] && !open.startsWith("G:") && <span className="mt-1 block text-xs text-muted">{titles[open].title}</span>}
         </span>
       )}
     </span>
@@ -189,7 +197,9 @@ function AnswerCard({
   );
   const chunks = useQuery(api.questions.citationsFor, { anonId, chunkIds: gIds });
   const profile = useQuery(api.profiles.me, { anonId });
-  const titles: Record<string, string> = Object.fromEntries((chunks ?? []).map((c) => [`G:${c.chunkId}`, c.sourceTitle]));
+  const titles: Record<string, SourceInfo> = Object.fromEntries(
+    (chunks ?? []).map((c) => [`G:${c.chunkId}`, { title: c.sourceTitle, section: c.section, verifiedAgainst: c.verifiedAgainst }]),
+  );
   const style = STATE_STYLE[final.state] ?? STATE_STYLE["cant-tell"];
 
   const lang = profile?.language ?? "en";
