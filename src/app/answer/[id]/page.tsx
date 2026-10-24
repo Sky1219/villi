@@ -34,28 +34,81 @@ const TOOL_LABEL: Record<string, string> = {
   reviewer: "Second reviewer",
 };
 
-function TraceList({ trace, status }: { trace: Trace[]; status: string }) {
-  const working = status === "queued" || status === "running" || status === "reviewing";
+const isWorking = (status: string) => status === "queued" || status === "running" || status === "reviewing";
+
+function TraceSteps({ trace }: { trace: Trace[] }) {
   return (
-    <section aria-live="polite" className="rounded-2xl border border-border bg-surface p-4">
+    <ol className="space-y-2">
+      {trace.map((t) => (
+        <li key={t.step} className="flex gap-2 text-sm">
+          <span aria-hidden className={t.ok ? "text-ok" : "text-flag"}>
+            {t.ok ? "✓" : "!"}
+          </span>
+          <span>
+            <span className="font-bold">{TOOL_LABEL[t.tool] ?? t.tool}</span>{" "}
+            <span className="text-muted">{t.summary}</span>
+          </span>
+        </li>
+      ))}
+      {trace.length === 0 && <li className="text-sm text-muted">Starting…</li>}
+    </ol>
+  );
+}
+
+// While the agent works, the trace is the page. Once an answer is final it moves into the receipt at the end.
+function TraceList({ trace, status }: { trace: Trace[]; status: string }) {
+  const working = isWorking(status);
+  return (
+    <section className="rounded-2xl border border-border bg-surface p-4">
       <h2 className="mb-2 flex items-center gap-2 text-sm font-bold text-muted">
         {working && <span className="inline-block h-2 w-2 rounded-full bg-accent motion-safe:animate-[villi-pulse_1.2s_ease-in-out_infinite]" />}
         {status === "reviewing" ? "Safety review in progress…" : working ? "Checking sources…" : "What Villi checked"}
       </h2>
-      <ol className="space-y-2">
-        {trace.map((t) => (
-          <li key={t.step} className="flex gap-2 text-sm">
-            <span aria-hidden className={t.ok ? "text-ok" : "text-flag"}>
-              {t.ok ? "✓" : "!"}
-            </span>
-            <span>
-              <span className="font-bold">{TOOL_LABEL[t.tool] ?? t.tool}</span>{" "}
-              <span className="text-muted">{t.summary}</span>
-            </span>
-          </li>
-        ))}
-        {trace.length === 0 && <li className="text-sm text-muted">Starting…</li>}
-      </ol>
+      <TraceSteps trace={trace} />
+    </section>
+  );
+}
+
+function Receipt({
+  trace,
+  final,
+  edited,
+}: {
+  trace: Trace[];
+  final: FinalAnswer;
+  edited: boolean;
+}) {
+  const hasLabel = JSON.stringify(final.why).includes("[L:");
+  return (
+    <section className="space-y-2">
+      <details className="group rounded-2xl border border-border bg-surface px-4 text-sm">
+        <summary className="flex min-h-12 cursor-pointer items-center font-bold">
+          How Villi checked this ({trace.length} steps, {final.sourcesChecked.length} sources)
+        </summary>
+        <div className="space-y-4 pb-4">
+          <TraceSteps trace={trace} />
+          {final.sourcesChecked.length > 0 && (
+            <div>
+              <h3 className="mb-1 font-bold">Sources I checked</h3>
+              <ul className="list-disc space-y-1 pl-5 text-muted">
+                {final.sourcesChecked.map((s, i) => (
+                  <li key={i}>{s}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <p className="text-muted">
+            Confidence: {final.confidence}.{" "}
+            {edited ? "A second reviewer checked this answer and edited it before you saw it." : "A second reviewer checked this answer before you saw it."}
+          </p>
+        </div>
+      </details>
+      {hasLabel && (
+        <p className="text-xs text-muted">
+          FDA label text via openFDA. openFDA says not to rely on it alone for decisions about medical care; that&apos;s why
+          every answer ends with a question for your pharmacist or doctor.
+        </p>
+      )}
     </section>
   );
 }
@@ -109,13 +162,11 @@ function AnswerCard({
   answerId,
   anonId,
   itemId,
-  itemName,
 }: {
   final: FinalAnswer;
   answerId: Id<"answers">;
   anonId: string;
   itemId: Id<"items"> | null;
-  itemName: string | null;
 }) {
   const gIds = Array.from(
     new Set(
@@ -127,12 +178,13 @@ function AnswerCard({
   const chunks = useQuery(api.questions.citationsFor, { anonId, chunkIds: gIds });
   const profile = useQuery(api.profiles.me, { anonId });
   const titles: Record<string, string> = Object.fromEntries((chunks ?? []).map((c) => [`G:${c.chunkId}`, c.sourceTitle]));
-  const hasLabel = JSON.stringify(final.why).includes("[L:");
   const style = STATE_STYLE[final.state] ?? STATE_STYLE["cant-tell"];
 
   const lang = profile?.language ?? "en";
+  // Reading order: verdict, the reasoning behind it, the question to take away, then supporting evidence.
   return (
-    <div className="space-y-4" lang={lang} dir={lang === "ar" ? "rtl" : "ltr"}>
+    <div className="space-y-8" lang={lang} dir={lang === "ar" ? "rtl" : "ltr"}>
+      <div className="space-y-3">
       <section className={`rounded-2xl border-2 p-4 ${style.box}`}>
         <p className={`mb-1 text-xs font-bold uppercase tracking-wide ${style.tagCls}`}>{style.tag}</p>
         <p className="text-xl font-bold leading-snug">{prose(final.verdict)}</p>
@@ -179,7 +231,11 @@ function AnswerCard({
           <Citations citation={final.swapToAskAbout.citation} final={final} titles={titles} />
         </section>
       )}
+      </div>
 
+      <QuestionCard ask={final.ask} answerId={answerId} anonId={anonId} />
+
+      <div className="space-y-3">
       {itemId ? (
         <CommunityCounts anonId={anonId} itemId={itemId} />
       ) : (
@@ -225,28 +281,7 @@ function AnswerCard({
           </ul>
         </section>
       )}
-
-      <QuestionCard ask={final.ask} answerId={answerId} anonId={anonId} />
-
-      {itemId && itemName && <LogCard anonId={anonId} answerId={answerId} itemName={itemName} />}
-
-      {final.sourcesChecked.length > 0 && (
-        <details className="rounded-2xl border border-border bg-surface p-4 text-sm">
-          <summary className="cursor-pointer font-bold">Sources I checked ({final.sourcesChecked.length})</summary>
-          <ul className="mt-2 list-disc space-y-1 pl-5 text-muted">
-            {final.sourcesChecked.map((s, i) => (
-              <li key={i}>{s}</li>
-            ))}
-          </ul>
-          <p className="mt-2 text-xs text-muted">Confidence: {final.confidence}</p>
-        </details>
-      )}
-      {hasLabel && (
-        <p className="text-xs text-muted">
-          FDA label text via openFDA. openFDA says not to rely on it alone for decisions about medical care; that&apos;s why
-          every answer ends with a question for your pharmacist or doctor.
-        </p>
-      )}
+      </div>
     </div>
   );
 }
@@ -332,9 +367,25 @@ function AnswerView({ anonId, answerId }: { anonId: string; answerId: Id<"answer
   if (a === null) return <p className="pt-10 text-center">Answer not found on this device.</p>;
   const final = a.final as FinalAnswer | null;
   const retryText = a.identified ?? a.inputText;
+  const done = !!final && a.status === "final";
+  const itemName = a.identified ?? a.inputText;
+  const statusLine = done
+    ? `Answer ready: ${(STATE_STYLE[final.state] ?? STATE_STYLE["cant-tell"]).tag}.`
+    : a.status === "reviewing"
+      ? "Safety review in progress."
+      : isWorking(a.status)
+        ? "Checking sources."
+        : a.status === "blocked"
+          ? "This answer didn't pass the safety check."
+          : a.status === "failed"
+            ? "Something went wrong."
+            : "";
 
   return (
     <main className="space-y-4 pt-4">
+      <p role="status" className="sr-only">
+        {statusLine}
+      </p>
       <div className="flex gap-4">
         <Link href="/" className="inline-block min-h-11 py-2 text-sm font-bold text-accent">
           ← Home
@@ -352,20 +403,18 @@ function AnswerView({ anonId, answerId }: { anonId: string; answerId: Id<"answer
           <p className="text-sm text-muted">Read from your photo.</p>
         )}
         {a.kind === "scan" && !a.isSaw && a.identified && (
-          <Link href={`/?q=${encodeURIComponent(a.identified)}`} className="text-sm font-bold text-accent underline">
+          <Link
+            href={`/?q=${encodeURIComponent(a.identified)}`}
+            className="inline-flex min-h-11 items-center text-sm font-bold text-accent underline"
+          >
             Not right? Type the name instead
           </Link>
         )}
       </section>
 
-      <TraceList trace={a.toolTrace} status={a.status} />
+      {!done && <TraceList trace={a.toolTrace} status={a.status} />}
 
-      {final && a.status === "final" && (
-        <AnswerCard final={final} answerId={a._id} anonId={anonId} itemId={a.itemId} itemName={a.identified ?? a.inputText} />
-      )}
-      {final && a.reviewSummary?.edited && (
-        <p className="text-xs text-muted">The second reviewer edited this answer before you saw it.</p>
-      )}
+      {done && <AnswerCard final={final} answerId={a._id} anonId={anonId} itemId={a.itemId} />}
 
       {(a.status === "failed" || a.status === "blocked") && (
         <section className="rounded-2xl border border-border bg-surface-2 p-4">
@@ -385,7 +434,14 @@ function AnswerView({ anonId, answerId }: { anonId: string; answerId: Id<"answer
         </section>
       )}
 
-      {a.status === "final" && <FollowUp anonId={anonId} parentId={a.kind === "followup" && a.parentId ? a.parentId : a._id} />}
+      {done && (
+        <div className="space-y-3 pt-4">
+          <FollowUp anonId={anonId} parentId={a.kind === "followup" && a.parentId ? a.parentId : a._id} />
+          {a.itemId && itemName && <LogCard anonId={anonId} answerId={a._id} itemName={itemName} />}
+        </div>
+      )}
+
+      {done && <Receipt trace={a.toolTrace} final={final} edited={!!a.reviewSummary?.edited} />}
     </main>
   );
 }
