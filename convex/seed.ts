@@ -4,11 +4,12 @@ import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { anatomyValidator, outcomeValidator } from "./schema";
 import { anatomyKeyOf, type AnatomyKey } from "./lib/anatomy";
-import { applyPooledTransition } from "./community";
+import { applyCareOutcomeTransition, applyPooledTransition } from "./community";
 import {
   FATHER,
   PEER,
   SEED_CARE_TEAM,
+  seedCareOutcomes,
   SEED_ITEMS,
   SEED_QUESTIONS,
   SEED_SWAPS,
@@ -52,6 +53,12 @@ export const clearSyntheticBatch = internalMutation({
         if (table === "log_entries") {
           const e = row as Doc<"log_entries">;
           if (e.pooled === true && e.itemId) await applyPooledTransition(ctx, { ...e, itemId: e.itemId }, -1);
+        }
+        if (table === "care_team_answers") {
+          const c = row as Doc<"care_team_answers">;
+          if (c.pooled === true && c.itemId && c.resultingChange) {
+            await applyCareOutcomeTransition(ctx, { ...c, itemId: c.itemId, resultingChange: c.resultingChange }, -1);
+          }
         }
         await ctx.db.delete(table, row._id);
         deleted++;
@@ -195,10 +202,10 @@ export const insertCommunity = internalMutation({
         createdAt: Date.now() - i * 3_600_000,
       });
     }
-    for (const c of SEED_CARE_TEAM) {
+    for (const c of [...SEED_CARE_TEAM, ...seedCareOutcomes()]) {
       const profileId = pick(c.anatomy, i++);
       const p = (await ctx.db.get("profiles", profileId))!;
-      await ctx.db.insert("care_team_answers", {
+      const careId = await ctx.db.insert("care_team_answers", {
         profileId,
         anatomySnapshot: p.anatomy,
         anatomyKey: p.anatomyKey,
@@ -212,6 +219,10 @@ export const insertCommunity = internalMutation({
         synthetic: true,
         createdAt: Date.now() - i * 3_600_000,
       });
+      const row = (await ctx.db.get("care_team_answers", careId))!;
+      if (row.itemId && row.resultingChange) {
+        await applyCareOutcomeTransition(ctx, { ...row, itemId: row.itemId, resultingChange: row.resultingChange }, 1);
+      }
     }
     const keys = Object.keys(args.byAnatomy) as AnatomyKey[];
     for (const [n, text] of SEED_QUESTIONS.entries()) {

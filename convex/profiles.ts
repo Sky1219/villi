@@ -9,7 +9,7 @@ import {
 } from "./_generated/server";
 import { anatomyValidator, caresForValidator, roleValidator } from "./schema";
 import { internal } from "./_generated/api";
-import { applyPooledTransition } from "./community";
+import { applyCareOutcomeTransition, applyPooledTransition } from "./community";
 import { SEGMENTS, anatomyKeyOf, defaultDiagram, describeAnatomy, type DiagramState, type SegmentId } from "./lib/anatomy";
 import type { Doc } from "./_generated/dataModel";
 
@@ -212,7 +212,12 @@ export const deleteMine = mutation({
     const swaps = await ctx.db.query("swaps").withIndex("by_profileId", (q) => q.eq("profileId", p._id)).take(BATCH);
     for (const s of swaps) await ctx.db.delete("swaps", s._id);
     const care = await ctx.db.query("care_team_answers").withIndex("by_profileId", (q) => q.eq("profileId", p._id)).take(BATCH);
-    for (const c of care) await ctx.db.delete("care_team_answers", c._id);
+    for (const c of care) {
+      if (c.pooled === true && c.itemId && c.resultingChange) {
+        await applyCareOutcomeTransition(ctx, { ...c, itemId: c.itemId, resultingChange: c.resultingChange }, -1);
+      }
+      await ctx.db.delete("care_team_answers", c._id);
+    }
     const questions = await ctx.db.query("questions").withIndex("by_profileId", (q) => q.eq("profileId", p._id)).take(BATCH);
     for (const q of questions) await ctx.db.delete("questions", q._id);
     const meds = await ctx.db.query("meds").withIndex("by_profileId", (q) => q.eq("profileId", p._id)).take(50);

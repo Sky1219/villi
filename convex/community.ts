@@ -62,6 +62,135 @@ export async function applyPooledTransition(
   await bump(ctx, { itemId: entry.itemId, anatomyKey: entry.anatomyKey, outcome: entry.outcome, synthetic: entry.synthetic }, delta);
 }
 
+// ---- What care teams changed (care_outcomes)
+
+type Change = "formulation_changed" | "dose_monitored" | "no_change" | "pending";
+export const CHANGES: Change[] = ["formulation_changed", "dose_monitored", "no_change", "pending"];
+type CareEntry = Pick<Doc<"care_team_answers">, "_id" | "profileId" | "anatomyKey" | "synthetic" | "createdAt"> & {
+  itemId: Id<"items">;
+  resultingChange: Change;
+};
+
+async function bumpCare(ctx: MutationCtx, e: { itemId: Id<"items">; anatomyKey: string; change: Change; synthetic: boolean }, delta: 1 | -1) {
+  const row = await ctx.db
+    .query("care_outcomes")
+    .withIndex("by_itemId_and_anatomyKey", (q) => q.eq("itemId", e.itemId).eq("anatomyKey", e.anatomyKey))
+    .unique();
+  const synth = e.synthetic ? delta : 0;
+  if (!row) {
+    if (delta < 0) return;
+    await ctx.db.insert("care_outcomes", {
+      itemId: e.itemId,
+      anatomyKey: e.anatomyKey,
+      formulation_changed: 0,
+      dose_monitored: 0,
+      no_change: 0,
+      pending: 0,
+      [e.change]: 1,
+      syntheticCount: synth,
+    });
+    return;
+  }
+  await ctx.db.patch("care_outcomes", row._id, {
+    [e.change]: Math.max(0, row[e.change] + delta),
+    syntheticCount: Math.max(0, row.syntheticCount + synth),
+  });
+}
+
+// The only path that changes care_outcomes. Call it in the same mutation that
+// flips a care-team answer's `pooled` to true (1) or back from true (-1), or
+// around a change of its resultingChange. One answer per profile and item counts.
+export async function applyCareOutcomeTransition(ctx: MutationCtx, entry: CareEntry, delta: 1 | -1) {
+  const mine = await ctx.db
+    .query("care_team_answers")
+    .withIndex("by_profileId", (q) => q.eq("profileId", entry.profileId))
+    .order("desc")
+    .take(100);
+  const latestOther = mine
+    .filter((a) => a._id !== entry._id && a.pooled === true && a.itemId === entry.itemId && a.resultingChange)
+    .reduce<Doc<"care_team_answers"> | null>((best, a) => (!best || a.createdAt > best.createdAt ? a : best), null);
+  if (latestOther && entry.createdAt < latestOther.createdAt) return;
+  if (latestOther) {
+    await bumpCare(ctx, { itemId: entry.itemId, anatomyKey: latestOther.anatomyKey, change: latestOther.resultingChange!, synthetic: latestOther.synthetic }, delta === 1 ? -1 : 1);
+  }
+  await bumpCare(ctx, { itemId: entry.itemId, anatomyKey: entry.anatomyKey, change: entry.resultingChange, synthetic: entry.synthetic }, delta);
+}
+
+export type CareOutcomeCell = { anatomyKey: string; label: string; total: number } & Record<Change, number>;
+export type CareOutcomes = { matchingKey: string; byAnatomy: CareOutcomeCell[]; includesSynthetic: boolean };
+
+export async function careOutcomeCounts(ctx: QueryCtx, itemId: Id<"items">, anatomyKey: string): Promise<CareOutcomes> {
+  const byAnatomy: CareOutcomeCell[] = [];
+  let synthetic = 0;
+  for (const key of ANATOMY_KEYS) {
+    const row = await ctx.db
+      .query("care_outcomes")
+      .withIndex("by_itemId_and_anatomyKey", (q) => q.eq("itemId", itemId).eq("anatomyKey", key))
+      .unique();
+    if (!row) continue;
+    const total = CHANGES.reduce((n, c) => n + row[c], 0);
+    if (total === 0) continue;
+    synthetic += row.syntheticCount;
+    byAnatomy.push({
+      anatomyKey: key,
+      label: ANATOMY_LABELS[key],
+      total,
+      formulation_changed: row.formulation_changed,
+      dose_monitored: row.dose_monitored,
+      no_change: row.no_change,
+      pending: row.pending,
+    });
+  }
+  byAnatomy.sort((a, b) => Number(b.anatomyKey === anatomyKey) - Number(a.anatomyKey === anatomyKey));
+  return { matchingKey: anatomyKey, byAnatomy, includesSynthetic: synthetic > 0 };
+}
+
+// On the answer page, next to the community counts.
+export const careOutcomesFor = query({
+  args: { anonId: v.string(), itemId: v.id("items") },
+  handler: async (ctx, args) => {
+    const profile = await requireProfile(ctx, args.anonId);
+    const item = await ctx.db.get("items", args.itemId);
+    if (!item) return null;
+    return { canonicalName: item.canonicalName, ...(await careOutcomeCounts(ctx, item._id, profile.anatomyKey)) };
+  },
+});
+
+// Community page: every item with care-team outcomes for the chosen anatomy.
+export const careOutcomesList = query({
+  args: { anonId: v.string(), anatomy: v.string() },
+  handler: async (ctx, args) => {
+    const profile = await requireProfile(ctx, args.anonId);
+    const keys = args.anatomy === "all" ? [...ANATOMY_KEYS] : args.anatomy === "mine" ? [profile.anatomyKey] : [args.anatomy];
+    const rows = (await ctx.db.query("care_outcomes").take(500)).filter((r) => keys.includes(r.anatomyKey as AnatomyKey));
+    const out = [];
+    for (const r of rows) {
+      const total = CHANGES.reduce((n, c) => n + r[c], 0);
+      if (total === 0) continue;
+      const item = await ctx.db.get("items", r.itemId);
+      if (!item) continue;
+      out.push({
+        item: item.canonicalName,
+        anatomyKey: r.anatomyKey,
+        label: ANATOMY_LABELS[r.anatomyKey as AnatomyKey] ?? r.anatomyKey,
+        total,
+        formulation_changed: r.formulation_changed,
+        dose_monitored: r.dose_monitored,
+        no_change: r.no_change,
+        pending: r.pending,
+        synthetic: r.syntheticCount > 0,
+      });
+    }
+    return out.sort((a, b) => b.total - a.total).slice(0, 30);
+  },
+});
+
+// query_care_outcomes back-end for the agent.
+export const careOutcomesByItemId = internalQuery({
+  args: { itemId: v.id("items"), anatomyKey: v.string() },
+  handler: async (ctx, args) => careOutcomeCounts(ctx, args.itemId, args.anatomyKey),
+});
+
 export type StratifiedCounts = {
   itemId: Id<"items">;
   anatomyKey: string;

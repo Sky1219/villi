@@ -230,6 +230,73 @@ export const TEMPLATE_FOLLOW_UP = {
   newFormName: "Metoprolol tartrate",
 };
 
+// Extra synthetic care-team answers so "What care teams changed" has
+// plausible counts for the demo items. Each one lands on a different
+// synthetic profile, so the counts are people, not entries.
+const OUTCOME_ANSWERS: Record<string, Partial<Record<NonNullable<SeedCareTeam["change"]>, { professional: SeedCareTeam["professional"]; question: string; answer: string }>>> = {
+  "metoprolol succinate er": {
+    formulation_changed: { professional: "pharmacist", question: "Is my extended-release heart tablet being absorbed?", answer: "My pharmacist asked the prescriber to review the extended-release form, and it was changed." },
+    dose_monitored: { professional: "doctor", question: "Is my extended-release heart tablet working?", answer: "My doctor is watching my heart rate and blood pressure readings before deciding." },
+    no_change: { professional: "doctor", question: "Should my heart tablet be a different form?", answer: "My team said it seems to be working for me and kept it the same." },
+    pending: { professional: "pharmacist", question: "Could my heart tablet come in another form?", answer: "My pharmacist is checking with the prescriber." },
+  },
+  "pantoprazole dr": {
+    formulation_changed: { professional: "doctor", question: "Is my acid medicine absorbed with my short bowel?", answer: "My GI team switched me to a different form of my acid medicine." },
+    dose_monitored: { professional: "doctor", question: "Is my acid medicine doing its job?", answer: "My GI doctor is tracking my output to see whether it is working." },
+    no_change: { professional: "pharmacist", question: "Should my acid medicine be a different form?", answer: "My pharmacist kept the same form for now and asked me to tell them if anything changes." },
+    pending: { professional: "doctor", question: "Is there another form of my acid medicine?", answer: "We'll talk about it at my next GI visit." },
+  },
+  "sports drink": {
+    dose_monitored: { professional: "dietitian", question: "Is a sports drink OK for me?", answer: "My dietitian is tracking my output and urine while we look at my drinks." },
+    no_change: { professional: "dietitian", question: "Should I change my sports drink?", answer: "My dietitian said to keep my current plan and check back with her before changing fluids." },
+    pending: { professional: "dietitian", question: "Is a sports drink as good as ORS for me?", answer: "We'll go through my drinks at the next clinic visit." },
+  },
+  loperamide: {
+    dose_monitored: { professional: "pharmacist", question: "Is my loperamide working?", answer: "My pharmacist asked me to track my output to see how well it works." },
+    no_change: { professional: "pharmacist", question: "Should my loperamide be a different form?", answer: "My pharmacist kept the plain capsule for now." },
+    formulation_changed: { professional: "pharmacist", question: "Could my loperamide capsule be passing through?", answer: "My pharmacist changed me to a different form after I mentioned seeing capsules." },
+  },
+};
+
+// [item, anatomy, change, how many]
+const OUTCOME_MIX: [string, AnatomyKey, NonNullable<SeedCareTeam["change"]>, number][] = [
+  ["metoprolol succinate er", "end-jejunostomy", "formulation_changed", 4],
+  ["metoprolol succinate er", "end-jejunostomy", "dose_monitored", 2],
+  ["metoprolol succinate er", "end-jejunostomy", "no_change", 1],
+  ["metoprolol succinate er", "ileostomy", "formulation_changed", 2],
+  ["metoprolol succinate er", "ileostomy", "dose_monitored", 2],
+  ["metoprolol succinate er", "ileostomy", "no_change", 1],
+  ["metoprolol succinate er", "colon-in-continuity", "no_change", 3],
+  ["metoprolol succinate er", "colon-in-continuity", "formulation_changed", 1],
+  ["metoprolol succinate er", "colon-in-continuity", "pending", 1],
+  ["metoprolol succinate er", "colostomy", "no_change", 2],
+  ["pantoprazole dr", "end-jejunostomy", "no_change", 3],
+  ["pantoprazole dr", "end-jejunostomy", "formulation_changed", 2],
+  ["pantoprazole dr", "end-jejunostomy", "dose_monitored", 1],
+  ["pantoprazole dr", "ileostomy", "no_change", 3],
+  ["pantoprazole dr", "ileostomy", "pending", 2],
+  ["pantoprazole dr", "colon-in-continuity", "no_change", 2],
+  ["sports drink", "end-jejunostomy", "dose_monitored", 3],
+  ["sports drink", "end-jejunostomy", "no_change", 2],
+  ["sports drink", "end-jejunostomy", "pending", 1],
+  ["sports drink", "ileostomy", "no_change", 3],
+  ["sports drink", "ileostomy", "dose_monitored", 1],
+  ["loperamide", "end-jejunostomy", "dose_monitored", 3],
+  ["loperamide", "end-jejunostomy", "no_change", 3],
+  ["loperamide", "end-jejunostomy", "formulation_changed", 1],
+  ["loperamide", "ileostomy", "no_change", 2],
+  ["loperamide", "colon-in-continuity", "no_change", 2],
+];
+
+export function seedCareOutcomes(): SeedCareTeam[] {
+  const out: SeedCareTeam[] = [];
+  for (const [item, anatomy, change, n] of OUTCOME_MIX) {
+    const a = OUTCOME_ANSWERS[item][change]!;
+    for (let k = 0; k < n; k++) out.push({ item, anatomy, change, ...a });
+  }
+  return out;
+}
+
 export const SEED_QUESTIONS: string[] = [
   "Is my extended-release tablet being absorbed with how much bowel I have left?",
   "Does my liquid medicine contain sorbitol?",

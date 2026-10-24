@@ -44,3 +44,7 @@ export const LINK_CHOICES = {
   no_change: "No change needed",
   pending: "Will discuss at a visit",
 } as const;
+
+// Community and care-outcome cells under this many reports say "too few to say".
+export const MIN_REPORTS = 5;
+export const tooFewToSay = (total: number) => total < MIN_REPORTS;

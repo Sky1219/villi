@@ -388,6 +388,19 @@ export default defineSchema({
     syntheticCount: v.number(),
   }).index("by_itemId_and_anatomyKey", ["itemId", "anatomyKey"]),
 
+  // What care teams changed, per (item x anatomy): one counter row, changed only
+  // in the same mutation that pools or unpools a moderated care-team answer.
+  // Like `aggregates`, it counts one answer per profile and item (the latest).
+  care_outcomes: defineTable({
+    itemId: v.id("items"),
+    anatomyKey: v.string(),
+    formulation_changed: v.number(),
+    dose_monitored: v.number(),
+    no_change: v.number(),
+    pending: v.number(),
+    syntheticCount: v.number(),
+  }).index("by_itemId_and_anatomyKey", ["itemId", "anatomyKey"]),
+
   fda_label_cache: defineTable({
     queryKey: v.string(),
     found: v.boolean(),

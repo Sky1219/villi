@@ -9,6 +9,7 @@ import { retrier } from "./lib/retrier";
 import { CARE_TEAM_MODERATION_SYSTEM, prefilter } from "./lib/moderation";
 import { ANATOMY_KEYS, ANATOMY_LABELS, type AnatomyKey } from "./lib/anatomy";
 import { claudeModerate } from "./moderation";
+import { applyCareOutcomeTransition } from "./community";
 import type { Canonical } from "./canonicalize";
 import { sheetFor } from "./sheet";
 import { LINK_CHOICES } from "./lib/careFor";
@@ -206,7 +207,11 @@ export const setResultingChange = mutation({
     const me = await requireProfile(ctx, args.anonId);
     const row = await ctx.db.get("care_team_answers", args.id);
     if (!row || row.profileId !== me._id) throw new ConvexError("Answer not found");
+    // A pooled answer's outcome moves its care_outcomes count in the same mutation.
+    const counted = row.pooled === true && row.itemId && row.resultingChange;
+    if (counted) await applyCareOutcomeTransition(ctx, { ...row, itemId: row.itemId!, resultingChange: row.resultingChange! }, -1);
     await ctx.db.patch("care_team_answers", row._id, { resultingChange: args.resultingChange });
+    if (counted) await applyCareOutcomeTransition(ctx, { ...row, itemId: row.itemId!, resultingChange: args.resultingChange }, 1);
     if (args.resultingChange === "formulation_changed" && row.questionId) await startFollowUp(ctx, row.questionId);
     return null;
   },
@@ -233,12 +238,17 @@ export const apply = internalMutation({
   handler: async (ctx, args) => {
     const row = await ctx.db.get("care_team_answers", args.id);
     if (!row || row.pooled !== null) return null;
+    const itemId = row.itemId ?? args.itemId;
     await ctx.db.patch("care_team_answers", row._id, {
-      itemId: args.itemId,
+      itemId,
       pooled: args.pooled,
       moderationReason: args.reason ?? undefined,
       nudgeUser: args.pooled ? undefined : (args.nudge ?? undefined),
     });
+    // "What care teams changed" moves only here, when an answer is pooled.
+    if (args.pooled && itemId && row.resultingChange) {
+      await applyCareOutcomeTransition(ctx, { ...row, itemId, resultingChange: row.resultingChange }, 1);
+    }
     return null;
   },
 });

@@ -9,6 +9,7 @@ import { useAnonId } from "@/lib/anon";
 import { friendlyError } from "@/lib/errors";
 import { citationLabel, humanizeCitations, sectionOf } from "@/lib/citations";
 import { AnatomyBadge } from "@/components/AnatomyBadge";
+import { CareOutcomesList } from "@/components/CareOutcomes";
 
 const FILTERS = [{ key: "mine", label: "Like me" }, { key: "all", label: "Everyone" }, ...ANATOMY_KEYS.map((k) => ({ key: k, label: ANATOMY_LABELS[k] }))];
 
@@ -282,7 +283,14 @@ function Community({ anonId }: { anonId: string }) {
           </button>
         ))}
       </div>
-      {tab === "swaps" ? <Swaps anonId={anonId} filter={filter} /> : <CareTeam anonId={anonId} filter={filter} />}
+      {tab === "swaps" ? (
+        <Swaps anonId={anonId} filter={filter} />
+      ) : (
+        <>
+          <CareOutcomesList anonId={anonId} filter={filter} />
+          <CareTeam anonId={anonId} filter={filter} />
+        </>
+      )}
     </main>
   );
 }

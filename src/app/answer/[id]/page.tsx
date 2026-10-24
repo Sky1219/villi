@@ -12,6 +12,7 @@ import { citationLabel } from "@/lib/citations";
 import { friendlyError } from "@/lib/errors";
 import { GutDiagram } from "@/components/GutDiagram";
 import { CommunityCounts } from "@/components/CommunityCounts";
+import { CareOutcomes } from "@/components/CareOutcomes";
 import { LogCard } from "@/components/LogCard";
 import type { SegmentId } from "@convex/lib/anatomy";
 import { personFor } from "@convex/lib/careFor";
@@ -29,6 +30,7 @@ const TOOL_LABEL: Record<string, string> = {
   canonicalize_item: "Identified as",
   query_swaps: "Swaps board",
   query_care_team_answers: "Care-team answers",
+  query_care_outcomes: "What care teams changed",
   lookup_ors: "ORS reference",
   match_pill: "Your medicines",
   safety_lint: "Safety check",
@@ -259,6 +261,7 @@ function AnswerCard({
       <QuestionCard ask={final.ask} answerId={answerId} anonId={anonId} />
 
       <div className="space-y-3">
+      {itemId && <CareOutcomes anonId={anonId} itemId={itemId} />}
       {itemId ? (
         <CommunityCounts anonId={anonId} itemId={itemId} />
       ) : (
