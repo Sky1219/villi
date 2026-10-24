@@ -8,7 +8,7 @@ import type { Id } from "@convex/_generated/dataModel";
 const OUTCOMES = [
   { value: "helped", label: "Helped" },
   { value: "neutral", label: "No change" },
-  { value: "hurt", label: "Made it worse" },
+  { value: "hurt", label: "Worse" },
 ] as const;
 
 export function LogStatus({ status, nudge }: { status: string; nudge: string | null }) {

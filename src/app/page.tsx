@@ -126,8 +126,8 @@ function Home({ anonId }: { anonId: string }) {
 
       <footer className="space-y-2 pt-2 text-xs text-muted">
         <p>
-          Villi flags, cites, and writes the question. It never tells you to start, stop, or change a medicine, and it
-          is not an interaction checker.
+          Villi flags, cites, and writes the question. It never tells you to start, stop, or change a medicine. It
+          isn&apos;t an interaction checker: it can&apos;t tell you whether two medicines are safe together.
         </p>
         <p>
           Privacy: no names, birthdays or medical history. Your setup lives under a random id on this device; anything

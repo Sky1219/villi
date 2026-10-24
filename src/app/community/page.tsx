@@ -16,11 +16,11 @@ function Badges({ synthetic, endorsements }: { synthetic: boolean; endorsements:
   return (
     <span className="flex flex-wrap gap-1">
       {endorsements > 0 && (
-        <span className="rounded-full bg-ok-soft px-2 py-0.5 text-xs font-bold text-ok">
+        <span className="rounded-full bg-info-soft px-2.5 py-1 text-xs font-bold text-info">
           Clinician endorsed{endorsements > 1 ? ` ×${endorsements}` : ""} · demo verification
         </span>
       )}
-      {synthetic && <span className="rounded-full bg-surface-2 px-2 py-0.5 text-xs font-bold text-muted">demo data</span>}
+      {synthetic && <span className="rounded-full bg-surface-2 px-2.5 py-1 text-xs font-bold text-muted">demo data</span>}
     </span>
   );
 }
@@ -232,7 +232,7 @@ function Community({ anonId }: { anonId: string }) {
       <div role="tablist" className="grid grid-cols-2 gap-2">
         {(
           [
-            ["swaps", "Safe swaps"],
+            ["swaps", "Swaps to ask about"],
             ["care", "Care-team answers"],
           ] as const
         ).map(([k, label]) => (

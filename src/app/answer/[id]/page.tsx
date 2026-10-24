@@ -25,7 +25,7 @@ const TOOL_LABEL: Record<string, string> = {
   query_community: "Community logs",
   query_my_log: "Your own log",
   canonicalize_item: "Identified as",
-  query_swaps: "Safe-swaps board",
+  query_swaps: "Swaps board",
   query_care_team_answers: "Care-team answers",
   lookup_ors: "ORS reference",
   match_pill: "Your medicines",
@@ -297,7 +297,7 @@ function Counts({ c }: { c: { helped: number; neutral: number; hurt: number } })
         <span className="bg-flag" style={{ width: pct(c.hurt) }} />
       </div>
       <p className="mt-1 text-sm">
-        {c.helped} helped · {c.neutral} no change · {c.hurt} hurt <span className="text-muted">(of {total})</span>
+        {c.helped} helped · {c.neutral} no change · {c.hurt} worse <span className="text-muted">(of {total})</span>
       </p>
     </div>
   );

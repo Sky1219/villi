@@ -48,7 +48,7 @@ export function CommunityCounts({ anonId, itemId }: { anonId: string; itemId: Id
                 <>
                   <Bar helped={r.helped} neutral={r.neutral} hurt={r.hurt} />
                   <p className="mt-1 text-sm">
-                    {r.helped} helped · {r.neutral} no change · {r.hurt} hurt <span className="text-muted">of {r.total}</span>
+                    {r.helped} helped · {r.neutral} no change · {r.hurt} worse <span className="text-muted">of {r.total}</span>
                   </p>
                 </>
               )}

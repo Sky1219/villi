@@ -119,12 +119,16 @@ function labelForModel(l: LabelResult) {
   };
 }
 
+// Trace lines are shown to patients, so they use plain words, not field names or ids.
+const plain = (s: string) => s.replace(/[_-]+/g, " ").toLowerCase();
+
 function labelTrace(l: LabelResult): string {
-  if (!l.found) return `no FDA label found${l.error ? ` (${l.error})` : ""}`;
-  const flags = l.flags.map((f) => f.flag).join(", ") || "none";
-  return `${l.brandName ?? l.genericName} by ${l.manufacturer ?? "?"}; form: ${l.dosageForms[0] ?? "unknown"}; flags: ${flags}; ${
-    Object.keys(l.sections).length
-  } sections, missing: ${l.absentSections.slice(0, 4).join(", ") || "none"}${l.fromCache ? " (cached)" : ""}`;
+  if (!l.found) return "no FDA label found for this name";
+  const who = l.manufacturer ? ` from ${l.manufacturer}` : "";
+  const form = l.dosageForms[0] ? `: ${plain(l.dosageForms[0])}` : "";
+  const flags = l.flags.length ? `. Noted: ${[...new Set(l.flags.map((f) => plain(f.flag)))].join(", ")}` : "";
+  const absent = l.absentSections.length ? `. Not on this label: ${l.absentSections.slice(0, 4).map(plain).join(", ")}` : "";
+  return `${l.brandName ?? l.genericName} label${who}${form}${flags}${absent}`;
 }
 
 function registerLabel(reg: Registry, l: LabelResult) {
@@ -172,7 +176,7 @@ class Agent {
     const sameItem = core.split(" ").some((w) => w.length > 3 && this.primaryCore!.includes(w));
     if (sameItem) registerLabel(this.reg, label);
     else if (label.found) {
-      await this.trace("fetch_label", `${name}: a different product; not citable in this answer`, false);
+      await this.trace("fetch_label", `${name}: a different product, so it isn't used in this answer`, false);
       return { ...label, sections: {}, flags: [], absentSections: [], error: "Different product from the one being checked. Villi is not an interaction checker; do not use this." };
     }
     await this.trace("fetch_label", `${name}: ${labelTrace(label)}`, label.found);
@@ -203,8 +207,8 @@ class Agent {
           this.registerChunks(res.chunks);
           await this.trace(
             "search_guidelines",
-            `"${a.data.query}" via ${res.path === "vector" ? "vector index" : "full-text index"}: ${res.chunks.length} chunks${
-              res.chunks.length ? `, top G:${res.chunks[0].chunkId}` : ""
+            `${res.chunks.length} relevant passage${res.chunks.length === 1 ? "" : "s"} for "${a.data.query}"${
+              res.path === "vector" ? "" : " (keyword search)"
             }`,
           );
           return ok({
@@ -246,7 +250,7 @@ class Agent {
           this.reg.evidence[`C:${res.item.canonicalName}`] = JSON.stringify(c.byAnatomy);
           await this.trace(
             "query_community",
-            `${res.item.canonicalName}: ${c.matchingAnatomy.hurt}/${c.matchingAnatomy.total} "hurt" with ${c.anatomyLabel}${
+            `${res.item.canonicalName}: ${c.matchingAnatomy.hurt} of ${c.matchingAnatomy.total} people with ${c.anatomyLabel} logged "worse"${
               c.includesSynthetic ? " (includes demo data)" : ""
             }`,
           );
@@ -384,7 +388,7 @@ class Agent {
           const lint = lintAnswer(parsed.data, this.reg);
           if (lint.blocking.length > 0 && this.lintRetries < 2) {
             this.lintRetries++;
-            await this.trace("safety_lint", `sent back for fixes: ${lint.blocking.join("; ")}`, false);
+            await this.trace("safety_lint", `draft sent back for fixes (${lint.blocking.length} issue${lint.blocking.length === 1 ? "" : "s"})`, false);
             return err(`Fix these and call submit_answer again: ${lint.issues.join("; ")}`);
           }
           this.submitted = parsed.data;
@@ -395,7 +399,7 @@ class Agent {
           return err(`unknown tool ${block.name}`);
       }
     } catch (e) {
-      await this.trace(block.name, `error: ${(e as Error).message}`, false);
+      await this.trace(block.name, "this step didn't work", false);
       return err(`tool failed: ${(e as Error).message}`);
     }
   }
@@ -436,7 +440,7 @@ export const run = internalAction({
 
       const agent = new Agent(ctx, args.answerId, answer.profileId, profile);
       agent.reg.language = profile.language;
-      await agent.trace("get_profile", `${profile.anatomyText}; ${profile.meds.length} meds on file; language ${profile.language}`);
+      await agent.trace("get_profile", `${profile.anatomyText}; ${profile.meds.length} medicine${profile.meds.length === 1 ? "" : "s"} on file`);
 
       // "I saw something": closed-set match against this user's own meds.
       let sawContext: unknown = null;
@@ -551,12 +555,12 @@ export const run = internalAction({
         const attrs = [canon.attributes.tonicity, canon.attributes.releaseForm].filter(Boolean).join(", ");
         await agent.trace(
           "canonicalize_item",
-          `${canon.canonicalName} (${canon.category}${attrs ? `, ${attrs}` : ""}) via ${
-            canon.path === "exact" ? "catalog" : canon.path === "model-match" ? "nearest catalog match" : "new catalog entry"
+          `${canon.canonicalName} (${canon.category}${attrs ? `, ${attrs}` : ""})${
+            canon.path === "exact" ? "" : canon.path === "model-match" ? ", closest known match" : ", new item"
           }`,
         );
       } catch (e) {
-        await agent.trace("canonicalize_item", `could not canonicalize: ${(e as Error).message}`, false);
+        await agent.trace("canonicalize_item", "couldn't match this to a known item", false);
       }
 
       // 2. Prefetch the label server-side so the first model turn already has it.
