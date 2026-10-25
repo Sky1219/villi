@@ -14,14 +14,14 @@ Record on the phone (screen recording on, Do Not Disturb on, brightness up, port
 | # | Clicks | Say |
 |---|---|---|
 | A1 | Home screen, top | "My dad lost his entire large intestine and most of his small intestine. Guidelines say extended-release pills may not work in a gut that short. Nobody told us. Villi is for people who've had most of their intestine removed, and the family members who manage their medications." |
-| A2 | Scroll to **Medicine list review** | "Every medicine on his list, checked instantly against the FDA label and the guidelines for his anatomy." |
+| A2 | Tap the **Review of your parent's 5 medicines** line under the check box (it opens the sheet's **Medicine list review**) | "Every medicine on his list, checked instantly against the FDA label and the guidelines for his anatomy." |
 | A3 | Tap the chip on the **Metoprolol succinate ER 50 mg** row (the `FDA label: dosage form` chip, then an `AGA 2022` chip) | "Every flag has two sources: the label sentence and the guideline. This one is extended release, and the guidelines say to avoid that after a major resection." Close the sheet. |
 | A4 | Pantoprazole row | "Acid medicine reads differently: it's commonly used after resection, so the question is the form, not whether." |
 | A5 | **Add a question to the sheet** on the metoprolol row | "It doesn't decide. It writes the question for the pharmacist." |
 | A6 | **Log how something went** → type `sports drink` → **Worse** → note `dizzy when I stand up` → **Save** | Warning card appears: "If a note sounds like dehydration, Villi says to contact the care team today, and nothing else." Tap **Got it**. |
 | A7 | **Your sheet** → on the metoprolol question tap **I asked this** | "This is what we bring to the pharmacist: his questions, his medicines with what the labels say, warning signs he logged." |
 | A8 | **Share with the care team** → copy the link → open it on the laptop → on the metoprolol question choose **Reviewed: form changed** → **Save** | On the phone the sheet shows "Recorded through the care-team link". "The pharmacist closes the loop. Villi says plainly it can't verify who holds the link." |
-| A9 | Home → **Is Villi working?** | "Flags raised, questions asked, answers logged, formulation changes, by anatomy. Real use and demo data are counted separately." Then revoke the link on the sheet after you stop recording. |
+| A9 | Home → footer → **Is Villi working?** | "Flags raised, questions asked, answers logged, formulation changes, by anatomy. Real use and demo data are counted separately." Then revoke the link on the sheet after you stop recording. |
 
 ## Part B: record once credits are back (about 60 seconds, splice after A2)
 

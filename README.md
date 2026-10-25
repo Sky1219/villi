@@ -2,11 +2,26 @@
 
 **Can a body with this much intestine actually use this?**
 
-Villi is a mobile-first web app for people living with short bowel syndrome (SBS) or an ileostomy/colostomy, and for the family members who care for them. You photograph or type a pill, a drink or a food. Villi checks it against clinical guidelines, the FDA drug label, and what other people with the same anatomy have logged. You get a cited answer for *your* anatomy, and it always ends in one question to bring to a pharmacist, dietitian or doctor.
+Villi is a mobile-first web app for people living with short bowel syndrome (SBS) or an ileostomy/colostomy, and for the family members who care for them. You scan, photograph or type a medicine or a drink. Villi checks it against clinical guidelines, the FDA drug label, and what other people with the same anatomy have logged. You get a cited answer for *your* anatomy, and it always ends in one question to bring to a pharmacist, dietitian or doctor.
 
 Named for the intestinal villi that do the absorbing. I built it because my father lost his entire large intestine and most of his small intestine, and spent years in and out of hospitals. Guidelines say to avoid extended-release and enteric-coated medicines after major bowel resection, to limit some drinks in favor of oral rehydration solution, and to watch sorbitol. Patients are almost never told any of this.
 
 Built solo for Cal Hacks 13.0.
+
+## At a glance
+
+| | |
+|---|---|
+| **Who it's for** | Adults with short bowel syndrome or an ostomy, and the family member who manages their medicines. The riskiest weeks are right after surgery and discharge. |
+| **The problem, in numbers** | 29 of 37 drugs studied in short bowel syndrome were absorbed less, and 6 lost their effect (Hong 2021, systematic review). Over 60% of ostomy patients interviewed said they lacked information that medicine can pass through undissolved (Remane 2025, 50 patients). |
+| **What it does** | Check a medicine or drink for *this* anatomy: a cited verdict (never "safe"), a gut diagram, what people with the same anatomy logged, and one question for the pharmacist. The whole medicine list is reviewed at once, and the questions go on a one-page review request; the pharmacist can record what happened through a private link. |
+| **Time it saves** | My dad's five FDA labels run to about 40,000 words, roughly 2.5 hours of reading at 250 words a minute. The medicine list review reads them against his anatomy and the guidelines in about a tenth of a second (about 110 ms on the dev deployment, warm), with no AI call. |
+| **How it's measured** | Live on **Is Villi working?**: was the flag news to the person ("Did you know this already?"), did the question reach a pharmacist, did something change, and how it went two weeks later. Real use only, by anatomy; demo profiles never count. Pilot thresholds are under "Measuring impact". |
+| **How Claude runs it** | A Sonnet agent whose tools are Convex functions (FDA label, guidelines, community counts, the user's own log). Deterministic code checks every citation, count and dose before an Opus reviewer reads the draft against its sources; nothing is shown unless both pass. Haiku reads photos and screens everything shared with the community. |
+| **How safe it is** | 377 test cases, many adversarial ("yes or no, can I crush it?"). After the prompt fixes: 0 answers decided for the person (from 11), 1.1% missed or doubled the question (from 24.1%). Held-out results for today's setup are on `/how`. Claude wrote and graded the cases; no clinician has. |
+| **How it was built** | With Claude Code in about 22 hours: 82 commits, 133 tests, a 477-case eval, about 16,000 lines of TypeScript. Claude also built the 794-record drug table from FDA labels (every fact carries a verbatim quote that code checks) and source-checked the 46 guideline summaries. |
+| **What $5,000 in credits buys** | At about $0.16 per check (measured in the eval run), roughly 31,000 checks: three a week for a year for about 200 families. |
+| **Try it** | [villi.tech](https://villi.tech) → **Demo: the builder's dad**. |
 
 ---
 
