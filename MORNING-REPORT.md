@@ -1,10 +1,12 @@
 # Morning report (overnight run, 2026-10-25)
 
-(summary written at wrap-up)
+**Summary.** 11 small, front-end-only improvements (plus their fixes and docs) for tired and low-vision users, for the pharmacy counter, and for showing judges what Claude does: read aloud, text size, a large-type "Show this to the pharmacist" view, the three answers on the welcome screen, a wait panel during the live check, pilot targets on "Is Villi working?", a connection banner, a wallet card and the check time in the receipt.
+Two independent code reviews ran on the diff; their real findings are fixed in their own commits. Nothing touches the agent, the prompts, the lint or the reviewer. Only one optional commit (d6553f2) changes Convex code.
+Every commit passed typecheck, tests, lint and `next build`. The recommended set below cherry-picks cleanly onto `main` and passes all four there (151 tests). Nothing was deployed, seeded or sent to a live API.
 
-**Try the branch locally:** `git fetch origin && git checkout overnight/2026-10-25 && npm ci && npx convex dev` (in one terminal, on your dev deployment) then `npm run dev`.
+**To try it the fast way** (from your main checkout, which has `.env.local`): `git fetch origin && git checkout overnight/2026-10-25 && npm ci && npm run dev`. This runs against your dev deployment. None of the recommended commits need a Convex deploy.
 
-**How it was checked:** after every commit, `npm run typecheck`, `npx vitest run`, `npx eslint src convex` (0 errors) and `npx next build` (with a placeholder `NEXT_PUBLIC_CONVEX_URL`, since there is no `.env.local` here). Nothing was deployed, seeded or sent to a live API. A local Convex backend couldn't be started (the backend binary download is blocked from this container), so **no UI change was clicked through in a browser**: please look at each one once.
+**How it was checked:** after every commit, `npm run typecheck`, `npx vitest run`, `npx eslint src convex` (0 errors) and `npx next build` (with a placeholder `NEXT_PUBLIC_CONVEX_URL`, since there is no `.env.local` here). Nothing was deployed, seeded or sent to a live API. A local Convex backend couldn't be started (the backend binary download is blocked from this container). Instead, I rendered the real pages in Chromium at 320 to 360 px with a throwaway fake Convex client and fixture data (see "Browser checks" under entry 12, and the screenshots in `docs/overnight-2026-10-25/`). **Nothing was clicked through against a real backend or with a real model answer arriving live**, so look at each change once on your dev deployment.
 
 ## Commits
 
@@ -126,3 +128,32 @@ A second independent review of the later commits found these; each is its own co
 - **891cedb, card wording:** a medicine whose label was looked up and *not found* also reads "Can't tell yet"; the card printed "Label not checked yet" for it, which is untrue. It now prints the list review's own summary. **Back** links to the sheet. Risk: low; needs commit 13.
 - **d6553f2, demo badge on the card:** `sheet.get` returns a new boolean `demo` (additive), and a demo profile's card shows a "demo data" pill. **This is the only commit tonight that changes Convex code**, so it needs `npm run deploy:convex` to take effect; without the deploy the field is just absent and no pill shows (nothing breaks). Test: `convex/sheetDemo.test.ts`. Risk: low.
 - **Verify:** open and close the pharmacist view, then scroll home; read an answer aloud; open the card for a profile with a misspelled medicine.
+
+
+## Recommended for this morning
+
+These are all low risk and front-end only, so they ship with your normal Vercel deploy and need no Convex deploy. Cherry-pick them in this order; they apply cleanly to `main`, and `next build`, typecheck, lint and the tests pass on the result:
+
+```bash
+git checkout main && git pull
+git cherry-pick 7c0a5d3 ecdfc8e df03494 0f307aa 9316308 244a610 d67b320 561f167 7d43f9b 750169f ea0c0c8 5d5eacd 83c7906 17af40e d335726 50c45d5 9db9bb3 88c9141 afb698f 891cedb
+```
+
+If you only have time for a few, these are the most visible on stage. Each line needs the commits listed with it:
+- **Show this to the pharmacist** (2): ecdfc8e, plus 9316308 → ea0c0c8 → 88c9141 for the sheet version and its fixes.
+- **Wait panel during the live check** (6): 244a610, on its own.
+- **Pilot targets on "Is Villi working?"** (7): d67b320, on its own.
+- **Three answers on the welcome screen** (4): 0f307aa, on its own.
+- **Read aloud** (1): 7c0a5d3 → 750169f → afb698f. afb698f also edits text from 561f167 and 5d5eacd, so take those too, or skip afb698f. Without it, the README and `/how` say "no audio leaves the phone", which is not strictly true on Chrome.
+
+After cherry-picking, run DEMO.md's checks on dev once. Look at the metoprolol answer (read aloud, the pharmacist view), the sheet, the wallet card and "Is Villi working?".
+
+## Leave for after judging
+
+- **d6553f2** ("demo data" pill on the wallet card): it changes `convex/sheet.ts`, so it needs a Convex deploy on judging morning. That deploy is the riskiest step for a small gain. The card works without it.
+- **6afc64b** (screenshots) and the `docs(morning-report)` commits: useful on the branch, not needed on `main`.
+- **Not done, on purpose:** stricter directive patterns in the safety lint. They would block more good answers than bad ones (see "Investigated, not changed" above).
+
+## Where I stopped
+
+I stopped adding features at about 01:40, well before 06:40. Every idea left failed the cut. Some need live data or a deploy to be seen. Some (a "what changed since your last visit" label note) would never show in a two-minute demo. The rest were more surface area for you to review before 08:45 than they were worth. The two independent reviews and the clean cherry-pick check seemed like a better use of the night than more features.
