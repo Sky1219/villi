@@ -14,6 +14,22 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
+// From eval/REPORT.md, "Before and after the prompt fixes (tuning split)": the same
+// 377 cases, final output (what the person sees), run 2026-10-24. Update with the report.
+const EVAL = {
+  cases: 377,
+  date: "October 24, 2026",
+  rows: [
+    { what: "Decides for the person (stop, start, crush, keep taking)", before: "11 (2.9%)", after: "0 (0%)" },
+    { what: "Missing ASK, or two questions in one", before: "91 (24.1%)", after: "4 (1.1%)" },
+    { what: "A claim its source doesn't support", before: "52 (13.8%)", after: "21 (5.6%)" },
+    { what: "Sounds more certain than the evidence", before: "9 (2.4%)", after: "13 (3.4%)" },
+    { what: "Gives a dose or amount", before: "0 (0%)", after: "3 (0.8%)" },
+    { what: "Contradicts a guideline", before: "1 (0.3%)", after: "0 (0%)" },
+  ],
+  blocked: { before: "39 of 318 (12.3%)", after: "51 of 318 (16.0%)" },
+};
+
 // Every sentence here describes what the code does; keep it in step with it.
 export default function HowPage() {
   return (
@@ -68,6 +84,46 @@ export default function HowPage() {
         </p>
       </Section>
 
+      <Section title="Tested before you see it">
+        <p>
+          Before launch, {EVAL.cases} test cases ran through the real pipeline: routine checks, edge cases, and adversarial
+          ones like &ldquo;yes or no, can I crush it?&rdquo; or &ldquo;what dose should I take?&rdquo;. A separate Claude graded
+          what the person would have seen. Then the prompts were fixed and the same cases ran again ({EVAL.date}).
+        </p>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <caption className="sr-only">Answers with each problem, out of {EVAL.cases} cases, before and after the fixes</caption>
+            <thead>
+              <tr className="border-b border-border">
+                <th scope="col" className="py-2 pr-2 font-bold">Answers that…</th>
+                <th scope="col" className="py-2 pr-2 font-bold">Before</th>
+                <th scope="col" className="py-2 font-bold">After</th>
+              </tr>
+            </thead>
+            <tbody>
+              {EVAL.rows.map((r) => (
+                <tr key={r.what} className="border-b border-border align-top">
+                  <th scope="row" className="py-2 pr-2 font-normal">
+                    {r.what}
+                  </th>
+                  <td className="py-2 pr-2 whitespace-nowrap">{r.before}</td>
+                  <td className="py-2 whitespace-nowrap font-bold">{r.after}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Held back by the safety checks, never shown: {EVAL.blocked.before} before, {EVAL.blocked.after} after. Stricter
+          checks hold back more answers; a held-back answer tells the person to try again or ask their pharmacist.
+        </p>
+        <p className="text-muted">
+          Limits: the cases and the grades are both written by Claude, not by patients or clinicians, and none uses a real
+          photo. The 100 held-out cases haven&apos;t been graded yet. Some problems went up after the fixes; they are listed
+          as they are.
+        </p>
+      </Section>
+
       <Section title="Warning signs">
         <p>
           If a log note mentions signs like thirst, dark or less urine, dizziness or much higher output, Villi shows a card
@@ -92,8 +148,11 @@ export default function HowPage() {
       <Section title="The community in this build">
         <p>
           In this build, the community counts, swaps and care-team answers come from synthetic demo data, made to follow
-          the guidelines, plus any real entries. Anything that includes demo data is badged &ldquo;demo data&rdquo;, and
-          &ldquo;Is Villi working?&rdquo; counts real use separately.
+          the guidelines, plus any real entries. Anything that includes demo data is badged &ldquo;demo data&rdquo;, and{" "}
+          <Link href="/impact" className="font-bold text-accent underline">
+            Is Villi working?
+          </Link>{" "}
+          counts real use separately. Profiles started from a demo count as demo data too.
         </p>
       </Section>
 
