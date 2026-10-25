@@ -23,6 +23,29 @@ Built solo for Cal Hacks 13.0.
 | **What $5,000 in credits buys** | At about $0.16 per check (measured in the eval run), roughly 31,000 checks: three a week for a year for about 200 families. |
 | **Try it** | [villi.tech](https://villi.tech) → **Demo: the builder's dad**. |
 
+
+## How a check runs
+
+```mermaid
+flowchart TD
+  U["Scan, photograph or type a medicine or drink"] --> S["answers.start (Convex mutation)<br/>schedules the check"]
+  S --> A["Claude Sonnet agent loop"]
+  A <--> T1["fetch_label<br/>openFDA + 794-record drug table"]
+  A <--> T2["search_guidelines<br/>46 summaries, Voyage vectors,<br/>keyword fallback"]
+  A <--> T3["query_community<br/>counts split by anatomy"]
+  A <--> T4["query_my_log<br/>this person's own log"]
+  A --> D["Draft answer (JSON)"]
+  D --> L["Code safety check<br/>every citation was retrieved, counts match,<br/>no dose, no directive, exactly one question"]
+  L -->|fails| A
+  L --> R["Claude Opus reviewer<br/>reads the draft against its sources;<br/>may tighten wording or block"]
+  R -->|"blocked, or reviewer down"| B["Not shown: try again, or ask the pharmacist"]
+  R --> F["Answer appears live on the phone<br/>(Convex subscription)"]
+```
+
+**Measured on the 377-case run** (`eval/REPORT.md`, Opus drafting at the time): a medicine or drink check takes 33 s at the median (48 s at p90); the review step takes 15 s of that. Model spend was about $0.16 per case. In the part billed to the API, 59% of Opus input tokens were read from the prompt cache. The medicine list review needs no model call: about 110 ms on the dev deployment.
+
+**How it was built.** Claude Code, spec first: research and a roadmap in `.planning/`, then build, then critique, accessibility and red-team passes. The eval loop closed it: 477 Claude-written cases run through the real pipeline, a Claude grader on seven dimensions, prompt and corpus fixes chosen from the tuning split only, then the same cases again, and the 100 held-out cases last.
+
 ---
 
 ## What it does
