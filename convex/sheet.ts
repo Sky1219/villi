@@ -4,6 +4,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { requireProfile } from "./profiles";
 import { statusOf } from "./questions";
 import { describeAnatomy } from "./lib/anatomy";
+import { reviewQuestion } from "./lib/medReview";
 import { medReviewRows } from "./meds";
 import { scanWarningSigns } from "./lib/warningSigns";
 
@@ -67,6 +68,23 @@ export async function sheetFor(ctx: QueryCtx, me: Doc<"profiles">) {
         text: f.text,
         citation: (f.citations.find((c) => c.key.startsWith("G:")) ?? f.citations[0])?.key ?? null,
       })),
+      // The pharmacist review request prints both sources of every flag: the label
+      // sentence and the guideline, plus one formulation question per flagged medicine.
+      requestFlags: r.flags.map((f) => {
+        const label = f.citations.find((c) => c.key.startsWith("L:"));
+        // The first guideline short enough to print whole, so a line is never cut mid-claim.
+        const guidelines = f.citations.filter((c) => c.key.startsWith("G:"));
+        const guideline = guidelines.find((c) => c.text.length <= 220) ?? guidelines[0];
+        return {
+          text: f.text,
+          label: label ? { key: label.key, source: label.label, text: label.text } : null,
+          guideline: guideline
+            ? { key: guideline.key, source: guideline.label, section: guideline.section ?? null, text: guideline.text }
+            : null,
+        };
+      }),
+      // The anatomy is in the request header, so the question says "this anatomy".
+      question: r.state === "flagged" ? reviewQuestion(r.name, "this anatomy") : null,
     }));
 
     const view = (q: (typeof questions)[number]) => ({
@@ -79,6 +97,7 @@ export async function sheetFor(ctx: QueryCtx, me: Doc<"profiles">) {
     });
     return {
       anatomyText: describeAnatomy(me.anatomy),
+      anatomyConfirmed: me.anatomyConfirmed !== false,
       role: me.role,
       caresFor: me.caresFor ?? null,
       language: me.language,

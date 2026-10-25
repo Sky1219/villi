@@ -29,7 +29,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" className={`${atkinson.variable} h-full antialiased`}>
       <body className="min-h-full font-sans">
         <ConvexClientProvider>
-          <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-4 pb-10">
+          <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-4 pb-10 print:max-w-none print:px-0 print:pb-0">
             <AnatomyBanner />
             {children}
           </div>

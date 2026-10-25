@@ -261,6 +261,7 @@ export const cloneDemo = mutation({
         language: template.language,
         caresFor: template.caresFor,
         diagram: template.diagram,
+        anatomyConfirmed: true,
         clinicianDemoVerified: false,
       });
     }
@@ -274,6 +275,7 @@ export const cloneDemo = mutation({
         language: template.language,
         caresFor: template.caresFor,
         diagram: template.diagram,
+        anatomyConfirmed: true,
         clinicianDemoVerified: false,
         synthetic: false,
         createdAt: Date.now(),

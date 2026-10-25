@@ -109,6 +109,12 @@ button[aria-pressed="false"] {
   }
   .print-sheet {
     max-width: none;
-    font-size: 12pt;
+    font-size: 9.5pt;
   }
+}
+
+/* The review request and fridge sheet print on US letter. */
+@page {
+  size: letter;
+  margin: 0.5in;
 }

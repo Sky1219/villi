@@ -8,7 +8,7 @@ import type { Id } from "@convex/_generated/dataModel";
 import { useAnonId } from "@/lib/anon";
 import { friendlyError } from "@/lib/errors";
 import { LogStatus } from "@/components/LogCard";
-import { CHANGE_CHOICES, CHANGE_SHORT, OUTCOME_WORD, patternSentence, sheetMarkdown, warningSentence, type ResultingChange } from "@/lib/sheet";
+import { CHANGE_CHOICES, CHANGE_SHORT, OUTCOME_WORD, patternSentence, requestMarkdown, warningSentence, type ResultingChange } from "@/lib/sheet";
 import { personFor, preparedBy } from "@convex/lib/careFor";
 import { MedReview } from "@/components/MedReview";
 import { ShareWithTeam } from "@/components/ShareWithTeam";
@@ -186,14 +186,14 @@ function Sheet({ anonId }: { anonId: string }) {
   const [copied, setCopied] = useState(false);
   if (!d) return <p className="pt-10 text-center text-muted">Loading…</p>;
   const date = new Date().toLocaleDateString(d.language);
-  const md = () => sheetMarkdown(d, date);
+  const md = () => requestMarkdown(d, date);
 
   async function share() {
     const text = md();
-    const file = new File([text], "villi-appointment-sheet.md", { type: "text/markdown" });
+    const file = new File([text], "villi-medication-review-request.md", { type: "text/markdown" });
     try {
       if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: "Appointment sheet" });
+        await navigator.share({ files: [file], title: "Medication review request" });
         return;
       }
       await navigator.clipboard.writeText(text);
@@ -207,7 +207,7 @@ function Sheet({ anonId }: { anonId: string }) {
     const url = URL.createObjectURL(new Blob([md()], { type: "text/markdown" }));
     const a = document.createElement("a");
     a.href = url;
-    a.download = "villi-appointment-sheet.md";
+    a.download = "villi-medication-review-request.md";
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -219,13 +219,16 @@ function Sheet({ anonId }: { anonId: string }) {
       </Link>
       <header>
         <h1 className="text-2xl font-bold">Appointment sheet</h1>
-        <p className="text-sm text-muted">Patient&apos;s anatomy: {d.anatomyText}</p>
+        <p className="text-sm text-muted">
+          Patient&apos;s anatomy: {d.anatomyText}
+          {!d.anatomyConfirmed && " (not confirmed: assuming the most cautious case)"}
+        </p>
         <p className="text-sm text-muted">Prepared by {preparedBy(d.role, d.caresFor)}. Either of you can hand it to the clinician.</p>
       </header>
 
       <div className="grid grid-cols-2 gap-2">
         <Link href="/sheet/print" className="flex min-h-12 items-center justify-center rounded-xl bg-accent px-3 text-center font-bold text-accent-ink">
-          Print or save PDF
+          Review request (PDF)
         </Link>
         <button onClick={share} className="min-h-12 rounded-xl border border-accent px-3 font-bold text-accent">
           {copied ? "Copied ✓" : "Share or copy"}

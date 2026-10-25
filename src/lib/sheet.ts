@@ -40,47 +40,91 @@ export function patternSentence(p: SheetData["patterns"][number]): string {
   return `${p.item}: logged ${OUTCOME_WORD[top]} ${p[top]} of ${p.total} times (${p.helped} helped, ${p.neutral} no change, ${p.hurt} worse)`;
 }
 
-export function sheetMarkdown(d: SheetData, date: string): string {
-  const lines: string[] = [];
-  lines.push(
-    `# Appointment sheet`,
+// ---- Pharmacist review request: one page a pharmacist can act on.
+
+export const REQUEST_TITLE = "Medication review request";
+
+export const REQUEST_FOOTER =
+  "What Villi is: a free tool for people who've had much of their intestine removed, and their families. It reads the FDA label and published short bowel syndrome guidance, flags what may not suit this anatomy, cites both sources, and writes the question. What it isn't: a prescriber or an interaction checker. It gives no doses and makes no decisions. Label text from openFDA, which says not to rely on it alone for medical decisions; guideline lines are Villi's summaries of the cited source.";
+
+export function anatomyLine(d: Pick<SheetData, "anatomyText" | "anatomyConfirmed">): string {
+  return d.anatomyConfirmed
+    ? `${d.anatomyText} (as described by the patient or family)`
+    : `not confirmed. Villi is assuming the most cautious case: ${d.anatomyText}`;
+}
+
+// Short enough for one page without changing the meaning: whole sentences up to
+// `max`, or, for a long ingredient list, the words around the flagged ingredient.
+export function excerpt(text: string, max = 300, around?: string): string {
+  const t = text.replace(/\s+/g, " ").trim();
+  if (t.length <= max) return t;
+  if (around) {
+    const i = t.toLowerCase().indexOf(around.toLowerCase());
+    if (i >= 0) {
+      const start = Math.max(0, t.lastIndexOf(" ", Math.max(0, i - 60)));
+      const end = t.indexOf(" ", Math.min(t.length, i + around.length + 60));
+      return `${start > 0 ? "…" : ""}${t.slice(start, end < 0 ? t.length : end).trim()}${end < 0 ? "" : "…"}`;
+    }
+  }
+  let out = "";
+  for (const s of t.split(/(?<=\.)\s+/)) {
+    if (`${out} ${s}`.trim().length > max) break;
+    out = `${out} ${s}`.trim();
+  }
+  return out || `${t.slice(0, max).replace(/\s+\S*$/, "")}…`;
+}
+
+// Whether a flag's own text already quotes or states its label line.
+export function labelRepeats(flagText: string, labelText: string): boolean {
+  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  return norm(flagText).includes(norm(labelText).slice(0, 80));
+}
+
+// The ingredient a sugar-alcohol flag names ("The label lists mannitol among its ingredients.").
+export function flaggedWord(flagText: string): string | undefined {
+  return flagText.match(/lists (\w+) among/)?.[1];
+}
+
+export function guidelineCite(g: { source: string; section: string | null }): string {
+  return g.section && !g.source.includes("·") ? `${g.source}, ${g.section}` : g.source;
+}
+
+export function requestMarkdown(d: SheetData, date: string): string {
+  const flagged = d.meds.filter((m) => m.question);
+  const clear = d.meds.filter((m) => !m.question && m.labelChecked);
+  const unchecked = d.meds.filter((m) => !m.question && !m.labelChecked);
+  const lines: string[] = [
+    `# ${REQUEST_TITLE}`,
     ``,
-    `Patient's anatomy: ${d.anatomyText}.`,
-    `Prepared with Villi on ${date} by ${preparedBy(d.role, d.caresFor)}.`,
+    `For the pharmacist. Prepared with Villi on ${date} by ${preparedBy(d.role, d.caresFor)}.`,
     ``,
-  );
-  lines.push(`## Questions to ask`, ``);
-  if (d.open.length === 0) lines.push(`- (none open)`);
-  d.open.forEach((q, i) =>
-    lines.push(`${i + 1}. ${q.text}${q.itemName ? ` _(about ${q.itemName})_` : ""}${q.status === "asked" ? " _(asked, answer not logged yet)_" : ""}`),
-  );
-  lines.push(``, `## Patterns in the patient's log (to discuss, not conclusions)`, ``);
-  if (d.patterns.length === 0) lines.push(`- Not enough entries yet.`);
-  d.patterns.forEach((p) => lines.push(`- ${patternSentence(p)}`));
+    `**Anatomy:** ${anatomyLine(d)}.`,
+    ``,
+    `## Medicines to review (${flagged.length})`,
+    ``,
+  ];
+  if (flagged.length === 0) lines.push(`No flags in the label sections checked.`, ``);
+  flagged.forEach((m, i) => {
+    lines.push(`### ${i + 1}. ${m.name}${m.dosageForm ? ` (${m.dosageForm.toLowerCase()})` : ""}`);
+    for (const f of m.requestFlags) {
+      lines.push(`- ${f.text}`);
+      if (f.label && !labelRepeats(f.text, f.label.text)) lines.push(`  - Label: "${excerpt(f.label.text, 260, flaggedWord(f.text))}" (${f.label.source})`);
+      else if (f.label) lines.push(`  - Source: ${f.label.source}`);
+      if (f.guideline) lines.push(`  - Guidance: ${excerpt(f.guideline.text, 300)} (${guidelineCite(f.guideline)})`);
+    }
+    lines.push(`- **Question:** ${m.question}`, ``);
+  });
+  if (clear.length) lines.push(`No flags in the label sections checked: ${clear.map((m) => m.name).join(", ")}.`);
+  if (unchecked.length) lines.push(`Label not checked yet: ${unchecked.map((m) => m.name).join(", ")}.`);
   if (d.warnings.length) {
     lines.push(``, `## Warning signs logged`, ``);
     d.warnings.forEach((w) => lines.push(`- ${warningSentence(w, d.language)}`));
   }
-  lines.push(``, `## Medicines and what the labels say`, ``);
-  if (d.meds.length === 0) lines.push(`- (no medicines on file)`);
-  for (const m of d.meds) {
-    const flags = m.flags.map((f) => `${f.text}${citeText(f.citation)}`).join("; ");
-    lines.push(`- **${m.name}**${m.dosageForm ? `: ${m.dosageForm.toLowerCase()}` : ""}${flags ? `. Flags: ${flags}` : m.labelChecked ? ". No flags in the sections checked" : ". Label not checked yet"}`);
-  }
-  if (d.answered.length) {
-    lines.push(``, `## Answered`, ``);
-    for (const q of d.answered) {
-      lines.push(`- ${q.text}`);
-      if (q.answer) {
-        lines.push(`  - ${q.answer.professionalType}: ${q.answer.text}`);
-        if (q.answer.resultingChange) lines.push(`  - Outcome: ${CHANGE_SHORT[q.answer.resultingChange]}`);
-      }
-    }
-  }
-  lines.push(
-    ``,
-    `---`,
-    `Villi flags and cites; it does not make treatment decisions. Label text from openFDA, which says not to rely on it alone for medical decisions.`,
+  lines.push(``, `## Other open questions`, ``);
+  if (d.open.length === 0) lines.push(`- (none)`);
+  d.open.forEach((q, i) =>
+    lines.push(`${i + 1}. ${q.text}${q.itemName ? ` _(about ${q.itemName})_` : ""}${q.status === "asked" ? " _(asked, answer not logged yet)_" : ""}`),
   );
+  lines.push(``, `---`, REQUEST_FOOTER);
   return lines.join("\n");
 }

@@ -104,7 +104,9 @@ export const enrich = internalAction({
   handler: async (ctx, args) => {
     const name: string | null = await ctx.runQuery(internal.meds.getMed, { medId: args.medId });
     if (!name || name.startsWith("Unreadable")) return null;
-    const label: LabelResult = await ctx.runAction(internal.fda.fetchLabel, { name });
+    // The medicine list review reads the cached label sections, so skip the drug table here:
+    // a table hit returns facts without writing the label cache.
+    const label: LabelResult = await ctx.runAction(internal.fda.fetchLabel, { name, needFullText: true });
     // A rate limit or outage is not "no label": leave the med unchecked and try again.
     if (label.error && !label.fromCache) {
       const attempt = args.attempt ?? 0;

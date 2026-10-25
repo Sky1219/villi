@@ -92,6 +92,17 @@ function familiesNamed(sentence: string): FormFamily[] {
   return out;
 }
 
+// A long ingredient sentence, cut to the words around the flagged ingredient so the quote still shows it.
+function quoteAround(sentence: string, word: string, max = 240): string {
+  if (sentence.length <= max) return sentence;
+  const i = sentence.toLowerCase().indexOf(word.toLowerCase());
+  const lead = sentence.split(":")[0];
+  const head = lead.length < 90 && sentence.includes(":") ? `${lead}: ` : "";
+  const start = Math.max(head.length, sentence.lastIndexOf(" ", Math.max(0, i - 50)));
+  const end = sentence.indexOf(" ", Math.min(sentence.length, i + word.length + 50));
+  return `${head}…${sentence.slice(start, end < 0 ? undefined : end).trim()}${end < 0 ? "" : "…"}`;
+}
+
 // A sugar alcohol counts only if the label ties it to this product's own form. A label
 // can cover several products (tablets and granules for suspension), and its flat
 // ingredient list can't say which one an ingredient belongs to.
@@ -104,7 +115,7 @@ function sugarAlcoholFlag(sections: Record<string, string>, forms: string[]): La
       if (!m) continue;
       const named = familiesNamed(sentence);
       if (named.length ? own && !named.includes(own) : multiForm) continue;
-      return { flag: "sugar-alcohol", section: key, evidence: m[1].toLowerCase(), quote: labelSentence(sentence).slice(0, 240) };
+      return { flag: "sugar-alcohol", section: key, evidence: m[1].toLowerCase(), quote: quoteAround(labelSentence(sentence), m[1]) };
     }
   }
   if (multiForm) return null;
