@@ -104,9 +104,17 @@ function News({ d }: { d: Summary }) {
           </ul>
         </>
       )}
+      <p className="mt-2 text-sm">
+        Published baseline: over 60% of 50 ostomy patients interviewed said they lacked information that medicine can pass
+        through undissolved.{" "}
+        <Link href="/sources#remane-2025%23patient-education" className="font-bold text-accent underline">
+          Remane 2025
+        </Link>
+      </p>
       <p className="mt-1 text-xs text-muted">
         Real use only. From the &ldquo;Did you know this already?&rdquo; tap on flagged checks and flagged medicines in the list
-        review. Self-reported.
+        review. Self-reported, and a different question from the study&apos;s, so the two are a rough comparison, not a
+        match.
       </p>
     </section>
   );

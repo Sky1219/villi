@@ -186,7 +186,7 @@ Villi exists because people with this anatomy are rarely told what their gut can
 
 | Question | Metric, as the app counts it | Pilot threshold for "working" |
 |---|---|---|
-| Is the problem real? | **New to the person:** share of real flags answered "New to me" on "Did you know this already?" (checks and flagged medicines in the list review) | At least 50% of answered flags are new |
+| Is the problem real? | **New to the person:** share of real flags answered "New to me" on "Did you know this already?" (checks and flagged medicines in the list review). Published baseline: over 60% of 50 ostomy patients lacked this information (Remane 2025); the questions differ, so it's a rough comparison | At least 50% of answered flags are new |
 | Does the flag reach a professional? | **Asked:** flagged questions the person marked "I asked this" | At least 40% of flags with a saved question |
 | Does it change care? (primary) | **Something changed:** of those asked, a logged care-team answer with the form changed or monitoring started, within 30 days. Answers recorded through the care-team link are reported apart from self-reported ones | At least 15% of asked flags |
 | Did the change help? | **Two-week outcome:** the "helped / no change / worse" tap two weeks after a change | More "helped" than "worse", with every "worse" reviewed |
