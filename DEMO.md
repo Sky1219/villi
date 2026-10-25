@@ -17,6 +17,7 @@ One check runs live. Everything else was run beforehand on the same profile and 
   3. Type **Gatorade**.
   4. **I saw something** → yellow, oval.
   5. Tap **Add to appointment sheet** on the metoprolol answer, and on the Gatorade answer.
+     On each flagged answer, answer **Did you or your parent know this already?** truthfully. That fills the "Was the flag news?" card on "Is Villi working?".
   6. On **Your sheet**, leave both questions open. You'll tap **I asked this** on stage.
   7. Only if it's true: on a question your dad really asked, tap **What did they say?** and log what his pharmacist or doctor said and what changed. That becomes one real row on "Is Villi working?". Never make one up.
 - Read each answer once. If one came out weak, run it again and keep the better one. Answers can differ from run to run.
@@ -34,7 +35,7 @@ One check runs live. Everything else was run beforehand on the same profile and 
 | 6 | 1:25 | On the **laptop**: Log how something went → type **sports drink** → **Worse** | On the phone, the end-jejunostomy count ticks up. "Live Convex query. That entry was screened before it counted, by a rule filter and then Claude." |
 | 7 | 1:35 | Recent checks → **Something seen: yellow oval** | "Matched only against his own medicines. Pantoprazole is a *possible* match. A tablet in the pouch can be undissolved or an empty shell, so show the pharmacist." |
 | 8 | 1:45 | **Your sheet** → tap **I asked this** on the metoprolol question | "This is what we bring Monday: his questions, his own patterns as hypotheses, his medicines with what the labels say. Either of us can hand it over. When the pharmacist answers, I log what they said and what changed." Don't open the print dialog on stage. |
-| 9 | 1:55 | Home → footer → **Is Villi working?** | "The question has to reach a care team and change something. This counts that, live and by anatomy: flags, questions asked, answers logged, formulation changes. Real use and demo data are counted separately." |
+| 9 | 1:55 | Home → footer → **Is Villi working?** | "First, was the flag news to him? Every flag asks. Then the question has to reach a care team and change something. This counts that, live and by anatomy: flags, questions asked, answers logged, formulation changes. Real use and demo data are counted separately." |
 
 **Say this unprompted, once:** "A citation proves Villi retrieved a source. It doesn't prove the source says the claim. The code checks and the reviewer catch most of that, not all of it. That's why every answer ends in a question, not an instruction."
 

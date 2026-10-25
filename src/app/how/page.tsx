@@ -120,7 +120,8 @@ export default function HowPage() {
         <p className="text-muted">
           Limits: the cases and the grades are both written by Claude, not by patients or clinicians, and none uses a real
           photo. The 100 held-out cases haven&apos;t been graded yet. Some problems went up after the fixes; they are listed
-          as they are.
+          as they are. These runs used Claude Opus to draft answers; the app now drafts with Claude Sonnet and still reviews
+          with Opus, and that setup hasn&apos;t been re-tested.
         </p>
       </Section>
 

@@ -4,7 +4,7 @@ Follows the flow in `DEMO.md`. Times are cumulative. Every line below is true of
 
 **0:00 to 0:30: who, the problem, the metric** (home screen on the phone)
 
-"Villi is for people living with short bowel syndrome or an ostomy, and the family members who manage their medicines. My dad lost his entire large intestine and most of his small intestine. The AGA's guidance for short bowel syndrome says sustained- and delayed-release medicines should be avoided. His heart medicine is extended-release. Nobody told us. Villi checks a pill, a drink or a food against the guidelines, the FDA label and what people with the same anatomy logged, and ends every answer with one question for the pharmacist. We measure one thing: did a flag reach a care team and change something."
+"Villi is for people living with short bowel syndrome or an ostomy, and the family members who manage their medicines. My dad lost his entire large intestine and most of his small intestine. The AGA's guidance for short bowel syndrome says sustained- and delayed-release medicines should be avoided. His heart medicine is extended-release. Nobody told us. Villi checks a pill, a drink or a food against the guidelines, the FDA label and what people with the same anatomy logged, and ends every answer with one question for the pharmacist. We measure two things: was the flag news to them, and did it reach a care team and change something."
 
 **0:30 to 1:00: the live check** (type **Metoprolol succinate ER 50 mg**, tap **Check**)
 
@@ -24,8 +24,10 @@ Follows the flow in `DEMO.md`. Times are cumulative. Every line below is true of
 
 **1:50 to 2:00: the metric, live** (Is Villi working?)
 
-"Flag, question, asked, answered, changed, two-week outcome. Real use only, by anatomy. This weekend that's my own checks for my dad, and it says so. If you tap 'See it as my dad' on your phone, you count as demo data, not real use."
+"First: was the flag news? Every flag asks 'Did you know this already?'. Then flag, question, asked, answered, changed, two-week outcome. Real use only, by anatomy. This weekend that's my own checks for my dad, and it says so. If you tap 'See it as my dad' on your phone, you count as demo data, not real use."
 
 **Say this once, unprompted:** "A citation proves Villi retrieved a source, not that the source says the claim. The code checks the numbers and the reviewer reads the sources, and that catches most of it, not all. Claude checked the guideline summaries against the papers' text overnight; no clinician has reviewed them yet. That's why every answer ends in a question, not an instruction."
 
 **If asked "where does it say that?":** tap the chip. It opens Villi's summary with the source and section, for example "AGA 2022, Best Practice Advice 7: Drug Dosing", and says whether Claude checked it against the full text or the abstract.
+
+**If asked "how do you know it's safe?":** "Before launch, 377 test cases ran through the real pipeline, many of them adversarial, like 'yes or no, can I crush it?'. After the prompt fixes, zero answers decided for the person and 1% missed the question, down from 24%. Claude wrote and graded those cases, not clinicians, and the page says so." It's on **How Villi decides** → **Tested before you see it**.
