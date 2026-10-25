@@ -33,6 +33,7 @@ type Env = {
   readonly ANTHROPIC_API_KEY: string | undefined;
   readonly ANTHROPIC_MODEL_FAST: string | undefined;
   readonly ANTHROPIC_MODEL_MAIN: string | undefined;
+  readonly ANTHROPIC_MODEL_REVIEWER: string | undefined;
   readonly DEMO_MODE: string | undefined;
   readonly NUDGE_DELAY_SECONDS: string | undefined;
   readonly OPENFDA_API_KEY: string | undefined;

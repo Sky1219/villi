@@ -7,6 +7,8 @@ const app = defineApp({
     ANTHROPIC_API_KEY: v.optional(v.string()),
     ANTHROPIC_MODEL_MAIN: v.optional(v.string()),
     ANTHROPIC_MODEL_FAST: v.optional(v.string()),
+    // Optional: a stronger model for the single reviewer call (defaults to ANTHROPIC_MODEL_MAIN).
+    ANTHROPIC_MODEL_REVIEWER: v.optional(v.string()),
     VOYAGE_API_KEY: v.optional(v.string()),
     OPENFDA_API_KEY: v.optional(v.string()),
     DEMO_MODE: v.optional(v.string()),

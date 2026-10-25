@@ -6,6 +6,7 @@ import { retrier } from "./lib/retrier";
 import type { Doc } from "./_generated/dataModel";
 import { categoryValidator, problemKindValidator, sawValidator } from "./schema";
 import { requireProfile } from "./profiles";
+import { describeAnatomy } from "./lib/anatomy";
 import { AMOUNT_QUESTION_MESSAGE, AMOUNT_QUESTION_RE, OPEN_QUESTION_MESSAGE, OPEN_QUESTION_RE } from "./lib/answerSchema";
 
 const MAX_TRACE = 40;
@@ -286,7 +287,13 @@ export const getReview = internalQuery({
     const a = await ctx.db.get("answers", args.answerId);
     if (!r || !a) return null;
     const profile = await ctx.db.get("profiles", a.profileId);
-    return { draft: r.draft, registry: r.registry, status: a.status, language: profile?.language ?? "en" };
+    return {
+      draft: r.draft,
+      registry: r.registry,
+      status: a.status,
+      language: profile?.language ?? "en",
+      anatomy: profile ? describeAnatomy(profile.anatomy) : null,
+    };
   },
 });
 

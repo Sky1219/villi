@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { env, internalAction } from "./_generated/server";
 import { internal } from "./_generated/api";
-import { anthropicClient, mainModel } from "./lib/llm";
+import { anthropicClient, reviewerModel } from "./lib/llm";
 import { REVIEWER_SYSTEM } from "./lib/prompts";
 import { ReviewerSchema, type Answer, type ReviewerDecision } from "./lib/answerSchema";
 import { reviewDraft, type CitationRegistry } from "./lib/safety";
@@ -12,10 +12,10 @@ import { coverageNoteFor } from "./lib/coverage";
 
 type Registry = CitationRegistry & { evidence?: Record<string, string> };
 
-async function claudeReview(answer: Answer, reg: Registry, language: string): Promise<ReviewerDecision> {
+async function claudeReview(answer: Answer, reg: Registry, language: string, anatomy: string | null): Promise<ReviewerDecision> {
   const client = anthropicClient(env);
   const res = await client.messages.parse({
-    model: mainModel(env),
+    model: reviewerModel(env),
     max_tokens: 8000,
     system: REVIEWER_SYSTEM,
     output_config: { effort: "low", format: zodOutputFormat(ReviewerSchema) },
@@ -24,6 +24,8 @@ async function claudeReview(answer: Answer, reg: Registry, language: string): Pr
         role: "user",
         content: JSON.stringify({
           userLanguage: language,
+          // The profile anatomy is context the draft may restate without a citation.
+          userAnatomy: anatomy,
           draft: answer,
           // What each citation actually says, so the reviewer can check support.
           retrievedSources: Object.fromEntries(
@@ -45,12 +47,12 @@ async function claudeReview(answer: Answer, reg: Registry, language: string): Pr
 export const run = internalAction({
   args: { answerId: v.id("answers") },
   handler: async (ctx, args): Promise<null> => {
-    const r: { draft: unknown; registry: Registry; status: string; language: string } | null = await ctx.runQuery(
+    const r: { draft: unknown; registry: Registry; status: string; language: string; anatomy: string | null } | null = await ctx.runQuery(
       internal.answers.getReview,
       { answerId: args.answerId },
     );
     if (!r || r.status !== "reviewing") return null;
-    const outcome = await reviewDraft(r.draft, r.registry, (a) => claudeReview(a, r.registry, r.language));
+    const outcome = await reviewDraft(r.draft, r.registry, (a) => claudeReview(a, r.registry, r.language, r.anatomy));
     await ctx.runMutation(internal.answers.finalize, {
       answerId: args.answerId,
       status: outcome.status,
