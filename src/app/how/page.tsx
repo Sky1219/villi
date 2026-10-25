@@ -112,8 +112,8 @@ export default function HowPage() {
         </p>
         <p>
           There are no accounts, names or birthdays. Photos are deleted as soon as they are read. Delete my data, at the
-          bottom of the home screen, removes your profile and everything tied to it, including your share of the community
-          counts.
+          bottom of the home screen, removes your profile, medicines, questions, answers and private logs. Anything you already shared with the
+          community stays, anonymous and no longer linked to this phone.
         </p>
       </Section>
     </main>

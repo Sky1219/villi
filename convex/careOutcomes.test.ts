@@ -73,16 +73,16 @@ describe("what care teams changed", () => {
     expect([4, 5].map(tooFewToSay)).toEqual([true, false]);
   });
 
-  it("moves the counters when an answer's outcome changes and when its author deletes their data", async () => {
+  it("moves the counters when an answer's outcome changes, and keeps them when its author forgets their data", async () => {
     const { t, answer, counts } = await setup();
     const anonId = "overnight-care-author-0000000001";
     const id = await answer(JEJ, "pending", { anonId });
     expect((await counts()).byAnatomy[0]).toMatchObject({ pending: 1, total: 1 });
     await t.mutation(api.careTeam.setResultingChange, { anonId, id: id as Id<"care_team_answers">, resultingChange: "formulation_changed" });
     expect((await counts()).byAnatomy[0]).toMatchObject({ pending: 0, formulation_changed: 1, total: 1 });
-    // Delete my data unpools it in the same mutation.
+    // Forget me keeps a shared answer, unlinked, so the counts stay.
     for (let i = 0; i < 5; i++) if ((await t.mutation(api.profiles.deleteMine, { anonId })).done) break;
-    expect((await counts()).byAnatomy).toEqual([]);
+    expect((await counts()).byAnatomy[0]).toMatchObject({ formulation_changed: 1, total: 1 });
   });
 
   it("the agent's numbers are lint-checked against these counts", () => {

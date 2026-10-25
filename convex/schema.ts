@@ -116,6 +116,10 @@ export default defineSchema({
     // false: the user tapped "I don't know", so Villi assumes the most cautious anatomy
     // until they confirm it with their care team. Missing on older rows means confirmed.
     anatomyConfirmed: v.optional(v.boolean()),
+    // Forget me: shared entries move to an anonymous stand-in profile (forgotten: true,
+    // random id never given to any device); the old profile points at it while deleting.
+    forgotten: v.optional(v.boolean()),
+    forgottenInto: v.optional(v.id("profiles")),
     clinicianDemoVerified: v.boolean(),
     synthetic: v.boolean(),
     // What the user tapped on the gut diagram (coarse, non-identifying).

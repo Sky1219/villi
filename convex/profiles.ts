@@ -9,7 +9,6 @@ import {
 } from "./_generated/server";
 import { anatomyValidator, caresForValidator, roleValidator } from "./schema";
 import { internal } from "./_generated/api";
-import { applyCareOutcomeTransition, applyPooledTransition } from "./community";
 import { SEGMENTS, anatomyKeyOf, defaultDiagram, describeAnatomy, type DiagramState, type SegmentId } from "./lib/anatomy";
 import type { Doc, Id } from "./_generated/dataModel";
 import { anatomyQuestionFor, type CaresFor } from "./lib/careFor";
@@ -305,20 +304,38 @@ export const cloneDemo = mutation({
   },
 });
 
-// "Delete my data": everything tied to this device's profile, including its
-// contribution to community counts. Bounded batches; the client calls again until done.
+// Forget me: deletes the profile and everything personal. Entries already shared with
+// the community stay, anonymous and unlinked: they move to a stand-in profile whose id
+// no device holds, so community counts don't change and no row references this device.
+// Bounded batches; the client calls again until done.
 export const deleteMine = mutation({
   args: { anonId: v.string() },
   handler: async (ctx, args) => {
     const p = await findProfile(ctx, args.anonId);
     if (!p) return { done: true };
     const BATCH = 200;
+    let standIn = p.forgottenInto ?? null;
+    const unlinkTo = async () => {
+      if (standIn) return standIn;
+      standIn = await ctx.db.insert("profiles", {
+        anonId: `forgotten:${crypto.randomUUID()}`,
+        role: "patient",
+        anatomy: p.anatomy,
+        anatomyKey: p.anatomyKey,
+        language: "en",
+        forgotten: true,
+        clinicianDemoVerified: false,
+        synthetic: false,
+        createdAt: Date.now(),
+      });
+      await ctx.db.patch("profiles", p._id, { forgottenInto: standIn });
+      return standIn;
+    };
+
     const logs = await ctx.db.query("log_entries").withIndex("by_profileId", (q) => q.eq("profileId", p._id)).take(BATCH);
     for (const l of logs) {
-      if (l.pooled === true && l.itemId) {
-        await applyPooledTransition(ctx, { ...l, itemId: l.itemId }, -1);
-      }
-      await ctx.db.delete("log_entries", l._id);
+      if (l.pooled === true) await ctx.db.patch("log_entries", l._id, { profileId: await unlinkTo(), note: undefined, answerId: undefined });
+      else await ctx.db.delete("log_entries", l._id);
     }
     const answers = await ctx.db.query("answers").withIndex("by_profileId", (q) => q.eq("profileId", p._id)).take(50);
     for (const a of answers) {
@@ -327,20 +344,18 @@ export const deleteMine = mutation({
       if (a.input.photoId) await ctx.storage.delete(a.input.photoId);
       await ctx.db.delete("answers", a._id);
     }
+    // Upvotes stay on the swaps; the vote rows only stopped this profile voting twice.
     const votes = await ctx.db.query("swap_votes").withIndex("by_profileId", (q) => q.eq("profileId", p._id)).take(BATCH);
-    for (const vote of votes) {
-      const s = await ctx.db.get("swaps", vote.swapId);
-      if (s) await ctx.db.patch("swaps", s._id, { upvotes: Math.max(0, s.upvotes - 1) });
-      await ctx.db.delete("swap_votes", vote._id);
-    }
+    for (const vote of votes) await ctx.db.delete("swap_votes", vote._id);
     const swaps = await ctx.db.query("swaps").withIndex("by_profileId", (q) => q.eq("profileId", p._id)).take(BATCH);
-    for (const s of swaps) await ctx.db.delete("swaps", s._id);
+    for (const sw of swaps) {
+      if (sw.pooled === true) await ctx.db.patch("swaps", sw._id, { profileId: await unlinkTo() });
+      else await ctx.db.delete("swaps", sw._id);
+    }
     const care = await ctx.db.query("care_team_answers").withIndex("by_profileId", (q) => q.eq("profileId", p._id)).take(BATCH);
     for (const c of care) {
-      if (c.pooled === true && c.itemId && c.resultingChange) {
-        await applyCareOutcomeTransition(ctx, { ...c, itemId: c.itemId, resultingChange: c.resultingChange }, -1);
-      }
-      await ctx.db.delete("care_team_answers", c._id);
+      if (c.pooled === true) await ctx.db.patch("care_team_answers", c._id, { profileId: await unlinkTo(), questionId: undefined });
+      else await ctx.db.delete("care_team_answers", c._id);
     }
     const questions = await ctx.db.query("questions").withIndex("by_profileId", (q) => q.eq("profileId", p._id)).take(BATCH);
     for (const q of questions) await ctx.db.delete("questions", q._id);
@@ -353,8 +368,16 @@ export const deleteMine = mutation({
     for (const d of devices) await ctx.db.delete("device_links", d._id);
     const codes = await ctx.db.query("device_codes").withIndex("by_profileId", (q) => q.eq("profileId", p._id)).take(BATCH);
     for (const c of codes) await ctx.db.delete("device_codes", c._id);
+    // This device's own code attempts carry its id.
+    const attempts = await ctx.db
+      .query("device_link_attempts")
+      .withIndex("by_anonId_and_at", (q) => q.eq("anonId", args.anonId))
+      .take(BATCH);
+    for (const at of attempts) await ctx.db.delete("device_link_attempts", at._id);
 
-    const more = logs.length === BATCH || answers.length === 50 || votes.length === BATCH || swaps.length === BATCH || care.length === BATCH || questions.length === BATCH || links.length === BATCH;
+    const more =
+      logs.length === BATCH || answers.length === 50 || votes.length === BATCH || swaps.length === BATCH ||
+      care.length === BATCH || questions.length === BATCH || links.length === BATCH || attempts.length === BATCH;
     if (more) return { done: false };
     await ctx.db.delete("profiles", p._id);
     return { done: true };

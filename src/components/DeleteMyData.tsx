@@ -14,7 +14,7 @@ export function DeleteMyData({ anonId }: { anonId: string }) {
       <button
         disabled={busy}
         onClick={async () => {
-          if (!window.confirm("Delete this profile, its logs, questions and swaps from Villi? This can't be undone.")) return;
+          if (!window.confirm("Delete this profile, its medicines, questions, answers and private logs from Villi? Anything already shared with the community stays, anonymous and no longer linked to you. This can't be undone.")) return;
           setBusy(true);
           try {
             for (let i = 0; i < 50; i++) {
