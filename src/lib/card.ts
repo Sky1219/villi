@@ -3,7 +3,7 @@
 type Med = { name: string; state: "flagged" | "nothing-found" | "cant-tell"; requestFlags: { text: string }[] };
 
 export const CARD_QUESTION =
-  "With this anatomy, is the form of any new or changed medicine (extended-release, delayed-release, enteric-coated, or a liquid with sorbitol) the best one for absorption?";
+  "Is the form of any new or changed medicine (extended-release, delayed-release, enteric-coated, or a liquid with sorbitol) suited to this anatomy?";
 
 export function cardLine(m: Med): string {
   // Each flag is already a sentence; one that ends in a quote gets no extra period.
