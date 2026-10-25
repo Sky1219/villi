@@ -120,7 +120,7 @@ describe("impact funnel", () => {
         ctx.db.insert("profiles", { anonId, role: "caregiver", caresFor: "parent", anatomy: JEJ, anatomyKey: anatomyKeyOf(JEJ), language: "en", clinicianDemoVerified: false, synthetic, createdAt: 0 });
       const me = await mk(ANON, false);
       const demo = await mk("synthetic-demo-profile-000000001", true);
-      // A real device that tapped "See it as my dad": real rows, but demo for counting.
+      // A real device that tapped "Demo: the builder's dad": real rows, but demo for counting.
       const clone = await mk("demo-clone-device-0000000000001", false);
       await ctx.db.patch("profiles", clone, { demoClone: true });
       const ans = (profileId: typeof me, status: "final" | "blocked" | "failed", state: string, edited = false, problem?: "confusing") =>

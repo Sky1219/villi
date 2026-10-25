@@ -8,6 +8,7 @@ import type { Id } from "@convex/_generated/dataModel";
 import { LINK_CHOICES, preparedBy } from "@convex/lib/careFor";
 import { friendlyError } from "@/lib/errors";
 import { CHANGE_SHORT, citeText, patternSentence, warningSentence } from "@/lib/sheet";
+import { Loading } from "@/components/Loading";
 
 const PROS = ["pharmacist", "dietitian", "doctor", "nurse"] as const;
 type Change = keyof typeof LINK_CHOICES;
@@ -123,7 +124,7 @@ function Respond({ token, questionId }: { token: string; questionId: Id<"questio
 
 function Team({ token }: { token: string }) {
   const d = useQuery(api.careTeam.linkView, { token });
-  if (d === undefined) return <p className="pt-10 text-center text-muted">Loading…</p>;
+  if (d === undefined) return <Loading />;
   if (d.expired) {
     return (
       <main className="space-y-3 pt-10">

@@ -13,6 +13,7 @@ import { personFor, preparedBy } from "@convex/lib/careFor";
 import { MedReview } from "@/components/MedReview";
 import { ShareWithTeam } from "@/components/ShareWithTeam";
 import { CheckNewForm } from "@/components/AfterChange";
+import { Loading } from "@/components/Loading";
 
 const PROS = ["pharmacist", "dietitian", "doctor", "nurse"] as const;
 
@@ -197,7 +198,7 @@ function Sheet({ anonId }: { anonId: string }) {
     if (d && target) document.getElementById(`answer-${target}`)?.scrollIntoView();
   }, [d, target]);
   const [copied, setCopied] = useState(false);
-  if (!d) return <p className="pt-10 text-center text-muted">Loading…</p>;
+  if (!d) return <Loading />;
   const date = new Date().toLocaleDateString(d.language);
   const md = () => requestMarkdown(d, date);
 
@@ -352,6 +353,6 @@ function Sheet({ anonId }: { anonId: string }) {
 
 export default function SheetPage() {
   const anonId = useAnonId();
-  if (!anonId) return <p className="pt-10 text-center text-muted">Loading…</p>;
+  if (!anonId) return <Loading />;
   return <Sheet anonId={anonId} />;
 }

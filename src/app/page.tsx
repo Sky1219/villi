@@ -16,6 +16,7 @@ import { ScanBox } from "@/components/ScanBox";
 import { useState } from "react";
 import { stripCitations } from "@/lib/citations";
 import { personFor } from "@convex/lib/careFor";
+import { Loading } from "@/components/Loading";
 
 function Header() {
   return (
@@ -26,24 +27,63 @@ function Header() {
   );
 }
 
+// The two numbers behind Villi, each linked to its row on the sources page.
+const PROBLEM = [
+  {
+    figure: "29 of 37",
+    text: "drugs studied in short bowel syndrome were absorbed less; 6 lost their effect.",
+    source: "Hong 2021, systematic review",
+    href: "/sources#hong-2021%23absorption-findings",
+  },
+  {
+    figure: "Over 60%",
+    text: "of ostomy patients interviewed said they lacked information that medicine can pass through undissolved.",
+    source: "Remane 2025, 50 patients",
+    href: "/sources#remane-2025%23patient-education",
+  },
+];
+
 function Welcome({ anonId }: { anonId: string }) {
   return (
     <main className="space-y-6">
       <Header />
-      <section className="space-y-3">
+      <section aria-labelledby="why" className="space-y-3">
+        <h2 id="why" className="sr-only">
+          Why Villi exists
+        </h2>
+        <p>
+          For people living with short bowel syndrome or an ostomy, and the family who manage their medicines. A pill
+          built to release slowly may pass through a short gut before it works.
+        </p>
+        <ul className="grid grid-cols-2 gap-2">
+          {PROBLEM.map((p) => (
+            <li key={p.figure} className="flex flex-col rounded-2xl bg-surface-2 p-3">
+              <span className="text-2xl font-bold">{p.figure}</span>
+              <span className="text-sm">{p.text}</span>
+              <Link href={p.href} className="mt-auto inline-flex min-h-11 items-center text-xs font-bold text-accent underline">
+                {p.source}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
+      <section aria-labelledby="try" className="space-y-3">
+        <h2 id="try" className="font-bold">
+          Try it with a demo profile
+        </h2>
         <Link
           href="/demo?as=father"
           className="flex min-h-16 flex-col justify-center rounded-2xl bg-accent px-5 py-4 text-accent-ink shadow-sm"
         >
-          <span className="text-lg font-bold">See it as my dad</span>
-          <span className="text-sm opacity-90">End-jejunostomy, no colon, under 100 cm of small bowel</span>
+          <span className="text-lg font-bold">Demo: the builder&apos;s dad</span>
+          <span className="text-sm opacity-90">No colon, under 100 cm of small bowel, end-jejunostomy. 5 medicines on file.</span>
         </Link>
         <Link
           href="/demo?as=peer"
           className="flex min-h-16 flex-col justify-center rounded-2xl border border-border bg-surface px-5 py-4 shadow-sm"
         >
-          <span className="text-lg font-bold">See it as someone with their colon</span>
-          <span className="text-sm text-muted">Small bowel joined to colon, 100 to 200 cm</span>
+          <span className="text-lg font-bold">Demo: someone with their colon</span>
+          <span className="text-sm text-muted">Small bowel joined to the colon, 100 to 200 cm</span>
         </Link>
       </section>
       <Link
@@ -52,6 +92,14 @@ function Welcome({ anonId }: { anonId: string }) {
       >
         Set up your own (about a minute)
       </Link>
+      <p className="text-sm text-muted">
+        Check a medicine or drink for that anatomy and get a cited answer with one question for the pharmacist. Demo
+        profiles never count as real use.
+      </p>
+      <p className="text-sm text-muted">
+        Built by a family caregiver whose dad lost his whole large intestine and most of his small intestine. Nobody told
+        them his heart medicine was extended-release.
+      </p>
       <EnterDeviceCode anonId={anonId} />
       <p className="text-sm text-muted">No name, no birthday, no medical history. Only coarse anatomy, tied to a random id on this device.</p>
       <p className="text-sm text-muted">Villi is not medical advice. It cites its sources and writes one question for your pharmacist or doctor.</p>
@@ -125,7 +173,7 @@ function Home({ anonId }: { anonId: string }) {
 
   // "Not right? Type the name instead" lands here with the read name to correct.
   const prefill = typeof window === "undefined" ? "" : (new URLSearchParams(window.location.search).get("q") ?? "");
-  if (profile === undefined) return <p className="pt-10 text-center text-muted">Loading…</p>;
+  if (profile === undefined) return <Loading />;
   if (profile === null) return <Welcome anonId={anonId} />;
   const person = personFor(profile.role, profile.caresFor);
   const openQuestions = questions?.filter((q) => q.status !== "answered").length ?? 0;
@@ -209,6 +257,6 @@ function Home({ anonId }: { anonId: string }) {
 
 export default function Page() {
   const anonId = useAnonId();
-  if (!anonId) return <p className="pt-10 text-center text-muted">Loading…</p>;
+  if (!anonId) return <Loading />;
   return <Home anonId={anonId} />;
 }

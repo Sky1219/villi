@@ -9,6 +9,7 @@ import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { useAnonId } from "@/lib/anon";
 import { downscaleToJpeg } from "@/lib/image";
+import { Loading } from "@/components/Loading";
 
 const SHAPES = [
   { v: "round", label: "Round", cls: "h-6 w-6 rounded-full" },
@@ -169,6 +170,6 @@ function Saw({ anonId }: { anonId: string }) {
 
 export default function SawPage() {
   const anonId = useAnonId();
-  if (!anonId) return <p className="pt-10 text-center text-muted">Loading…</p>;
+  if (!anonId) return <Loading />;
   return <Saw anonId={anonId} />;
 }

@@ -20,6 +20,7 @@ import { GutDiagram } from "@/components/GutDiagram";
 import { QuickProfileForm } from "@/components/QuickProfileForm";
 import { CARES_FOR_CHOICES, type CaresFor } from "@convex/lib/careFor";
 import { MedsEditor } from "@/components/MedsEditor";
+import { Loading } from "@/components/Loading";
 
 type Role = "patient" | "caregiver" | "clinician";
 type Stoma = "none" | "jejunostomy" | "ileostomy" | "colostomy" | "unsure";
@@ -378,12 +379,12 @@ function Onboarding({ anonId, profile }: { anonId: string; profile: Profile | nu
 
 function OnboardingLoader({ anonId }: { anonId: string }) {
   const profile = useQuery(api.profiles.me, { anonId });
-  if (profile === undefined) return <p className="pt-10 text-center text-muted">Loading…</p>;
+  if (profile === undefined) return <Loading />;
   return <Onboarding anonId={anonId} profile={profile} />;
 }
 
 export default function OnboardingPage() {
   const anonId = useAnonId();
-  if (!anonId) return <p className="pt-10 text-center text-muted">Loading…</p>;
+  if (!anonId) return <Loading />;
   return <OnboardingLoader anonId={anonId} />;
 }

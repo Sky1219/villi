@@ -6,6 +6,7 @@ import type { FunctionReturnType } from "convex/server";
 import { api } from "@convex/_generated/api";
 import { useAnonId } from "@/lib/anon";
 import { AnatomyBadge } from "@/components/AnatomyBadge";
+import { Loading } from "@/components/Loading";
 
 type Summary = FunctionReturnType<typeof api.impact.summary>;
 
@@ -195,7 +196,7 @@ function Safety({ d }: { d: Summary }) {
 
 function Impact({ anonId }: { anonId: string }) {
   const d = useQuery(api.impact.summary, { anonId });
-  if (!d) return <p className="pt-10 text-center text-muted">Loading…</p>;
+  if (!d) return <Loading />;
   return (
     <main className="space-y-5 pt-4">
       <Link href="/" className="inline-block min-h-11 py-2 text-sm font-bold text-accent">
@@ -263,6 +264,6 @@ function Impact({ anonId }: { anonId: string }) {
 
 export default function ImpactPage() {
   const anonId = useAnonId();
-  if (!anonId) return <p className="pt-10 text-center text-muted">Loading…</p>;
+  if (!anonId) return <Loading />;
   return <Impact anonId={anonId} />;
 }

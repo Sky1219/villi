@@ -10,6 +10,7 @@ import { friendlyError } from "@/lib/errors";
 import { citationLabel, humanizeCitations, sectionOf } from "@/lib/citations";
 import { AnatomyBadge } from "@/components/AnatomyBadge";
 import { CareOutcomesList } from "@/components/CareOutcomes";
+import { Loading } from "@/components/Loading";
 
 const FILTERS = [{ key: "mine", label: "Like me" }, { key: "all", label: "Everyone" }, ...ANATOMY_KEYS.map((k) => ({ key: k, label: ANATOMY_LABELS[k] }))];
 
@@ -95,7 +96,7 @@ function Swaps({ anonId, filter }: { anonId: string; filter: string }) {
   const upvote = useMutation(api.swaps.upvote);
   const [error, setError] = useState<string | null>(null);
   const run = (p: Promise<unknown>) => p.catch((e) => setError(friendlyError(e)));
-  if (!data) return <p className="text-muted">Loading…</p>;
+  if (!data) return <Loading inline />;
   return (
     <div className="space-y-4">
       {error && (
@@ -165,7 +166,7 @@ function CareTeam({ anonId, filter }: { anonId: string; filter: string }) {
   const data = useQuery(api.careTeam.list, { anonId, anatomy: filter });
   const [error, setError] = useState<string | null>(null);
   const run = (p: Promise<unknown>) => p.catch((e) => setError(friendlyError(e)));
-  if (!data) return <p className="text-muted">Loading…</p>;
+  if (!data) return <Loading inline />;
   return (
     <div className="space-y-3">
       {error && (
@@ -209,7 +210,7 @@ function Community({ anonId }: { anonId: string }) {
   const profile = useQuery(api.profiles.me, { anonId });
   const [tab, setTab] = useState<"swaps" | "care">("swaps");
   const [filter, setFilter] = useState("mine");
-  if (profile === undefined) return <p className="pt-10 text-center text-muted">Loading…</p>;
+  if (profile === undefined) return <Loading />;
   if (profile === null)
     return (
       <p className="pt-10 text-center">
@@ -272,6 +273,6 @@ function Community({ anonId }: { anonId: string }) {
 
 export default function CommunityPage() {
   const anonId = useAnonId();
-  if (!anonId) return <p className="pt-10 text-center text-muted">Loading…</p>;
+  if (!anonId) return <Loading />;
   return <Community anonId={anonId} />;
 }

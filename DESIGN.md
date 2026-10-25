@@ -155,7 +155,7 @@ It's a single phone-width column with big, forgiving controls, the kind you can 
 A warm, low-saturation palette of paper and roasted ink, with one rust accent and three quiet signal hues that each have a pale wash for surfaces. Every token has a dark-mode counterpart in `src/app/globals.css` (for example, warm rust becomes `#e07a5f` on a `#1b1714` page).
 
 ### Primary
-- **Warm Rust** (`warm-rust`): the only action color. It fills the primary "Take a photo" button, the "See it as my dad" entry, the "Add to appointment sheet" button and the stoma marker on the gut diagram, and outlines secondary actions and chips. **Warm Rust Ink** (`warm-rust-ink`) is the text color on top of it.
+- **Warm Rust** (`warm-rust`): the only action color. It fills the primary "Take a photo" button, the "Demo: the builder's dad" entry, the "Add to appointment sheet" button and the stoma marker on the gut diagram, and outlines secondary actions and chips. **Warm Rust Ink** (`warm-rust-ink`) is the text color on top of it.
 - **Rust Wash** (`rust-wash`): the background of the ASK card and of selected chips. It marks "this is yours to bring forward."
 
 ### Neutral

@@ -17,6 +17,7 @@ import { LogCard } from "@/components/LogCard";
 import { KnewBefore } from "@/components/KnewBefore";
 import type { SegmentId } from "@convex/lib/anatomy";
 import { personFor } from "@convex/lib/careFor";
+import { Loading } from "@/components/Loading";
 
 type FinalAnswer = Answer & {
   evidence?: Record<string, { kind: string; text: string }>;
@@ -543,7 +544,7 @@ function AnswerView({ anonId, answerId }: { anonId: string; answerId: Id<"answer
   const markKnew = useMutation(api.answers.markKnewBefore);
   const router = useRouter();
   const [retryError, setRetryError] = useState<string | null>(null);
-  if (a === undefined) return <p className="pt-10 text-center text-muted">Loading…</p>;
+  if (a === undefined) return <Loading />;
   if (a === null) return <p className="pt-10 text-center">Answer not found on this device.</p>;
   const final = a.final as FinalAnswer | null;
   const retryText = a.identified ?? a.inputText;
@@ -656,6 +657,6 @@ function AnswerView({ anonId, answerId }: { anonId: string; answerId: Id<"answer
 export default function AnswerPage() {
   const anonId = useAnonId();
   const { id } = useParams<{ id: string }>();
-  if (!anonId) return <p className="pt-10 text-center text-muted">Loading…</p>;
+  if (!anonId) return <Loading />;
   return <AnswerView anonId={anonId} answerId={id as Id<"answers">} />;
 }

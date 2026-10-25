@@ -4,12 +4,13 @@ import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { useAnonId } from "@/lib/anon";
 import { citationLabel } from "@/lib/citations";
+import { Loading } from "@/components/Loading";
 
 // The fridge sheet: printable on US letter. Guideline lines in Villi's words, drinks people
 // with the same anatomy logged as fine, never an amount.
 function Fridge({ anonId }: { anonId: string }) {
   const d = useQuery(api.fridge.get, { anonId });
-  if (!d) return <p className="pt-10 text-center text-muted">Loading…</p>;
+  if (!d) return <Loading />;
   const whose = d.role === "caregiver" ? "their" : "my";
   return (
     <main className="print-sheet space-y-4 bg-white py-6 text-black print:py-0">
