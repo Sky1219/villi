@@ -49,3 +49,17 @@
 - **Risk to the demo:** low. Display only, no backend change; it disappears when the answer lands. The "20 to 55 seconds" range is the one `DEMO.md` already states.
 - **Verify:** type a new check (any drink); watch the clock tick and step 3 go bold when the trace says "Safety review in progress…".
 - **Commit:** 244a610
+
+### 7. Pilot targets beside the live numbers on "Is Villi working?"
+- **What:** each funnel step that has a README pilot threshold now says it, with the live real-use value and its count, e.g. "Pilot target: at least 40% of saved questions get asked. Now: 50% (1 of 2)."; "Not enough answers yet" when there is no denominator; one line says the targets are our own, set before any data.
+- **Why it matters for judging:** turns the metric page into a test against stated thresholds, which is what "a clear way to measure impact" asks for (criterion 3); demo step 9 lands on it.
+- **Risk to the demo:** low. Text only, computed in the browser from the existing `impact.summary` query; no backend change. With this weekend's tiny real numbers it will show small counts, honestly.
+- **Verify:** open **Is Villi working?**; look under "Was the flag news?", "Asked", "Something changed" and "Two-week outcome".
+- **Commit:** d67b320
+
+### 8. Docs for the new pieces
+- **What:** README "What it does" gets rows for the accessibility pieces and the wait panel; DEMO.md's optional swaps say where "Show this to the pharmacist", read aloud and the wait panel fit; QA.md answers "What about older or low-vision users?".
+- **Why it matters for judging:** keeps the docs judges read true to the code, and gives you a ready answer for the accessibility question (honesty, criterion 1).
+- **Risk to the demo:** none. Docs only. Describes commits 1, 2, 3, 5 and 6: if you skip any of those, drop its sentence (or skip this commit).
+- **Verify:** read the three added README/DEMO/QA paragraphs.
+- **Commit:** 561f167
