@@ -7,3 +7,6 @@
 prompt.md
 skills-lock.json
 coverage
+eval/runs
+*.log
+.codex
