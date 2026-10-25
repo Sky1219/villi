@@ -7,6 +7,7 @@ import type { Id } from "@convex/_generated/dataModel";
 import { friendlyError } from "@/lib/errors";
 import { WarningCard } from "@/components/WarningCard";
 import { cardFor, scanWarningSigns, type WarningCard as Card } from "@convex/lib/warningSigns";
+import { AgainstGuidanceConfirm, useGuidanceCheck } from "@/components/AgainstGuidance";
 
 const OUTCOMES = [
   { value: "helped", label: "Helped" },
@@ -42,6 +43,21 @@ export function LogCard({
   const [local, setLocal] = useState<Exclude<Card, null> | null>(null);
   const [done, setDone] = useState(false);
   const card = done ? null : (logged?.card ?? local);
+  const guidance = useGuidanceCheck(anonId);
+
+  async function save(outcome: (typeof OUTCOMES)[number]["value"]) {
+    setBusy(true);
+    setError(null);
+    setLocal(cardFor(scanWarningSigns(note), outcome, null));
+    try {
+      await create({ anonId, answerId, outcome, note: note || undefined });
+      guidance.clear();
+    } catch (e) {
+      setError(friendlyError(e));
+    } finally {
+      setBusy(false);
+    }
+  }
 
   if (logged) {
     return (
@@ -79,15 +95,9 @@ export function LogCard({
             disabled={busy}
             onClick={async () => {
               setBusy(true);
-              setError(null);
-              setLocal(cardFor(scanWarningSigns(note), o.value, null));
-              try {
-                await create({ anonId, answerId, outcome: o.value, note: note || undefined });
-              } catch (e) {
-                setError(friendlyError(e));
-              } finally {
-                setBusy(false);
-              }
+              const ok = await guidance.check(o.value, { answerId });
+              setBusy(false);
+              if (ok) await save(o.value);
             }}
             className="min-h-12 rounded-xl border border-border bg-background px-2 font-bold disabled:opacity-60"
           >
@@ -95,6 +105,15 @@ export function LogCard({
           </button>
         ))}
       </div>
+      {guidance.pending && (
+        <AgainstGuidanceConfirm
+          pending={guidance.pending}
+          person={person}
+          busy={busy}
+          onSave={() => save(guidance.pending!.outcome)}
+          onCancel={guidance.clear}
+        />
+      )}
       {error && (
         <p role="alert" className="mt-2 text-sm text-flag">
           {error}

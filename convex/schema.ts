@@ -195,6 +195,11 @@ export default defineSchema({
     warning: v.optional(v.object({ level: v.union(v.literal("emergency"), v.literal("dehydration")), signs: v.array(v.string()) })),
     // When the author tapped "Got it" on the warning card.
     warningAckAt: v.optional(v.number()),
+    // A good or neutral outcome for an item Villi flagged for this anatomy: stays in the
+    // author's own log and is never pooled (lib/guidance.ts).
+    againstGuidance: v.optional(
+      v.object({ item: v.string(), why: v.string(), source: v.union(v.literal("check"), v.literal("review")) }),
+    ),
     synthetic: v.boolean(),
     createdAt: v.number(),
   })

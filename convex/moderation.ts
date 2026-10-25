@@ -10,6 +10,8 @@ import { applyPooledTransition } from "./community";
 import type { Canonical } from "./canonicalize";
 import { MODERATION_FIXTURES } from "./lib/moderationFixtures";
 import { retrier } from "./lib/retrier";
+import { AGAINST_GUIDANCE_NUDGE } from "./lib/guidance";
+import { guidanceConflict } from "./logs";
 
 const NEW_PROFILE_MS = 10 * 60_000;
 const NEW_PROFILE_NOTE_FREE = 3;
@@ -45,6 +47,22 @@ export const applyLog = internalMutation({
     const log = await ctx.db.get("log_entries", args.logId);
     if (!log || log.pooled !== null) return null; // idempotent under retries
     const itemId = log.itemId ?? args.itemId;
+    // A good or neutral outcome for an item Villi flagged for this anatomy stays with its
+    // author. Checked again now that a typed name has a catalog item.
+    const profile = await ctx.db.get("profiles", log.profileId);
+    const conflict =
+      log.againstGuidance ??
+      (profile && !log.synthetic ? await guidanceConflict(ctx, profile, { outcome: log.outcome, itemId, itemText: log.itemText }) : null);
+    if (conflict) {
+      await ctx.db.patch("log_entries", log._id, {
+        itemId,
+        pooled: false,
+        againstGuidance: conflict,
+        moderationReason: "against guidance for this anatomy",
+        nudgeUser: AGAINST_GUIDANCE_NUDGE,
+      });
+      return null;
+    }
     // A brand-new profile can share only a few note-free entries before its
     // first ten minutes are up; the rest wait for a re-check after the window.
     if (args.pooled && itemId && !log.note && !log.synthetic) {

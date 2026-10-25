@@ -8,6 +8,7 @@ import { LogStatus } from "@/components/LogCard";
 import { WarningCard } from "@/components/WarningCard";
 import type { Id } from "@convex/_generated/dataModel";
 import { cardFor, scanWarningSigns, type WarningCard as Card } from "@convex/lib/warningSigns";
+import { AgainstGuidanceConfirm, useGuidanceCheck } from "@/components/AgainstGuidance";
 
 const OUTCOMES = [
   { value: "helped", label: "Helped" },
@@ -28,12 +29,26 @@ export function QuickLog({ anonId, person = "you" }: { anonId: string; person?: 
   const saved = mine?.find((l) => l.card && l._id !== dismissed);
   const shown = local ?? (saved?.card ? { card: saved.card, logId: saved._id } : null);
 
-  async function log(outcome: (typeof OUTCOMES)[number]["value"]) {
+  const guidance = useGuidanceCheck(anonId);
+  const [busy, setBusy] = useState(false);
+
+  // Tapping an outcome: ask first if Villi flagged this item and the outcome is good or neutral.
+  async function tap(outcome: (typeof OUTCOMES)[number]["value"]) {
     if (!item.trim()) {
       setError("What did you have?");
       return;
     }
     setError(null);
+    guidance.clear();
+    setBusy(true);
+    const ok = await guidance.check(outcome, { itemText: item.trim() });
+    setBusy(false);
+    if (ok) await log(outcome);
+  }
+
+  async function log(outcome: (typeof OUTCOMES)[number]["value"]) {
+    setError(null);
+    guidance.clear();
     const card = cardFor(scanWarningSigns(note), outcome, null);
     if (card) setLocal({ card, logId: null });
     try {
@@ -56,7 +71,10 @@ export function QuickLog({ anonId, person = "you" }: { anonId: string; person?: 
       <input
         id="quick-item"
         value={item}
-        onChange={(e) => setItem(e.target.value)}
+        onChange={(e) => {
+          setItem(e.target.value);
+          guidance.clear();
+        }}
         placeholder={person === "you" ? "What did you have?" : "What did they have?"}
         className="mb-2 min-h-12 w-full rounded-xl border border-border bg-background px-3"
         autoComplete="off"
@@ -78,11 +96,24 @@ export function QuickLog({ anonId, person = "you" }: { anonId: string; person?: 
       </p>
       <div role="group" aria-labelledby="quick-outcome" className="grid grid-cols-3 gap-2">
         {OUTCOMES.map((o) => (
-          <button key={o.value} onClick={() => log(o.value)} className="min-h-12 rounded-xl border border-border bg-background font-bold">
+          <button
+            key={o.value}
+            onClick={() => tap(o.value)}
+            disabled={busy}
+            className="min-h-12 rounded-xl border border-border bg-background font-bold disabled:opacity-60"
+          >
             {o.label}
           </button>
         ))}
       </div>
+      {guidance.pending && (
+        <AgainstGuidanceConfirm
+          pending={guidance.pending}
+          person={person}
+          onSave={() => log(guidance.pending!.outcome)}
+          onCancel={guidance.clear}
+        />
+      )}
       {error && (
         <p role="alert" className="mt-2 text-sm text-flag">
           {error}

@@ -27,6 +27,7 @@ import type * as lib_drugTable from "../lib/drugTable.js";
 import type * as lib_embed from "../lib/embed.js";
 import type * as lib_evidence from "../lib/evidence.js";
 import type * as lib_fridge from "../lib/fridge.js";
+import type * as lib_guidance from "../lib/guidance.js";
 import type * as lib_impact from "../lib/impact.js";
 import type * as lib_labelNames from "../lib/labelNames.js";
 import type * as lib_labelText from "../lib/labelText.js";
@@ -80,6 +81,7 @@ declare const fullApi: ApiFromModules<{
   "lib/embed": typeof lib_embed;
   "lib/evidence": typeof lib_evidence;
   "lib/fridge": typeof lib_fridge;
+  "lib/guidance": typeof lib_guidance;
   "lib/impact": typeof lib_impact;
   "lib/labelNames": typeof lib_labelNames;
   "lib/labelText": typeof lib_labelText;
