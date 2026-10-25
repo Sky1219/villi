@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ShowPharmacist } from "@/components/ShowPharmacist";
 import { displayName } from "@/lib/displayName";
+import { stripCitations } from "@/lib/citations";
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 import { api } from "@convex/_generated/api";
@@ -263,7 +264,7 @@ function Sheet({ anonId }: { anonId: string }) {
         <h2 className="font-bold">Questions to ask ({d.open.length})</h2>
         {d.open.length === 0 && <p className="text-muted">No open questions. Add one from any answer&apos;s question card.</p>}
         <ShowPharmacist
-          questions={d.open.map((q) => ({ item: q.itemName ? displayName(q.itemName) : null, question: q.text }))}
+          questions={d.open.map((q) => ({ item: q.itemName ? displayName(q.itemName) : null, question: stripCitations(q.text) }))}
           label={d.open.length === 1 ? "Show this question to the pharmacist" : "Show these questions to the pharmacist"}
         />
         {d.open.map((q) => (

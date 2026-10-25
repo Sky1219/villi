@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useId, useRef } from "react";
 
 type Shown = { item: string | null; question: string; verdict?: string };
 
@@ -8,26 +8,34 @@ type Shown = { item: string | null; question: string; verdict?: string };
 // It shows only text Villi already has (item, verdict, question), nothing new.
 export function ShowPharmacist({ questions, label = "Show this to the pharmacist" }: { questions: Shown[]; label?: string }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
   if (questions.length === 0) return null;
   const many = questions.length > 1;
   return (
     <>
       <button
         type="button"
-        onClick={() => ref.current?.showModal()}
+        onClick={() => {
+          // The page behind a full-screen dialog shouldn't scroll (iOS lets it).
+          document.documentElement.style.overflow = "hidden";
+          ref.current?.showModal();
+        }}
         className="mt-2 min-h-12 w-full rounded-xl border border-accent bg-surface px-4 font-bold text-accent"
       >
         {label}
       </button>
       <dialog
         ref={ref}
-        aria-labelledby="show-title"
+        onClose={() => {
+          document.documentElement.style.overflow = "";
+        }}
+        aria-labelledby={titleId}
         className="m-0 h-dvh max-h-none w-screen max-w-none bg-background p-0 text-foreground backdrop:bg-black/60"
       >
         <div className="mx-auto flex min-h-dvh max-w-md flex-col gap-6 px-4 py-4">
           {/* First focusable element, so the dialog opens at the top, not scrolled to Done. */}
           <div className="flex items-center justify-between gap-3">
-            <p id="show-title" className="text-sm font-bold uppercase tracking-wide text-accent">
+            <p id={titleId} className="text-sm font-bold uppercase tracking-wide text-accent">
               {many ? `${questions.length} questions for you` : "A question for you"}
             </p>
             <form method="dialog">
