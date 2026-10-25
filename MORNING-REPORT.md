@@ -95,3 +95,10 @@
 - **Commits:** 5d5eacd and 83c7906 (take both)
 
 **Browser checks done tonight (no commit):** with a throwaway fake Convex client (kept out of the repo) I rendered the real home, welcome, answer (finished, using a real Gatorade answer from `eval/runs/demo-live-2`, and in progress) and sheet pages at 320 px. axe-core 4.10 found **no WCAG 2.2 A/AA violations** on any of them, or on `/how`, in light and dark mode; none of them scroll sideways at the largest text size.
+
+### 13. Wallet card for the next prescriber
+- **What:** `/card`, linked from **Your sheet** as "Wallet card: medicines and anatomy", prints a dashed cut-out card (4 in wide): the anatomy, each medicine on file with the medicine list review's own flag text (flagged first; "Nothing found in the label sections checked" / "Label not checked yet" otherwise), and one question for any prescriber or pharmacist: "With this anatomy, is the form of any new or changed medicine (extended-release, delayed-release, enteric-coated, or a liquid with sorbitol) the best one for absorption?"
+- **Why it matters for judging:** it's the origin story's gap (nobody prescribing knew the anatomy) turned into something to carry to an ER or a new specialist (criteria 2 and 3).
+- **Risk to the demo:** low. A new route and one more link on the sheet, below the fridge sheet; reads the existing `sheet.get` query only. Tests check it repeats only the review's text, has one question, no digits and no directive. Rendered with fixture medicines on screen and in print emulation; axe clean.
+- **Verify:** **Your sheet** → **Wallet card: medicines and anatomy** → look at the card → **Print or save as PDF** (preview only).
+- **Commit:** 17af40e
