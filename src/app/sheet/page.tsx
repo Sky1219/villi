@@ -256,6 +256,9 @@ function Sheet({ anonId }: { anonId: string }) {
         <Link href="/fridge" className="col-span-2 flex min-h-12 items-center justify-center rounded-xl border border-border bg-surface px-3 font-bold">
           Fridge sheet: drinks for this anatomy
         </Link>
+        <Link href="/card" className="col-span-2 flex min-h-12 items-center justify-center rounded-xl border border-border bg-surface px-3 font-bold">
+          Wallet card: medicines and anatomy
+        </Link>
       </div>
 
       <ShareWithTeam anonId={anonId} />
