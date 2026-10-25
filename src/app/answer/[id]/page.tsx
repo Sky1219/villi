@@ -22,6 +22,7 @@ import { displayName } from "@/lib/displayName";
 import { answerScript } from "@/lib/readAloud";
 import { ReadAloud } from "@/components/ReadAloud";
 import { ShowPharmacist } from "@/components/ShowPharmacist";
+import { WaitNote } from "@/components/WaitNote";
 
 type FinalAnswer = Answer & {
   evidence?: Record<string, { kind: string; text: string }>;
@@ -641,6 +642,7 @@ function AnswerView({ anonId, answerId }: { anonId: string; answerId: Id<"answer
       )}
 
       {!done && <TraceList trace={a.toolTrace} status={a.status} />}
+      {isWorking(a.status) && <WaitNote status={a.status} startedAt={a.createdAt} />}
 
       {done && (
         <AnswerCard
