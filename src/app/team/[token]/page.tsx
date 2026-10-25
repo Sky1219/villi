@@ -128,8 +128,10 @@ function Team({ token }: { token: string }) {
   if (d.expired) {
     return (
       <main className="space-y-3 pt-10">
-        <h1 className="text-2xl font-bold">This link has expired</h1>
-        <p className="text-muted">Care-team links last 14 days, and the family can revoke them sooner. Ask them for a new one.</p>
+        <h1 className="text-2xl font-bold">This link isn&apos;t working</h1>
+        <p className="text-muted">
+          It may have expired (care-team links last 14 days) or been revoked by the family. Ask them for a new one.
+        </p>
       </main>
     );
   }

@@ -556,7 +556,16 @@ function AnswerView({ anonId, answerId }: { anonId: string; answerId: Id<"answer
   const router = useRouter();
   const [retryError, setRetryError] = useState<string | null>(null);
   if (a === undefined) return <Loading />;
-  if (a === null) return <p className="pt-10 text-center">Answer not found on this device.</p>;
+  if (a === null)
+    return (
+      <main className="space-y-3 pt-10">
+        <h1 className="text-2xl font-bold">Answer not found on this device</h1>
+        <p className="text-muted">Answers stay on the phone that asked. Check it again from home.</p>
+        <Link href="/" className="inline-flex min-h-11 items-center font-bold text-accent underline">
+          Go home
+        </Link>
+      </main>
+    );
   const final = a.final as FinalAnswer | null;
   const retryText = a.identified ?? a.inputText;
   const done = !!final && a.status === "final";

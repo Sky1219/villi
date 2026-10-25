@@ -174,7 +174,7 @@ export const linkRespond = mutation({
   },
   handler: async (ctx, args) => {
     const found = await linkProfile(ctx, args.token);
-    if (!found || found.link.expiresAt < Date.now()) throw new ConvexError("This link has expired");
+    if (!found || found.link.expiresAt < Date.now()) throw new ConvexError("This link isn't working. It may have expired or been revoked.");
     const { profile } = found;
     const q = await ctx.db.get("questions", args.questionId);
     if (!q || q.profileId !== profile._id) throw new ConvexError("Question not found");

@@ -115,10 +115,13 @@ export const start = mutation({
 });
 
 export const get = query({
-  args: { anonId: v.string(), answerId: v.id("answers") },
+  // A plain string, so a mistyped or truncated link reads "not found" instead of failing validation.
+  args: { anonId: v.string(), answerId: v.string() },
   handler: async (ctx, args) => {
     const profile = await requireProfile(ctx, args.anonId);
-    const a = await ctx.db.get("answers", args.answerId);
+    const id = ctx.db.normalizeId("answers", args.answerId);
+    if (!id) return null;
+    const a = await ctx.db.get("answers", id);
     if (!a || a.profileId !== profile._id) return null;
     return publicAnswer(a);
   },
