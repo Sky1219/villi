@@ -28,3 +28,24 @@
 - **Risk to the demo:** low. Off by default, so the demo looks exactly as before unless someone taps it. It adds a small inline script in `<head>` that only reads one localStorage key inside try/catch. Screenshotted at 320 px at "largest": no horizontal scroll on the home header, anatomy panel and nav.
 - **Verify:** on home, tap the largest **A**; every screen grows. Reload: it stays. Tap the smallest **A** to go back.
 - **Commit:** df03494
+
+### 4. The three answers, on the welcome screen
+- **What:** the welcome screen (what a judge sees on their own phone) now shows the three answer states styled like the real cards, under "Three possible answers, and none of them is 'safe'", below **Set up your own**.
+- **Why it matters for judging:** shows the honesty design (no "safe" state) before anyone types anything (criterion 4, honesty).
+- **Risk to the demo:** low. Static text on the welcome screen only; the phone's home with a profile is unchanged.
+- **Verify:** open villi in a private window (no profile); scroll below the demo buttons.
+- **Commit:** 0f307aa
+
+### 5. Show the sheet's open questions to the pharmacist
+- **What:** on **Your sheet**, "Show these questions to the pharmacist" opens every open question in the same large-type view, numbered with its item; the view now has a **Close** link at the top so it opens at the top, not scrolled to **Done**.
+- **Why it matters for judging:** the sheet is the "bring it Monday" step of the demo; this makes it usable at the counter on a phone, not only on paper (criteria 3 and 1).
+- **Risk to the demo:** low. One outline button above the question cards, shown only when there are open questions; step 8's **I asked this** sits one row lower. Depends on commit 2 (same component).
+- **Verify:** **Your sheet** → **Show these questions to the pharmacist** → read → **Close**.
+- **Commit:** 9316308
+
+### 6. Elapsed time and the three steps during a live check
+- **What:** while a check runs, a panel under the live trace shows a ticking clock ("0:14 · usually 20 to 55 seconds"; past a minute: "taking longer than usual. It keeps going if you leave") and the three steps (Claude gathers sources → code checks every citation, count and dose → a second Claude reviews), marked from the answer's status.
+- **Why it matters for judging:** this is on screen during the one live moment of the demo (step 2); it makes Claude's two roles and the code gate visible without narration (criterion 4), and tells a tired user how long to wait.
+- **Risk to the demo:** low. Display only, no backend change; it disappears when the answer lands. The "20 to 55 seconds" range is the one `DEMO.md` already states.
+- **Verify:** type a new check (any drink); watch the clock tick and step 3 go bold when the trace says "Safety review in progress…".
+- **Commit:** 244a610
