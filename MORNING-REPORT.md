@@ -86,3 +86,12 @@
 - **Commit:** ea0c0c8
 
 **Review findings not acted on:** React 19 may log a dev-only console warning about the `<script>` in `<head>` (none seen in this dev server's log; prod is unaffected). Questions already marked "asked" still appear in the pharmacist view, on purpose: an asked question can still be waiting for its answer.
+
+### 12. "Made for tired eyes" on How Villi decides
+- **What:** a short section at the end of `/how` listing the accessibility pieces (Atkinson Hyperlegible, 44 px targets, text size, read aloud, the pharmacist view). A follow-up commit swaps two bold phrases for quotes, per DESIGN.md's Bold Means Something rule.
+- **Why it matters for judging:** `/how` is linked from every answer; this states the care for low-vision users where judges look (criterion 1).
+- **Risk to the demo:** none. Static text. Mentions commits 1, 2 and 3: skip it if you skip those.
+- **Verify:** open **How Villi decides**, scroll to the end.
+- **Commits:** 5d5eacd and 83c7906 (take both)
+
+**Browser checks done tonight (no commit):** with a throwaway fake Convex client (kept out of the repo) I rendered the real home, welcome, answer (finished, using a real Gatorade answer from `eval/runs/demo-live-2`, and in progress) and sheet pages at 320 px. axe-core 4.10 found **no WCAG 2.2 A/AA violations** on any of them, or on `/how`, in light and dark mode; none of them scroll sideways at the largest text size.
