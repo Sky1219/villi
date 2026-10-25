@@ -7,12 +7,23 @@ import { api } from "@convex/_generated/api";
 import { useAnonId } from "@/lib/anon";
 import { AnatomyBadge } from "@/components/AnatomyBadge";
 import { Loading } from "@/components/Loading";
+import { newsTarget, pilotTarget, type PilotTarget } from "@/lib/pilotTargets";
 
 type Summary = FunctionReturnType<typeof api.impact.summary>;
 
 function DemoCount({ n }: { n: number }) {
   if (n === 0) return null;
   return <span className="rounded-full bg-surface-2 px-2.5 py-1 text-xs font-bold text-muted">+{n} demo data</span>;
+}
+
+function Target({ t }: { t: PilotTarget | null }) {
+  if (!t) return null;
+  return (
+    <p className="mt-1 text-sm">
+      <span className="font-bold">Pilot target:</span> {t.target}.{" "}
+      <span className="text-muted">{t.now === null ? "Not enough answers yet." : `Now: ${t.now}.`}</span>
+    </p>
+  );
 }
 
 function ByAnatomy({ rows }: { rows: { anatomyKey: string; label: string; n: number }[] }) {
@@ -61,10 +72,12 @@ function Funnel({ d }: { d: Summary }) {
                 {s.outcomes.helped} helped · {s.outcomes.neutral} no change · {s.outcomes.hurt} worse
               </p>
             )}
+            <Target t={pilotTarget(s.key, d.funnel)} />
             <ByAnatomy rows={s.byAnatomy} />
           </li>
         ))}
       </ol>
+      <p className="text-xs text-muted">Pilot targets are our own, set before any pilot data; they are not from a study.</p>
       <p className="text-xs text-muted">
         Care-team-link answers are recorded by whoever holds the link; Villi doesn&apos;t verify who they are.
       </p>
@@ -104,6 +117,7 @@ function News({ d }: { d: Summary }) {
           </ul>
         </>
       )}
+      <Target t={newsTarget(n.newToThem, n.answered)} />
       <p className="mt-2 text-sm">
         Published baseline: over 60% of 50 ostomy patients interviewed said they lacked information that medicine can pass
         through undissolved.{" "}
