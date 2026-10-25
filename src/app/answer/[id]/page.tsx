@@ -21,6 +21,7 @@ import { Loading } from "@/components/Loading";
 import { displayName } from "@/lib/displayName";
 import { answerScript } from "@/lib/readAloud";
 import { ReadAloud } from "@/components/ReadAloud";
+import { ShowPharmacist } from "@/components/ShowPharmacist";
 
 type FinalAnswer = Answer & {
   evidence?: Record<string, { kind: string; text: string }>;
@@ -240,11 +241,13 @@ function AnswerCard({
   answerId,
   anonId,
   itemId,
+  itemLabel,
 }: {
   final: FinalAnswer;
   answerId: Id<"answers">;
   anonId: string;
   itemId: Id<"items"> | null;
+  itemLabel: string | null;
 }) {
   const gIds = Array.from(
     new Set(
@@ -320,7 +323,7 @@ function AnswerCard({
       )}
       </div>
 
-      <QuestionCard ask={final.ask} answerId={answerId} anonId={anonId} />
+      <QuestionCard ask={final.ask} answerId={answerId} anonId={anonId} itemLabel={itemLabel} verdict={prose(final.verdict)} />
 
       <div className="space-y-3">
       {itemId && <CareOutcomes anonId={anonId} itemId={itemId} />}
@@ -391,7 +394,19 @@ function Counts({ c }: { c: { helped: number; neutral: number; hurt: number } })
   );
 }
 
-function QuestionCard({ ask, answerId, anonId }: { ask: string; answerId: Id<"answers">; anonId: string }) {
+function QuestionCard({
+  ask,
+  answerId,
+  anonId,
+  itemLabel,
+  verdict,
+}: {
+  ask: string;
+  answerId: Id<"answers">;
+  anonId: string;
+  itemLabel: string | null;
+  verdict: string;
+}) {
   const add = useMutation(api.questions.addFromAnswer);
   const [added, setAdded] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -414,6 +429,7 @@ function QuestionCard({ ask, answerId, anonId }: { ask: string; answerId: Id<"an
       >
         {added ? "Added to appointment sheet ✓" : "Add to appointment sheet"}
       </button>
+      <ShowPharmacist item={itemLabel} verdict={verdict} question={prose(ask.replace(/^ASK:\s*/, ""))} />
       {error && (
         <p role="alert" className="mt-2 text-sm text-flag">
           {error}
@@ -626,7 +642,15 @@ function AnswerView({ anonId, answerId }: { anonId: string; answerId: Id<"answer
 
       {!done && <TraceList trace={a.toolTrace} status={a.status} />}
 
-      {done && <AnswerCard final={final} answerId={a._id} anonId={anonId} itemId={a.itemId} />}
+      {done && (
+        <AnswerCard
+          final={final}
+          answerId={a._id}
+          anonId={anonId}
+          itemId={a.itemId}
+          itemLabel={a.kind === "followup" || !itemName ? null : displayName(itemName)}
+        />
+      )}
 
       {(a.status === "failed" || a.status === "blocked") && (
         <section className="rounded-2xl border border-border bg-surface-2 p-4">
