@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 const noop = () => () => {};
 
@@ -14,13 +14,37 @@ export function ReadAloud({ parts, lang }: { parts: string[]; lang: string }) {
     () => false,
   );
   const [speaking, setSpeaking] = useState(false);
+  // Chrome can garbage-collect utterances nobody references, and then onend never fires.
+  const queued = useRef<SpeechSynthesisUtterance[]>([]);
 
   useEffect(() => {
-    // Leaving the page stops the voice.
+    if (!("speechSynthesis" in window)) return;
+    const synth = window.speechSynthesis;
+    // Leaving the page, or the app going to the background, stops the voice.
+    const hide = () => {
+      if (document.visibilityState === "hidden") {
+        synth.cancel();
+        setSpeaking(false);
+      }
+    };
+    document.addEventListener("visibilitychange", hide);
+    window.addEventListener("pagehide", hide);
     return () => {
-      if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
+      document.removeEventListener("visibilitychange", hide);
+      window.removeEventListener("pagehide", hide);
+      synth.cancel();
     };
   }, []);
+
+  useEffect(() => {
+    if (!speaking) return;
+    // Fallback for engines that drop onend: once nothing is speaking or queued, reset the button.
+    const id = setInterval(() => {
+      const synth = window.speechSynthesis;
+      if (!synth.speaking && !synth.pending) setSpeaking(false);
+    }, 1500);
+    return () => clearInterval(id);
+  }, [speaking]);
 
   if (!supported) return null;
 
@@ -31,7 +55,9 @@ export function ReadAloud({ parts, lang }: { parts: string[]; lang: string }) {
 
   const start = () => {
     const synth = window.speechSynthesis;
-    synth.cancel();
+    // Chrome sometimes drops a speak() that comes right after an unneeded cancel().
+    if (synth.speaking || synth.pending) synth.cancel();
+    queued.current = [];
     // One utterance per section, so the voice pauses between them.
     parts.forEach((text, i) => {
       const u = new SpeechSynthesisUtterance(text);
@@ -41,6 +67,7 @@ export function ReadAloud({ parts, lang }: { parts: string[]; lang: string }) {
         u.onend = () => setSpeaking(false);
         u.onerror = () => setSpeaking(false);
       }
+      queued.current.push(u);
       synth.speak(u);
     });
     setSpeaking(true);

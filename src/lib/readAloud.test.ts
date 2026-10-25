@@ -10,6 +10,11 @@ describe("forSpeech", () => {
       "oral rehydration solution has 75 millimoles per liter sodium",
     );
   });
+  it("keeps the emergency room as the ER", () => {
+    expect(forSpeech("If you feel faint, go to the ER.")).toBe("If you feel faint, go to the ER.");
+    expect(forSpeech("ER at the start")).toBe("ER at the start");
+    expect(forSpeech("The ER can help.")).toBe("The ER can help.");
+  });
   it("leaves words that only contain the letters alone", () => {
     expect(forSpeech("Every answer ends here.")).toBe("Every answer ends here.");
   });

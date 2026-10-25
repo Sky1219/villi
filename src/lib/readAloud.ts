@@ -16,11 +16,12 @@ const STATE_SPOKEN: Record<Speakable["state"], string> = {
 
 // Speech engines read "ER" as "er" and "mg" as "m g". Spell out the few forms answers use.
 const SPOKEN_WORDS: [RegExp, string][] = [
-  [/\bER\b/g, "extended-release"],
-  [/\bXL\b/g, "extended-release"],
-  [/\bSR\b/g, "sustained-release"],
-  [/\bDR\b/g, "delayed-release"],
-  [/\bEC\b/g, "enteric-coated"],
+  // Only right after a drug word ("metoprolol ER"), so "go to the ER" stays the emergency room.
+  [/(?<=[A-Za-z]\s)(?<!\b(?:[Tt]he|[Aa]n|[Tt]o|[Aa]t|[Ii]n)\s)ER\b/g, "extended-release"],
+  [/(?<=[A-Za-z]\s)XL\b/g, "extended-release"],
+  [/(?<=[A-Za-z]\s)SR\b/g, "sustained-release"],
+  [/(?<=[A-Za-z]\s)DR\b/g, "delayed-release"],
+  [/(?<=[A-Za-z]\s)EC\b/g, "enteric-coated"],
   [/\bORS\b/g, "oral rehydration solution"],
   [/(\d)\s?mg\b/g, "$1 milligrams"],
   [/(\d)\s?mmol\/L\b/g, "$1 millimoles per liter"],
