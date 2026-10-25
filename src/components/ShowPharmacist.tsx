@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 
 type Shown = { item: string | null; question: string; verdict?: string };
 
@@ -9,6 +9,11 @@ type Shown = { item: string | null; question: string; verdict?: string };
 export function ShowPharmacist({ questions, label = "Show this to the pharmacist" }: { questions: Shown[]; label?: string }) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
+  // If the dialog unmounts while open (back gesture, or the last question gets answered
+  // live), onClose never fires: release the scroll lock anyway.
+  useEffect(() => () => {
+    document.documentElement.style.overflow = "";
+  }, []);
   if (questions.length === 0) return null;
   const many = questions.length > 1;
   return (
