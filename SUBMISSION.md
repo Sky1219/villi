@@ -10,7 +10,7 @@ We're not unusual. In a 2025 study of 50 ostomy patients, over 60% said they lac
 
 ## What it does
 
-Villi is a phone-first web app for adults with short bowel syndrome or an ostomy, and the family members who manage their medicines.
+Villi is a phone-first web app for adults with short bowel syndrome or an ostomy, and the family members who manage their medicines. Between 725,000 and 1 million Americans live with an ostomy (UOAA).
 
 - **Check a medicine or drink** by barcode, photo or name. Villi answers for *this* anatomy: a cited verdict that is never "safe" (Flag to discuss, Nothing found in the sources I checked, or Can't tell yet), the gut diagram, what people with the same anatomy logged, and one question to bring to the pharmacist.
 - **Review the whole medicine list** at once from the FDA labels and the guidelines, with no AI call: about 40,000 words of labels for my dad's five medicines, read in about a tenth of a second.

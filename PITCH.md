@@ -4,7 +4,7 @@ Follows the flow in `DEMO.md`. Times are cumulative. Every line below is true of
 
 **0:00 to 0:30: who, the problem, the metric** (home screen on the phone)
 
-"Villi is for people living with short bowel syndrome or an ostomy, and the family members who manage their medicines. My dad lost his entire large intestine and most of his small intestine. The AGA's guidance for short bowel syndrome says sustained- and delayed-release medicines should be avoided. His heart medicine is extended-release. Nobody told us. Villi checks a pill, a drink or a food against the guidelines, the FDA label and what people with the same anatomy logged, and ends every answer with one question for the pharmacist. We measure two things: was the flag news to them, and did it reach a care team and change something."
+"Villi is for people living with short bowel syndrome or an ostomy, and the family members who manage their medicines. Up to a million Americans live with an ostomy. My dad lost his entire large intestine and most of his small intestine. The AGA's guidance for short bowel syndrome says sustained- and delayed-release medicines should be avoided. His heart medicine is extended-release. Nobody told us. Villi checks a pill, a drink or a food against the guidelines, the FDA label and what people with the same anatomy logged, and ends every answer with one question for the pharmacist. We measure two things: was the flag news to them, and did it reach a care team and change something."
 
 **0:30 to 1:00: the live check** (type **Metoprolol succinate ER 50 mg**, tap **Check**)
 

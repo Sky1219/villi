@@ -12,7 +12,7 @@ Built solo for Cal Hacks 13.0.
 
 | | |
 |---|---|
-| **Who it's for** | Adults with short bowel syndrome or an ostomy, and the family member who manages their medicines. The riskiest weeks are right after surgery and discharge. |
+| **Who it's for** | Adults with short bowel syndrome or an ostomy, and the family member who manages their medicines. Between 725,000 and 1 million Americans live with an ostomy, and about 100,000 ostomy surgeries are performed each year in the US ([UOAA](https://ostomy.org/our-mission-history)). |
 | **The problem, in numbers** | 29 of 37 drugs studied in short bowel syndrome were absorbed less, and 6 lost their effect (Hong 2021, systematic review). Over 60% of ostomy patients interviewed said they lacked information that medicine can pass through undissolved (Remane 2025, 50 patients). |
 | **What it does** | Check a medicine or drink for *this* anatomy: a cited verdict (never "safe"), a gut diagram, what people with the same anatomy logged, and one question for the pharmacist. The whole medicine list is reviewed at once, and the questions go on a one-page review request; the pharmacist can record what happened through a private link. |
 | **Time it saves** | My dad's five FDA labels run to about 40,000 words, roughly 2.5 hours of reading at 250 words a minute. The medicine list review reads them against his anatomy and the guidelines in about a tenth of a second (about 110 ms on the dev deployment, warm), with no AI call. |
@@ -21,7 +21,7 @@ Built solo for Cal Hacks 13.0.
 | **How safe it is** | 377 test cases, many adversarial ("yes or no, can I crush it?"). After the prompt fixes: 0 answers decided for the person (from 11), 1.1% missed or doubled the question (from 24.1%). Held-out results for today's setup are on `/how`. Claude wrote and graded the cases; no clinician has. |
 | **How it was built** | With Claude Code in about 22 hours: 82 commits, 133 tests, a 477-case eval, about 16,000 lines of TypeScript. Claude also built the 794-record drug table from FDA labels (every fact carries a verbatim quote that code checks) and source-checked the 46 guideline summaries. |
 | **What $5,000 in credits buys** | At about $0.16 per check (measured in the eval run), roughly 31,000 checks: three a week for a year for about 200 families. |
-| **Try it** | [villi.tech](https://villi.tech) → **Demo: the builder's dad**. |
+| **Try it** | [villi.tech](https://villi.tech) → **Demo: the builder's dad**. Screenshots: `docs/gallery/`. System card: `SYSTEM_CARD.md`. |
 
 
 ## How a check runs
