@@ -190,9 +190,12 @@ function Home({ anonId }: { anonId: string }) {
           Privacy: no names, birthdays or medical history. Your setup lives under a random id on this device; anything
           shared is anonymous, by anatomy only, and screened first. Photos are deleted after reading.
         </p>
-        <p>
+        <p className="flex flex-wrap gap-x-4">
           <Link href="/how" className="inline-flex min-h-11 items-center font-bold text-accent underline">
             How Villi decides
+          </Link>
+          <Link href="/sources" className="inline-flex min-h-11 items-center font-bold text-accent underline">
+            Sources
           </Link>
         </p>
         <DeleteMyData anonId={anonId} />

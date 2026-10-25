@@ -165,6 +165,9 @@ function Citations({ citation, final, titles }: { citation: string; final: Final
                   ? `Wording checked by Claude against the ${titles[open].verifiedAgainst}; not yet reviewed by a clinician.`
                   : "Not yet checked against the source text or by a clinician."}
               </span>
+              <Link href={`/sources#${encodeURIComponent(open.slice(2))}`} className="mt-1 inline-flex min-h-11 items-center text-xs font-bold text-accent underline">
+                See it on the sources page
+              </Link>
             </>
           ) : final.evidence?.[open] ? (
             <mark className="bg-transparent text-foreground">&ldquo;{final.evidence[open].text}&rdquo;</mark>
