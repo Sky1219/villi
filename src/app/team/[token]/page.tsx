@@ -187,7 +187,7 @@ function Team({ token }: { token: string }) {
                   ))}
                 </ul>
               ) : (
-                <p className="mt-1 text-muted">{m.summary}</p>
+                <p className="mt-1 text-muted">Nothing found in the sources I checked. {m.summary}</p>
               )}
             </li>
           ))}

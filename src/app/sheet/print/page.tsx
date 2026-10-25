@@ -31,7 +31,7 @@ function Print({ anonId }: { anonId: string }) {
       <header>
         <h1 className="text-xl font-bold">{REQUEST_TITLE}</h1>
         <p>
-          For the pharmacist. Prepared with Villi on {date} by {preparedBy(d.role, d.caresFor)}.
+          For the pharmacist. Prepared with Villi on {date} by {preparedBy(d.role, d.caresFor).replace(/^their /, "the patient's ")}.
         </p>
         <p className="mt-1">
           <b>Anatomy:</b> {anatomyLine(d)}.

@@ -79,7 +79,7 @@ describe("caregiver wording", () => {
   it("names the patient by relationship, never by name", () => {
     expect(personFor("caregiver", "parent")).toBe("your parent");
     expect(personFor("patient", null)).toBe("you");
-    expect(preparedBy("caregiver", "parent")).toBe("a family caregiver (their son or daughter)");
+    expect(preparedBy("caregiver", "parent")).toBe("their son or daughter");
     expect(preparedBy("patient", null)).toBe("the patient");
   });
 

@@ -96,7 +96,7 @@ export function requestMarkdown(d: SheetData, date: string): string {
   const lines: string[] = [
     `# ${REQUEST_TITLE}`,
     ``,
-    `For the pharmacist. Prepared with Villi on ${date} by ${preparedBy(d.role, d.caresFor)}.`,
+    `For the pharmacist. Prepared with Villi on ${date} by ${preparedBy(d.role, d.caresFor).replace(/^their /, "the patient's ")}.`,
     ``,
     `**Anatomy:** ${anatomyLine(d)}.`,
     ``,

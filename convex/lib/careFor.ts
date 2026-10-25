@@ -37,10 +37,10 @@ export function anatomyQuestionFor(role: string, caresFor: CaresFor | null | und
   return `What exactly was removed in ${who}'s surgery, and how much small intestine is left?`;
 }
 
-// "Prepared by: the patient" or "Prepared by: a family caregiver (their son or daughter)".
+// "Prepared by the patient" or "Prepared by their son or daughter".
 export function preparedBy(role: string, caresFor: CaresFor | null | undefined): string {
   if (role !== "caregiver") return "the patient";
-  return `a family caregiver (${caresFor ? CAREGIVER[caresFor] : "a family member"})`;
+  return caresFor ? CAREGIVER[caresFor] : "a family member";
 }
 
 // What the holder of a care-team link can record for a question, mapped to the
