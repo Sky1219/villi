@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMutation, useQuery } from "convex/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import { useAnonId } from "@/lib/anon";
@@ -16,9 +16,11 @@ import { CheckNewForm } from "@/components/AfterChange";
 
 const PROS = ["pharmacist", "dietitian", "doctor", "nurse"] as const;
 
-function LogAnswer({ anonId, questionId }: { anonId: string; questionId: Id<"questions"> }) {
+function LogAnswer({ anonId, questionId, startOpen = false }: { anonId: string; questionId: Id<"questions">; startOpen?: boolean }) {
   const log = useMutation(api.careTeam.logAnswer);
-  const [open, setOpen] = useState(false);
+  const [opened, setOpen] = useState(false);
+  // Opened by a tap, or by the home nudge's link to this question.
+  const open = opened || startOpen;
   const [pro, setPro] = useState<(typeof PROS)[number]>("pharmacist");
   const [text, setText] = useState("");
   const [change, setChange] = useState<ResultingChange>("pending");
@@ -183,6 +185,17 @@ function Outcome({ anonId, id, value }: { anonId: string; id: Id<"care_team_answ
 
 function Sheet({ anonId }: { anonId: string }) {
   const d = useQuery(api.sheet.get, { anonId });
+  // "Log what they said" on the home nudge links to #answer-<id> and opens that form.
+  const [target, setTarget] = useState("");
+  useEffect(() => {
+    const read = () => setTarget(window.location.hash.replace(/^#answer-/, ""));
+    read();
+    window.addEventListener("hashchange", read);
+    return () => window.removeEventListener("hashchange", read);
+  }, []);
+  useEffect(() => {
+    if (d && target) document.getElementById(`answer-${target}`)?.scrollIntoView();
+  }, [d, target]);
   const [copied, setCopied] = useState(false);
   if (!d) return <p className="pt-10 text-center text-muted">Loading…</p>;
   const date = new Date().toLocaleDateString(d.language);
@@ -244,12 +257,12 @@ function Sheet({ anonId }: { anonId: string }) {
         <h2 className="font-bold">Questions to ask ({d.open.length})</h2>
         {d.open.length === 0 && <p className="text-muted">No open questions. Add one from any answer&apos;s question card.</p>}
         {d.open.map((q) => (
-          <div key={q._id} className="rounded-2xl border border-border bg-surface p-4">
+          <div key={q._id} id={`answer-${q._id}`} className="scroll-mt-4 rounded-2xl border border-border bg-surface p-4">
             {q.status === "asked" && <p className="mb-1 text-xs font-bold uppercase tracking-wide text-accent">Asked</p>}
             <p className="font-bold">{q.text}</p>
             {q.itemName && <p className="text-xs text-muted">about {q.itemName}</p>}
             <AskedToggle anonId={anonId} questionId={q._id} asked={q.status === "asked"} />
-            <LogAnswer anonId={anonId} questionId={q._id} />
+            <LogAnswer anonId={anonId} questionId={q._id} startOpen={target === q._id} />
           </div>
         ))}
       </section>

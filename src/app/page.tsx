@@ -8,6 +8,7 @@ import { GutDiagram } from "@/components/GutDiagram";
 import { MedsEditor } from "@/components/MedsEditor";
 import { MedReview } from "@/components/MedReview";
 import { AfterChangeCards } from "@/components/AfterChange";
+import { AnswerNudges } from "@/components/AnswerNudges";
 import { DeviceLinks, EnterDeviceCode } from "@/components/DeviceLinks";
 import { QuickLog } from "@/components/QuickLog";
 import { DeleteMyData } from "@/components/DeleteMyData";
@@ -156,6 +157,7 @@ function Home({ anonId }: { anonId: string }) {
         </Link>
       </nav>
 
+      <AnswerNudges anonId={anonId} />
       <AfterChangeCards anonId={anonId} person={personFor(profile.role, profile.caresFor)} />
 
       <ScanBox anonId={anonId} initialText={prefill} />

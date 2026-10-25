@@ -322,6 +322,8 @@ export default defineSchema({
     newFormName: v.optional(v.string()),
     changedAt: v.optional(v.number()),
     followUpDue: v.optional(v.boolean()),
+    // "Did you get an answer?": set by a scheduled mutation some days after "I asked this".
+    answerNudgeDue: v.optional(v.boolean()),
     afterChangeOutcome: v.optional(outcomeValidator),
     afterChangeLogId: v.optional(v.id("log_entries")),
     synthetic: v.boolean(),

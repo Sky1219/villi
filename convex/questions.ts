@@ -1,5 +1,5 @@
 import { ConvexError, v } from "convex/values";
-import { internalMutation, mutation, query, type MutationCtx } from "./_generated/server";
+import { env, internalMutation, mutation, query, type MutationCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { outcomeValidator } from "./schema";
 import { insertLog } from "./logs";
@@ -95,6 +95,50 @@ export const markFollowUpDue = internalMutation({
   },
 });
 
+// Three days after "I asked this", unless NUDGE_DELAY_SECONDS says otherwise (30 for a demo).
+function nudgeDelayMs(): number {
+  const s = Number(env.NUDGE_DELAY_SECONDS);
+  return Number.isFinite(s) && s > 0 ? s * 1000 : 3 * 24 * 3600 * 1000;
+}
+
+export const markAnswerNudgeDue = internalMutation({
+  args: { questionId: v.id("questions") },
+  handler: async (ctx, args) => {
+    const q = await ctx.db.get("questions", args.questionId);
+    if (q && statusOf(q) === "asked") await ctx.db.patch("questions", q._id, { answerNudgeDue: true });
+    return null;
+  },
+});
+
+// In-app nudges on the home screen: asked questions still waiting for an answer.
+export const answerNudges = query({
+  args: { anonId: v.string() },
+  handler: async (ctx, args) => {
+    const profile = await requireProfile(ctx, args.anonId);
+    const rows = await ctx.db
+      .query("questions")
+      .withIndex("by_profileId", (q) => q.eq("profileId", profile._id))
+      .order("desc")
+      .take(100);
+    return rows
+      .filter((q) => q.answerNudgeDue && statusOf(q) === "asked")
+      .map((q) => ({ _id: q._id, text: q.text, itemName: q.context.itemName ?? null }));
+  },
+});
+
+// "Not yet": ask again after the same delay.
+export const snoozeAnswerNudge = mutation({
+  args: { anonId: v.string(), questionId: v.id("questions") },
+  handler: async (ctx, args) => {
+    const profile = await requireProfile(ctx, args.anonId);
+    const q = await ctx.db.get("questions", args.questionId);
+    if (!q || q.profileId !== profile._id) throw new ConvexError("Question not found");
+    await ctx.db.patch("questions", q._id, { answerNudgeDue: false });
+    if (statusOf(q) === "asked") await ctx.scheduler.runAfter(nudgeDelayMs(), internal.questions.markAnswerNudgeDue, { questionId: q._id });
+    return null;
+  },
+});
+
 // "What's the new form called?" (optional, short).
 export const setNewForm = mutation({
   args: { anonId: v.string(), questionId: v.id("questions"), name: v.string() },
@@ -164,7 +208,12 @@ export const setAsked = mutation({
     const q = await ctx.db.get("questions", args.questionId);
     if (!q || q.profileId !== profile._id) throw new ConvexError("Question not found");
     if (statusOf(q) === "answered") return null;
-    await ctx.db.patch("questions", q._id, args.asked ? { status: "asked", askedAt: Date.now() } : { status: "open", askedAt: undefined });
+    await ctx.db.patch(
+      "questions",
+      q._id,
+      args.asked ? { status: "asked", askedAt: Date.now(), answerNudgeDue: false } : { status: "open", askedAt: undefined, answerNudgeDue: false },
+    );
+    if (args.asked) await ctx.scheduler.runAfter(nudgeDelayMs(), internal.questions.markAnswerNudgeDue, { questionId: q._id });
     return null;
   },
 });
