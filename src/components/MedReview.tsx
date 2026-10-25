@@ -7,6 +7,7 @@ import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 import type { ReviewCitation } from "@convex/lib/medReview";
 import { friendlyError } from "@/lib/errors";
+import { KnewBefore } from "./KnewBefore";
 
 const STATE = {
   flagged: { tag: "Flag to discuss", cls: "text-flag", box: "border-flag bg-flag-soft" },
@@ -57,12 +58,23 @@ function Chips({ citations }: { citations: ReviewCitation[] }) {
 function Row({
   anonId,
   row,
+  person,
 }: {
   anonId: string;
-  row: { _id: Id<"meds">; name: string; state: keyof typeof STATE; summary: string; flags: { kind: string; text: string; citations: ReviewCitation[] }[]; labelSource: string | null };
+  row: {
+    _id: Id<"meds">;
+    name: string;
+    state: keyof typeof STATE;
+    summary: string;
+    flags: { kind: string; text: string; citations: ReviewCitation[] }[];
+    labelSource: string | null;
+    knewBefore: boolean | null;
+  };
+  person: string;
 }) {
   const router = useRouter();
   const start = useMutation(api.answers.start);
+  const markKnew = useMutation(api.meds.markKnewBefore);
   const addQuestion = useMutation(api.questions.addFromReview);
   const [added, setAdded] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -83,6 +95,9 @@ function Row({
         </ul>
       )}
       {row.labelSource && <p className="mt-1 text-xs text-muted">Label used: {row.labelSource}</p>}
+      {row.state === "flagged" && (
+        <KnewBefore compact value={row.knewBefore} person={person} onPick={(knew) => markKnew({ anonId, medId: row._id, knew })} />
+      )}
       <div className="mt-3 grid grid-cols-2 gap-2">
         <button
           onClick={async () => {
@@ -137,7 +152,7 @@ export function MedReview({ anonId, person = "you" }: { anonId: string; person?:
       </p>
       <ul className="space-y-2">
         {rows.map((r) => (
-          <Row key={r._id} anonId={anonId} row={r} />
+          <Row key={r._id} anonId={anonId} row={r} person={person} />
         ))}
       </ul>
       <p className="mt-2 text-xs text-muted">

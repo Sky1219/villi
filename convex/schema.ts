@@ -147,6 +147,8 @@ export default defineSchema({
     imprint: v.optional(v.string()),
     color: v.optional(v.string()),
     shape: v.optional(v.string()),
+    // "Did you know this already?" on a flagged review row: true "Knew it", false "New to me".
+    knewBefore: v.optional(v.boolean()),
     addedAt: v.number(),
   }).index("by_profileId", ["profileId"]),
 
@@ -408,6 +410,8 @@ export default defineSchema({
     error: v.optional(v.string()),
     // "Was this useful?" on the answer card.
     useful: v.optional(v.boolean()),
+    // "Did you know this already?" on a flagged answer: true "Knew it", false "New to me".
+    knewBefore: v.optional(v.boolean()),
     problemReport: v.optional(problemKindValidator),
     problemReportedAt: v.optional(v.number()),
     // "Check the new form": the question whose form change this check follows.

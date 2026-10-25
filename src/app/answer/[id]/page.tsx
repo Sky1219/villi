@@ -14,6 +14,7 @@ import { GutDiagram } from "@/components/GutDiagram";
 import { CommunityCounts } from "@/components/CommunityCounts";
 import { CareOutcomes } from "@/components/CareOutcomes";
 import { LogCard } from "@/components/LogCard";
+import { KnewBefore } from "@/components/KnewBefore";
 import type { SegmentId } from "@convex/lib/anatomy";
 import { personFor } from "@convex/lib/careFor";
 
@@ -539,6 +540,7 @@ function AnswerView({ anonId, answerId }: { anonId: string; answerId: Id<"answer
   const a = useQuery(api.answers.get, { anonId, answerId });
   const profile = useQuery(api.profiles.me, { anonId });
   const start = useMutation(api.answers.start);
+  const markKnew = useMutation(api.answers.markKnewBefore);
   const router = useRouter();
   const [retryError, setRetryError] = useState<string | null>(null);
   if (a === undefined) return <p className="pt-10 text-center text-muted">Loading…</p>;
@@ -635,7 +637,11 @@ function AnswerView({ anonId, answerId }: { anonId: string; answerId: Id<"answer
 
       {done && (
         <div className="space-y-3 pt-4">
-          <Useful anonId={anonId} answerId={a._id} value={a.useful} />
+          {final.state === "flagged" ? (
+            <KnewBefore value={a.knewBefore} person={person} onPick={(knew) => markKnew({ anonId, answerId: a._id, knew })} />
+          ) : (
+            <Useful anonId={anonId} answerId={a._id} value={a.useful} />
+          )}
           <SomethingWrong anonId={anonId} answerId={a._id} value={a.problemReport} />
           <FollowUp anonId={anonId} parentId={a.kind === "followup" && a.parentId ? a.parentId : a._id} />
           {a.itemId && itemName && <LogCard anonId={anonId} answerId={a._id} itemName={itemName} person={person} />}

@@ -49,6 +49,19 @@ export const remove = mutation({
   },
 });
 
+// "Did you know this already?" on a flagged review row. The review state is recomputed
+// from the label, so this is stored on the med and only counted while the row is flagged.
+export const markKnewBefore = mutation({
+  args: { anonId: v.string(), medId: v.id("meds"), knew: v.union(v.boolean(), v.null()) },
+  handler: async (ctx, args) => {
+    const profile = await requireProfile(ctx, args.anonId);
+    const med = await ctx.db.get("meds", args.medId);
+    if (!med || med.profileId !== profile._id) throw new ConvexError("Not found");
+    await ctx.db.patch("meds", med._id, { knewBefore: args.knew ?? undefined });
+    return null;
+  },
+});
+
 export const insertRead = internalMutation({
   args: { profileId: v.id("profiles"), name: v.string() },
   handler: async (ctx, args) => {
@@ -123,7 +136,13 @@ export const enrich = internalAction({
   },
 });
 
-export type MedReviewRow = MedReview & { _id: Doc<"meds">["_id"]; name: string; dosageForm: string | null; labelSource: string | null };
+export type MedReviewRow = MedReview & {
+  _id: Doc<"meds">["_id"];
+  name: string;
+  dosageForm: string | null;
+  labelSource: string | null;
+  knewBefore: boolean | null;
+};
 
 // One row per med on file, from the cached label only: instant, no model call.
 export async function medReviewRows(ctx: QueryCtx, profile: Doc<"profiles">): Promise<MedReviewRow[]> {
@@ -152,6 +171,7 @@ export async function medReviewRows(ctx: QueryCtx, profile: Doc<"profiles">): Pr
       name: m.name,
       dosageForm,
       labelSource: cached?.found ? `${cached.brandName ?? cached.genericName ?? ""} (${cached.manufacturer ?? "?"}, ${cached.effectiveTime ?? "?"})` : null,
+      knewBefore: m.knewBefore ?? null,
     });
   }
   return rows;

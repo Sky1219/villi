@@ -140,9 +140,12 @@ describe("impact funnel", () => {
       await ans(me, "blocked", "");
       await ans(me, "failed", "");
       await ans(demo, "final", "flagged");
-      await ans(clone, "final", "flagged");
+      const cloneFlag = await ans(clone, "final", "flagged");
+      await ctx.db.patch("answers", cloneFlag, { knewBefore: false });
       await ans(clone, "final", "nothing-found", true);
       const r = await ans(me, "final", "flagged");
+      await ctx.db.patch("answers", flagged, { knewBefore: false });
+      await ctx.db.patch("answers", r, { knewBefore: true });
       await ctx.db.insert("answer_reviews", { answerId: r, draft: {}, lint: ["removed claim: x", "removed swap: y"], registry: {}, attempts: 1, createdAt: 0 });
       const q = await ctx.db.insert("questions", { profileId: me, text: "q", context: { answerId: flagged }, resolved: true, status: "answered", afterChangeOutcome: "helped", synthetic: false, createdAt: 0 });
       await ctx.db.insert("care_team_answers", {
@@ -164,7 +167,26 @@ describe("impact funnel", () => {
     expect(d.safety.codeChecks).toEqual({ answersTouched: 1, fixes: 2 });
     expect(d.safety.logs).toEqual({ shared: 1, private: 1, checking: 1, demoShared: 2 });
     expect(d.metrics.find((m) => m.key === "flagsRaised")).toMatchObject({ real: 2, demo: 2 });
+    // The demo clone's "New to me" is left out.
+    expect([d.news.answered, d.news.newToThem]).toEqual([2, 1]);
+    expect(d.news.byAnatomy).toEqual([{ anatomyKey: "end-jejunostomy", label: expect.any(String), answered: 2, newToThem: 1 }]);
     expect(d.safety.warningCards).toEqual({ emergency: 1, dehydration: 1, softAfterWorseDrink: 0 });
     expect(d.safety.problemReports.confusing).toBe(1);
+  });
+
+  it("markKnewBefore: own flagged answers only, and null clears it", async () => {
+    const t = convexTest(schema, modules);
+    const { flaggedId, okId } = await t.run(async (ctx) => {
+      const me = await ctx.db.insert("profiles", { anonId: ANON, role: "patient", anatomy: JEJ, anatomyKey: anatomyKeyOf(JEJ), language: "en", clinicianDemoVerified: false, synthetic: false, createdAt: 0 });
+      const mk = (state: string) =>
+        ctx.db.insert("answers", { profileId: me, kind: "scan", input: { text: "x" }, status: "final", toolTrace: [], final: { state }, createdAt: 0 });
+      return { flaggedId: await mk("flagged"), okId: await mk("nothing-found") };
+    });
+    await t.mutation(api.answers.markKnewBefore, { anonId: ANON, answerId: flaggedId, knew: false });
+    expect((await t.run((ctx) => ctx.db.get("answers", flaggedId)))?.knewBefore).toBe(false);
+    await t.mutation(api.answers.markKnewBefore, { anonId: ANON, answerId: flaggedId, knew: null });
+    expect((await t.run((ctx) => ctx.db.get("answers", flaggedId)))?.knewBefore).toBeUndefined();
+    await expect(t.mutation(api.answers.markKnewBefore, { anonId: ANON, answerId: okId, knew: true })).rejects.toThrow();
+    await expect(t.mutation(api.answers.markKnewBefore, { anonId: "someone-else-device-0000000001", answerId: flaggedId, knew: true })).rejects.toThrow();
   });
 });

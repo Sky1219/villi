@@ -71,6 +71,46 @@ function Funnel({ d }: { d: Summary }) {
   );
 }
 
+// The problem Villi exists for: people are rarely told. Each real flag asks "Did you know this already?".
+function News({ d }: { d: Summary }) {
+  const n = d.news;
+  const pct = n.answered ? Math.round((n.newToThem / n.answered) * 100) : null;
+  return (
+    <section className="rounded-2xl border border-border bg-surface p-4">
+      <h2 className="font-bold">Was the flag news?</h2>
+      {n.answered === 0 ? (
+        <p className="mt-1 text-sm">
+          No answers yet. Every real flag asks &ldquo;Did you know this already?&rdquo;, and the answers land here.
+        </p>
+      ) : (
+        <>
+          <p className="flex flex-wrap items-baseline gap-2">
+            <span className="text-3xl font-bold">{n.newToThem}</span>
+            <span className="text-sm text-muted">
+              of {n.answered} flags were new to the person ({pct}%)
+            </span>
+          </p>
+          <ul className="mt-1 space-y-1">
+            {n.byAnatomy.map((a) => (
+              <li key={a.anatomyKey} className="flex items-center gap-2 text-sm">
+                <AnatomyBadge anatomyKey={a.anatomyKey} />
+                <span className="min-w-0 flex-1">{a.label}</span>
+                <span className="font-bold">
+                  {a.newToThem} of {a.answered}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      <p className="mt-1 text-xs text-muted">
+        Real use only. From the &ldquo;Did you know this already?&rdquo; tap on flagged checks and flagged medicines in the list
+        review. Self-reported.
+      </p>
+    </section>
+  );
+}
+
 function Review({ d }: { d: Summary }) {
   const rows = d.review.byAnatomy.filter((a) => a.reviewed > 0);
   return (
@@ -169,6 +209,7 @@ function Impact({ anonId }: { anonId: string }) {
         </p>
       </header>
 
+      <News d={d} />
       <Funnel d={d} />
       <Review d={d} />
       <Safety d={d} />

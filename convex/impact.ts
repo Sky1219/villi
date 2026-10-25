@@ -62,6 +62,19 @@ export const summary = query({
     // ---- Real use only from here on: no synthetic rows, no demo clones, no clinician profiles.
     const isReal = (p: Doc<"profiles"> | null): p is Doc<"profiles"> => !!p && !isDemo(p) && p.role !== "clinician";
 
+    // "Did you know this already?" on real flags: is Villi telling people something new?
+    const news = { answered: 0, newToThem: 0, byAnatomy: ANATOMY_KEYS.map((k) => ({ anatomyKey: k, label: ANATOMY_LABELS[k], answered: 0, newToThem: 0 })) };
+    const countNews = (anatomyKey: string, knewBefore: boolean | null | undefined) => {
+      if (knewBefore === null || knewBefore === undefined) return;
+      const cell = news.byAnatomy.find((b) => b.anatomyKey === anatomyKey);
+      news.answered++;
+      if (cell) cell.answered++;
+      if (!knewBefore) {
+        news.newToThem++;
+        if (cell) cell.newToThem++;
+      }
+    };
+
     // Funnel stage 1a: flagged checks.
     const flags: { anatomyKey: string }[] = [];
     const flaggedAnswers = new Set<Id<"answers">>();
@@ -71,6 +84,7 @@ export const summary = query({
       if ((a.final as { state?: string } | undefined)?.state === "flagged") {
         flags.push({ anatomyKey: p.anatomyKey });
         flaggedAnswers.add(a._id);
+        countNews(p.anatomyKey, a.knewBefore);
       }
     }
 
@@ -91,6 +105,7 @@ export const summary = query({
           review.flagged++;
           if (cell) cell.flagged++;
           flags.push({ anatomyKey: p.anatomyKey });
+          countNews(p.anatomyKey, r.knewBefore);
         }
       }
     }
@@ -170,6 +185,7 @@ export const summary = query({
       metrics: tallyImpact(events),
       useful: { yes: useful, rated },
       funnel: tallyFunnel(flags, chain),
+      news: { ...news, byAnatomy: news.byAnatomy.filter((b) => b.answered > 0) },
       review,
       safety,
     };

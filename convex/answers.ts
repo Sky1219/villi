@@ -29,6 +29,7 @@ function publicAnswer(a: Doc<"answers">) {
     final: done ? a.final : null,
     reviewSummary: a.reviewSummary ?? null,
     useful: a.useful ?? null,
+    knewBefore: a.knewBefore ?? null,
     problemReport: a.problemReport ?? null,
     error: a.status === "failed" || a.status === "blocked" ? (a.error ?? null) : null,
     createdAt: a.createdAt,
@@ -131,6 +132,20 @@ export const rateUseful = mutation({
     const a = await ctx.db.get("answers", args.answerId);
     if (!a || a.profileId !== profile._id || a.status !== "final") throw new ConvexError("Answer not found");
     await ctx.db.patch("answers", a._id, { useful: args.useful });
+    return null;
+  },
+});
+
+// "Did you know this already?" on a flagged answer: measures whether the flag was news.
+// The user's own final flagged answers only; null clears it.
+export const markKnewBefore = mutation({
+  args: { anonId: v.string(), answerId: v.id("answers"), knew: v.union(v.boolean(), v.null()) },
+  handler: async (ctx, args) => {
+    const profile = await requireProfile(ctx, args.anonId);
+    const a = await ctx.db.get("answers", args.answerId);
+    if (!a || a.profileId !== profile._id || a.status !== "final") throw new ConvexError("Answer not found");
+    if ((a.final as { state?: string } | undefined)?.state !== "flagged") throw new ConvexError("Only flagged answers ask this");
+    await ctx.db.patch("answers", a._id, { knewBefore: args.knew ?? undefined });
     return null;
   },
 });
