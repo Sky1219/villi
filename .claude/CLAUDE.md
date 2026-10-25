@@ -4,7 +4,7 @@
 
 **Villi**
 
-Villi is a mobile-first web app for people living with short bowel syndrome (SBS) or an ileostomy/colostomy, and for their family caregivers. A user photographs or describes a pill, a drink, or a food, and Villi answers one question: *can a body with this much intestine actually use this?* It puts clinical guidelines, the FDA drug label, and an anatomy-stratified community tolerance pool behind a camera. Patients teach each other what bodies like theirs tolerate, clinicians can check it, and Claude keeps it honest. Built solo for Cal Hacks 13.0 (domain: villi.tech).
+Villi is a mobile-first web app for people living with short bowel syndrome (SBS) or an ileostomy/colostomy, and for their family caregivers. A user photographs or describes a pill, a drink, or a food, and Villi answers one question: *can a body with this much intestine actually use this?* It puts clinical guidelines, the FDA drug label, and an anatomy-stratified community tolerance pool behind a camera. Patients teach each other what bodies like theirs tolerate, clinicians can check it, and Claude keeps it honest. Built solo for Cal Hacks 13.0 (domain: villi.health).
 
 Named for the intestinal villi that do the absorbing. Origin: the builder's father lost his entire large intestine and most of his small intestine and spent years in and out of hospitals. Guidelines (AGA and others) say to avoid extended-release and enteric-coated medications after major bowel resection, to prefer oral rehydration solution over hypotonic (water, tea) and hypertonic (juice, soda) drinks, and to watch sorbitol and simple sugars. Patients are almost never told any of this.
 
@@ -17,7 +17,7 @@ Named for the intestinal villi that do the absorbing. Origin: the builder's fath
 - **Models:** `ANTHROPIC_MODEL_MAIN` (strongest available) for agent and reviewer; `ANTHROPIC_MODEL_FAST` for canonicalization, moderation, translation.
 - **Convex fallback:** if Convex is still fighting at 30 minutes, fall back to SQLite + Prisma with a simple job queue, same module boundaries — tell the builder first.
 - **Accounts available:** Anthropic API key and Convex account are ready. No embeddings provider key yet (Anthropic has no embeddings API) — needs a decision in M1. ElevenLabs only for stretch.
-- **Deployment:** deployed URL (Vercel + Convex cloud, villi.tech) for a real phone, plus a laptop fallback.
+- **Deployment:** deployed URL (Vercel + Convex cloud, villi.health) for a real phone, plus a laptop fallback.
 - **Secrets:** `.env.example` lists all keys; no secrets committed.
 - **Checkpoints:** stop and show the builder after each milestone; commit after each milestone.
 

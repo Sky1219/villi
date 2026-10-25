@@ -5,7 +5,7 @@ Record on the phone (screen recording on, Do Not Disturb on, brightness up, port
 ## Before you press record
 
 1. **Model credits.** Live checks need Anthropic credits on the deployment you record. As of 2026-10-24 10:00 the key returned "credit balance too low" on dev. Until that's fixed, record **Part A only**.
-2. **Which deployment.** Prod (the villi.tech URL on your phone) after `npm run deploy:convex` and `npx convex run --prod seed:run`, or dev (`npm run dev` on the laptop, phone on the same network). Seed once, ahead of time, never while recording.
+2. **Which deployment.** Prod (the villi.health URL on your phone) after `npm run deploy:convex` and `npx convex run --prod seed:run`, or dev (`npm run dev` on the laptop, phone on the same network). Seed once, ahead of time, never while recording.
 3. **Demo profile.** Open the app → **Demo: the builder's dad**. Wait 1 minute so each medicine's label lookup finishes (rows stop saying "Label not checked yet").
 4. **Second device** (laptop): open the app → **Demo: the builder's dad**, at least 10 minutes before recording. Leave it on the home screen.
 

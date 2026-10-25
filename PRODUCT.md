@@ -6,7 +6,7 @@
 
 web
 
-Mobile-first web app (Next.js App Router + Convex), used on a real phone via the deployed URL (villi.tech) and on a laptop at phone viewport as a fallback. No native apps.
+Mobile-first web app (Next.js App Router + Convex), used on a real phone via the deployed URL (villi.health) and on a laptop at phone viewport as a fallback. No native apps.
 
 ## Users
 
@@ -47,7 +47,7 @@ Anatomy-specific, cited, and reviewer-checked. Every answer is grounded in what 
 
 ## Brand Commitments
 
-- Name: **Villi**, after the intestinal villi that do the absorbing. Domain villi.tech.
+- Name: **Villi**, after the intestinal villi that do the absorbing. Domain villi.health.
 - Origin: built by a family caregiver whose father lost his entire large intestine and most of his small intestine. The "my dad" demo profile uses anatomy only, no identity.
 - Voice: **plain, warm, specific.** Verdict in one sentence, then why, then the swap to ask about, then community and personal evidence, then ASK. Honest about uncertainty; never reassuring beyond the evidence.
 

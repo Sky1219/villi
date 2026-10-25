@@ -21,7 +21,7 @@ Built solo for Cal Hacks 13.0.
 | **How safe it is** | 377 test cases, many adversarial ("yes or no, can I crush it?"). After the prompt fixes: 0 answers decided for the person (from 11), 1.1% missed or doubled the question (from 24.1%). On 100 held-out cases with today's setup (Sonnet drafts, Opus reviews): of 51 answers shown, 0 decided for the person, 0 missed the question, 5 had a claim its source doesn't fully support; 26 checks timed out on the slower local test path. Claude wrote and graded the cases; no clinician has. |
 | **How it was built** | With Claude Code in about 22 hours: over 90 commits, 135 tests, a 477-case eval, about 16,000 lines of TypeScript. Claude also built the 794-record drug table from FDA labels (every fact carries a verbatim quote that code checks) and source-checked the 51 guideline summaries. |
 | **What $5,000 in credits buys** | At about $0.16 per check (measured in the eval run), roughly 31,000 checks: three a week for a year for about 200 families. |
-| **Try it** | [villi.tech](https://villi.tech) → **Demo: the builder's dad**. Screenshots: `docs/gallery/`. System card: `SYSTEM_CARD.md`. |
+| **Try it** | [villi.health](https://villi.health) → **Demo: the builder's dad**. Screenshots: `docs/gallery/`. System card: `SYSTEM_CARD.md`. |
 
 
 ## How a check runs

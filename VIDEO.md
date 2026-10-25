@@ -20,7 +20,7 @@ Every line below is true of the code on `main`. If a shot shows something you cu
 | 8 | 1:15 | **[You film]** The printed review request on a pharmacy counter, or on your table next to the bottles. A hand slides it forward. | "This is the page we bring to his pharmacist. They can open a private link and record what changed." |
 | 9 | 1:25 | **[Screen]** Footer → **Is Villi working?** → scroll from "Was the flag news?" to the funnel. | "Was it news, did it reach a pharmacist, did something change, how did it go two weeks later. Real use only, by anatomy. This weekend, that's my dad." |
 | 10 | 1:38 | **[Screen]** **How Villi decides** → **Tested before you see it** table. | "Before launch, we ran hundreds of test cases, many of them trying to make it say 'yes, crush it'. After our fixes, zero answers decided for the patient." |
-| 11 | 1:50 | **[Card]** "Villi. Can a body with this much intestine actually use this? villi.tech" | "Villi. Built with Claude, for the people nobody told." |
+| 11 | 1:50 | **[Card]** "Villi. Can a body with this much intestine actually use this? villi.health" | "Villi. Built with Claude, for the people nobody told." |
 
 ## Recording notes
 
