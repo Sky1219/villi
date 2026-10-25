@@ -465,10 +465,10 @@ function SomethingWrong({ anonId, answerId, value }: { anonId: string; answerId:
   const report = useMutation(api.answers.reportProblem);
   const [error, setError] = useState<string | null>(null);
   return (
-    <section className="rounded-2xl border border-border bg-surface p-4">
-      <h2 id="wrong" className="mb-1 font-bold">
-        Something wrong with this answer?
-      </h2>
+    <details open={!!value} className="rounded-2xl border border-border bg-surface px-4 text-sm">
+      <summary className="flex min-h-12 cursor-pointer items-center font-bold">
+        <span id="wrong">Something wrong with this answer?</span>
+      </summary>
       <p className="mb-2 text-xs text-muted">One tap. It marks this answer for a closer look; nothing else is sent.</p>
       <div role="group" aria-labelledby="wrong" className="grid grid-cols-2 gap-2">
         {PROBLEMS.map(([k, label]) => (
@@ -495,7 +495,8 @@ function SomethingWrong({ anonId, answerId, value }: { anonId: string; answerId:
           {error}
         </p>
       )}
-    </section>
+      <div className="pb-4" />
+    </details>
   );
 }
 
@@ -652,13 +653,13 @@ function AnswerView({ anonId, answerId }: { anonId: string; answerId: Id<"answer
           ) : (
             <Useful anonId={anonId} answerId={a._id} value={a.useful} />
           )}
-          <SomethingWrong anonId={anonId} answerId={a._id} value={a.problemReport} />
-          <FollowUp anonId={anonId} parentId={a.kind === "followup" && a.parentId ? a.parentId : a._id} />
           {a.itemId && itemName && <LogCard anonId={anonId} answerId={a._id} itemName={itemName} person={person} />}
+          <Receipt trace={a.toolTrace} final={final} review={a.reviewSummary} />
+          <SomethingWrong anonId={anonId} answerId={a._id} value={a.problemReport} />
+          {/* The page ends where the person's next step is: asking more. */}
+          <FollowUp anonId={anonId} parentId={a.kind === "followup" && a.parentId ? a.parentId : a._id} />
         </div>
       )}
-
-      {done && <Receipt trace={a.toolTrace} final={final} review={a.reviewSummary} />}
     </main>
   );
 }
