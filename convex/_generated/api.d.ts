@@ -46,6 +46,7 @@ import type * as lib_warningSigns from "../lib/warningSigns.js";
 import type * as logs from "../logs.js";
 import type * as meds from "../meds.js";
 import type * as moderation from "../moderation.js";
+import type * as preflight from "../preflight.js";
 import type * as profiles from "../profiles.js";
 import type * as questions from "../questions.js";
 import type * as reviewer from "../reviewer.js";
@@ -98,6 +99,7 @@ declare const fullApi: ApiFromModules<{
   logs: typeof logs;
   meds: typeof meds;
   moderation: typeof moderation;
+  preflight: typeof preflight;
   profiles: typeof profiles;
   questions: typeof questions;
   reviewer: typeof reviewer;

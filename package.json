@@ -16,7 +16,8 @@
     "eval": "tsx eval/run.ts",
     "eval:generate": "tsx eval/generate.ts",
     "eval:grade": "tsx eval/grade.ts",
-    "eval:report": "tsx eval/report.ts"
+    "eval:report": "tsx eval/report.ts",
+    "preflight": "tsx scripts/preflight.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.3.0",
