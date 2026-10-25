@@ -24,7 +24,7 @@ Follows the flow in `DEMO.md`. Times are cumulative. Every line below is true of
 
 **1:50 to 2:00: the metric, live** (Is Villi working?)
 
-"Flag, question, asked, answered, changed, two-week outcome. Real use only, by anatomy. This weekend that's my own checks, and it says so."
+"Flag, question, asked, answered, changed, two-week outcome. Real use only, by anatomy. This weekend that's my own checks for my dad, and it says so. If you tap 'See it as my dad' on your phone, you count as demo data, not real use."
 
 **Say this once, unprompted:** "A citation proves Villi retrieved a source, not that the source says the claim. The code checks the numbers and the reviewer reads the sources, and that catches most of it, not all. Claude checked the guideline summaries against the papers' text overnight; no clinician has reviewed them yet. That's why every answer ends in a question, not an instruction."
 

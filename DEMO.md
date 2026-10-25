@@ -5,7 +5,13 @@ One check runs live. Everything else was run beforehand on the same profile and 
 **Setup, the morning of judging (on the deployment you will demo):**
 - Run `npx convex env list --prod` and confirm `ANTHROPIC_API_KEY`, `OPENFDA_API_KEY` and `VOYAGE_API_KEY` are set. Without the Voyage key, guideline search quietly falls back to keywords and the trace says "(keyword search)". An openFDA rate limit looks like "I couldn't identify this", not an error.
 - Deploy the backend (`npm run deploy:convex`), then seed with `npx convex run --prod seed:run`. Re-seeding replaces the old synthetic rows, which removes the swap that failed the guideline check. Never seed during the demo: it competes with live traffic for scheduled jobs.
-- **Phone:** open the app and tap **See it as my dad**. The profile is a caregiver checking for a parent, so the home screen says "Checking for your parent". Then run these checks and wait for each to finish:
+- **Phone: your dad's real profile, not the demo.** Profiles made with **See it as my dad** are demo profiles and never count as real use on "Is Villi working?", even after edits. So on the phone:
+  - If it already has a profile, tap **Delete my data** at the bottom of home first. A profile that started as a demo stays a demo.
+  - Tap **Set up your own** → **Someone I care for** → **My parent**, and answer for his real anatomy (no colon, under 100 cm of small bowel, end-jejunostomy).
+  - Under **Medicines on file**, add his medicines by name as printed: Metoprolol succinate ER 50 mg, Pantoprazole sodium DR 40 mg, Tylenol Extra Strength liquid, Loperamide 2 mg, Ondansetron 4 mg. Add only what he really takes. Wait about a minute for each **Medicine list review** row to read its label.
+  - The home screen says "Checking for your parent". This profile has no seeded two-week card; that card is only on demo profiles (see Optional swaps).
+
+  Then run these checks and wait for each to finish:
   1. Type **Metoprolol succinate ER 50 mg** (its label facts come from Villi's checked drug table, so the live run works even if openFDA is down).
   2. On that answer, ask the follow-up **Can I crush it?** Leave this answer open in a **second browser tab**: follow-ups don't appear in Recent checks.
   3. Type **Gatorade**.
@@ -14,8 +20,8 @@ One check runs live. Everything else was run beforehand on the same profile and 
   6. On **Your sheet**, leave both questions open. You'll tap **I asked this** on stage.
   7. Only if it's true: on a question your dad really asked, tap **What did they say?** and log what his pharmacist or doctor said and what changed. That becomes one real row on "Is Villi working?". Never make one up.
 - Read each answer once. If one came out weak, run it again and keep the better one. Answers can differ from run to run.
-- **Laptop (the "second device"):** open the app and tap **See it as my dad**. It's a separate anonymous profile with the same anatomy, so it can't open the phone's answers. Leave it on the home screen.
-- Open **Is Villi working?** once. The big numbers are real use, which this weekend means your own checks; the demo-data counts are the seed. Say so if asked.
+- **Laptop (the "second device"):** open the app and tap **See it as my dad**. It's a separate anonymous demo profile with the same anatomy, so it can't open the phone's answers, and its log in step 6 counts as demo data. Leave it on the home screen.
+- Open **Is Villi working?** once on the phone. The big numbers are real use: the phone's checks and questions on your dad's real profile. Judges who tap **See it as my dad** on their own phones show up only as demo data. Say so if asked.
 - Use a personal hotspot, not venue Wi-Fi, and keep a screen recording of the full run as a fallback.
 
 | # | Time | Do | Say |
@@ -41,8 +47,8 @@ One check runs live. Everything else was run beforehand on the same profile and 
 
 Two new pieces can stand in for a step without slowing the run. Neither needs a live model call.
 
-- **Medicine list review instead of step 7 (I saw something), or right after step 3.** Scroll the home screen to **Medicine list review**: every medicine on your dad's list already has its row (Flag to discuss / Nothing found in the sections checked / Can't tell yet), with citation chips. Say: "That was one pill in 30 seconds. This is his whole list, instantly, from the labels and the guidelines. Pantoprazole reads differently: acid medicine is commonly used after resection, so the flag is about which form, not whether." Setup: clone the demo profile at least a minute before (each medicine's label lookup runs on its own after the clone; until then a row says "Label not checked yet"), and tap a chip once to make sure it opens.
+- **Medicine list review instead of step 7 (I saw something), or right after step 3.** Scroll the home screen to **Medicine list review**: every medicine on your dad's list already has its row (Flag to discuss / Nothing found in the sections checked / Can't tell yet), with citation chips. Say: "That was one pill in 30 seconds. This is his whole list, instantly, from the labels and the guidelines. Pantoprazole reads differently: acid medicine is commonly used after resection, so the flag is about which form, not whether." Setup: add the medicines at least a minute before (each medicine's label lookup runs on its own after it's added; until then a row says "Label not checked yet"), and tap a chip once to make sure it opens.
 - **Care-team link instead of step 8's last sentence.** On **Your sheet**, tap **Share with the care team**, open the link on the laptop, choose **Reviewed: form changed** on the metoprolol question, and the phone's sheet shows "Recorded through the care-team link" live; **Is Villi working?** then shows it in the funnel as a care-team-link answer. Say: "The pharmacist closes the loop, and Villi says plainly it can't verify who holds the link." Setup: one open question on the sheet (tap **Add a question to the sheet** on the metoprolol review row, or the answer's question card), and no more than 2 active links already (the limit is 3). Revoke the demo link afterwards.
-- **Two-week follow-up card.** After a reseed, a freshly cloned "my dad" profile shows one "It's been two weeks since your parent's Metoprolol succinate ER was changed" card, badged **demo data**. Use it only if you want to show the outcome step; tapping it records a demo (synthetic) log, never real use.
+- **Two-week follow-up card.** Only on the laptop's demo profile, not the phone's real one. After a reseed, a freshly cloned "my dad" profile shows one "It's been two weeks since your parent's Metoprolol succinate ER was changed" card, badged **demo data**. Use it only if you want to show the outcome step; tapping it records a demo (synthetic) log, never real use.
 
 **New pre-demo note:** the laptop "second device" in step 6 must be a profile older than 10 minutes, or one that has shared fewer than 3 note-free logs. A brand-new profile's 4th note-free log waits for a re-check after its first 10 minutes, so the phone's count would not tick on stage. Clone the laptop profile during setup, not right before.
