@@ -429,7 +429,7 @@ function QuestionCard({
       >
         {added ? "Added to appointment sheet ✓" : "Add to appointment sheet"}
       </button>
-      <ShowPharmacist item={itemLabel} verdict={verdict} question={prose(ask.replace(/^ASK:\s*/, ""))} />
+      <ShowPharmacist questions={[{ item: itemLabel, verdict, question: prose(ask.replace(/^ASK:\s*/, "")) }]} />
       {error && (
         <p role="alert" className="mt-2 text-sm text-flag">
           {error}
