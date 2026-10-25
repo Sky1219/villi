@@ -157,3 +157,12 @@ After cherry-picking, run DEMO.md's checks on dev once. Look at the metoprolol a
 ## Where I stopped
 
 I stopped adding features at about 01:40, well before 06:40. Every idea left failed the cut. Some need live data or a deploy to be seen. Some (a "what changed since your last visit" label note) would never show in a two-minute demo. The rest were more surface area for you to review before 08:45 than they were worth. The two independent reviews and the clean cherry-pick check seemed like a better use of the night than more features.
+
+## Added after the overnight run (on request)
+
+### 17. "Are you sure?" for a good outcome on a flagged item, kept private
+- **What:** logging "Helped" or "No change" for something Villi flagged for this anatomy asks first ("Villi flagged Gatorade for your parent's anatomy … Are you sure it helped? If you save it, it stays in your parent's own log only"). Saved, it is never pooled and never moves the shared counts. "Worse" and unflagged items work as before. "Flagged" means the person's latest finished check of that item was "Flag to discuss", or it's a flagged medicine in their list review.
+- **How it's enforced:** on the server. `logs.create` records the conflict, and `moderation.applyLog` checks again once a typed name gets its catalog item, so it holds even if the app skips the question. Schema change is additive (`log_entries.againstGuidance`, optional).
+- **Risk to the demo:** medium-low. **It changes Convex code, so it needs `npm run deploy:convex`.** Demo step 6 logs "Worse", which is unaffected. If you log "Helped" on a flagged item during the demo, the confirm card appears. Tests: `convex/againstGuidance.test.ts` and `convex/lib/guidance.test.ts`. Confirm card checked in a browser with fixture data; axe clean.
+- **Verify:** on dev, open the Gatorade answer → **Had it? How did it go?** → **Helped** → the card appears → **Save privately** → "Kept in your own log only…". On home, type "gatorade" in **Log how something went** → **No change** → same card.
+- **Commits:** 6d51517 (code) and d534a71 (README)
