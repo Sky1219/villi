@@ -22,6 +22,8 @@ export const summary = query({
       if (!profiles.has(id)) profiles.set(id, await ctx.db.get("profiles", id));
       return profiles.get(id)!;
     };
+    // Seeded demo rows, and anything written by a device trying /demo, count as demo data.
+    const isDemo = (p: Doc<"profiles"> | null) => !!p && (p.synthetic || p.demoClone === true);
 
     const events: ImpactEvent[] = [];
     let rated = 0;
@@ -36,7 +38,7 @@ export const summary = query({
       const p = await profileOf(a.profileId);
       if (!p || p.role === "clinician") continue;
       if ((a.final as { state?: string } | undefined)?.state === "flagged") {
-        events.push({ metric: "flagsRaised", anatomyKey: p.anatomyKey, synthetic: p.synthetic });
+        events.push({ metric: "flagsRaised", anatomyKey: p.anatomyKey, synthetic: isDemo(p) });
       }
       if (a.useful !== undefined) {
         rated++;
@@ -47,18 +49,18 @@ export const summary = query({
     for (const q of await ctx.db.query("questions").take(LIMIT)) {
       if (statusOf(q) === "open") continue;
       const p = await profileOf(q.profileId);
-      if (p) events.push({ metric: "questionsAsked", anatomyKey: p.anatomyKey, synthetic: q.synthetic });
+      if (p) events.push({ metric: "questionsAsked", anatomyKey: p.anatomyKey, synthetic: q.synthetic || isDemo(p) });
     }
 
     for (const c of await ctx.db.query("care_team_answers").take(LIMIT)) {
-      const base = { anatomyKey: c.anatomyKey, synthetic: c.synthetic };
+      const base = { anatomyKey: c.anatomyKey, synthetic: c.synthetic || isDemo(await profileOf(c.profileId)) };
       events.push({ metric: "answersLogged", ...base });
       if (c.resultingChange === "formulation_changed") events.push({ metric: "formulationChanged", ...base });
       if (c.resultingChange === "dose_monitored") events.push({ metric: "monitored", ...base });
     }
 
-    // ---- Real use only from here on: no synthetic rows, no clinician profiles.
-    const isReal = (p: Doc<"profiles"> | null): p is Doc<"profiles"> => !!p && !p.synthetic && p.role !== "clinician";
+    // ---- Real use only from here on: no synthetic rows, no demo clones, no clinician profiles.
+    const isReal = (p: Doc<"profiles"> | null): p is Doc<"profiles"> => !!p && !isDemo(p) && p.role !== "clinician";
 
     // Funnel stage 1a: flagged checks.
     const flags: { anatomyKey: string }[] = [];
@@ -95,7 +97,7 @@ export const summary = query({
 
     // Stages 2-6: questions that came from a flag, followed through the loop.
     const careByQuestion = new Map<Id<"questions">, Doc<"care_team_answers">>();
-    for (const c of await ctx.db.query("care_team_answers").take(LIMIT)) if (c.questionId && !c.synthetic) careByQuestion.set(c.questionId, c);
+    for (const c of await ctx.db.query("care_team_answers").take(LIMIT)) if (c.questionId && !c.synthetic && !isDemo(await profileOf(c.profileId))) careByQuestion.set(c.questionId, c);
     const chain: FunnelQuestion[] = [];
     for (const q of await ctx.db.query("questions").take(LIMIT)) {
       if (q.synthetic) continue;
@@ -145,7 +147,7 @@ export const summary = query({
     const categories = new Map<Id<"items">, string | null>();
     for (const l of await ctx.db.query("log_entries").take(LIMIT)) {
       const state = l.pooled === null ? "checking" : l.pooled ? "shared" : "private";
-      if (l.synthetic) {
+      if (l.synthetic || isDemo(await profileOf(l.profileId))) {
         if (state === "shared") safety.logs.demoShared++;
         continue;
       }
@@ -157,7 +159,7 @@ export const summary = query({
     }
     for (const s of await ctx.db.query("swaps").take(LIMIT)) {
       const state = s.pooled === null ? "checking" : s.pooled ? "shared" : "private";
-      if (s.synthetic) {
+      if (s.synthetic || isDemo(await profileOf(s.profileId))) {
         if (state === "shared") safety.swaps.demoShared++;
         continue;
       }

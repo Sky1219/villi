@@ -33,5 +33,7 @@ describe("seed", () => {
     const me = await t.query(api.profiles.me, { anonId });
     expect(me?.caresFor).toBe("parent");
     expect(me?.meds.length).toBe(5);
+    const row = await t.run((ctx) => ctx.db.query("profiles").withIndex("by_anonId", (q) => q.eq("anonId", anonId)).unique());
+    expect(row?.demoClone).toBe(true);
   });
 });

@@ -120,6 +120,9 @@ describe("impact funnel", () => {
         ctx.db.insert("profiles", { anonId, role: "caregiver", caresFor: "parent", anatomy: JEJ, anatomyKey: anatomyKeyOf(JEJ), language: "en", clinicianDemoVerified: false, synthetic, createdAt: 0 });
       const me = await mk(ANON, false);
       const demo = await mk("synthetic-demo-profile-000000001", true);
+      // A real device that tapped "See it as my dad": real rows, but demo for counting.
+      const clone = await mk("demo-clone-device-0000000000001", false);
+      await ctx.db.patch("profiles", clone, { demoClone: true });
       const ans = (profileId: typeof me, status: "final" | "blocked" | "failed", state: string, edited = false, problem?: "confusing") =>
         ctx.db.insert("answers", {
           profileId,
@@ -137,6 +140,8 @@ describe("impact funnel", () => {
       await ans(me, "blocked", "");
       await ans(me, "failed", "");
       await ans(demo, "final", "flagged");
+      await ans(clone, "final", "flagged");
+      await ans(clone, "final", "nothing-found", true);
       const r = await ans(me, "final", "flagged");
       await ctx.db.insert("answer_reviews", { answerId: r, draft: {}, lint: ["removed claim: x", "removed swap: y"], registry: {}, attempts: 1, createdAt: 0 });
       const q = await ctx.db.insert("questions", { profileId: me, text: "q", context: { answerId: flagged }, resolved: true, status: "answered", afterChangeOutcome: "helped", synthetic: false, createdAt: 0 });
@@ -150,13 +155,15 @@ describe("impact funnel", () => {
       await log(me, false, "I fainted");
       await log(me, null, "very thirsty");
       await log(demo, true, undefined, true);
+      await log(clone, true, undefined);
     });
     const d = await t.query(api.impact.summary, { anonId: ANON });
     expect(d.funnel.map((s) => s.total)).toEqual([2, 1, 1, 1, 1, 1]);
     expect(d.funnel[3].split).toEqual({ self: 0, teamLink: 1 });
     expect(d.safety.answers).toEqual({ approved: 2, edited: 1, blocked: 1, failed: 1 });
     expect(d.safety.codeChecks).toEqual({ answersTouched: 1, fixes: 2 });
-    expect(d.safety.logs).toEqual({ shared: 1, private: 1, checking: 1, demoShared: 1 });
+    expect(d.safety.logs).toEqual({ shared: 1, private: 1, checking: 1, demoShared: 2 });
+    expect(d.metrics.find((m) => m.key === "flagsRaised")).toMatchObject({ real: 2, demo: 2 });
     expect(d.safety.warningCards).toEqual({ emergency: 1, dehydration: 1, softAfterWorseDrink: 0 });
     expect(d.safety.problemReports.confusing).toBe(1);
   });

@@ -3,10 +3,10 @@
 import { ANATOMY_KEYS, ANATOMY_LABELS, type AnatomyKey } from "./anatomy";
 
 export const IMPACT_METRICS = [
-  { key: "flagsRaised", label: "Flags raised", help: "Checks that ended in \"Flag to discuss\"" },
+  { key: "flagsRaised", label: "Checks flagged to discuss", help: "Full checks that ended in \"Flag to discuss\". Medicine list review flags are counted above." },
   { key: "questionsAsked", label: "Questions asked", help: "Taken to a pharmacist, dietitian or doctor" },
   { key: "answersLogged", label: "Answers logged", help: "What the care team said, written down" },
-  { key: "formulationChanged", label: "Formulation changes", help: "The team changed the form of a medicine" },
+  { key: "formulationChanged", label: "Formulation changes", help: "The team changed the form of a medicine, whether or not the question began with a Villi flag" },
   { key: "monitored", label: "Monitoring started", help: "Levels, readings or the effect being watched" },
 ] as const;
 export type ImpactMetric = (typeof IMPACT_METRICS)[number]["key"];
@@ -50,7 +50,7 @@ export const FUNNEL_STAGES = [
   { key: "saved", label: "Question saved", help: "A flag's question added to the appointment sheet" },
   { key: "asked", label: "Asked", help: "Taken to a pharmacist, dietitian or doctor" },
   { key: "answered", label: "Answer logged", help: "What the care team said, written down" },
-  { key: "changed", label: "Something changed", help: "The form changed, or monitoring started" },
+  { key: "changed", label: "Something changed", help: "Of those answers: the form changed, or monitoring started" },
   { key: "outcome", label: "Two-week outcome", help: "How it went two weeks after the change" },
 ] as const;
 

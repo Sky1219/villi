@@ -54,6 +54,7 @@ function Welcome({ anonId }: { anonId: string }) {
       </Link>
       <EnterDeviceCode anonId={anonId} />
       <p className="text-sm text-muted">No name, no birthday, no medical history. Only coarse anatomy, tied to a random id on this device.</p>
+      <p className="text-sm text-muted">Villi is not medical advice. It cites its sources and writes one question for your pharmacist or doctor.</p>
     </main>
   );
 }
@@ -182,6 +183,7 @@ function Home({ anonId }: { anonId: string }) {
       <DeviceLinks anonId={anonId} />
 
       <footer className="space-y-2 pt-2 text-xs text-muted">
+        <p className="font-bold text-foreground">Villi is not medical advice.</p>
         <p>
           Villi flags, cites, and writes the question. It never tells you to start, stop, or change a medicine. It
           isn&apos;t an interaction checker: it can&apos;t tell you whether two medicines are safe together.

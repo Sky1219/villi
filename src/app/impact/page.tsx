@@ -37,7 +37,8 @@ function Funnel({ d }: { d: Summary }) {
       <h2 className="font-bold">From a flag to a change (real use only)</h2>
       {empty && (
         <p className="rounded-2xl border border-border bg-surface-2 p-4 text-sm">
-          No real answers logged yet. This weekend, real use is the builder&apos;s own checks.
+          No real answers logged yet. Demo profiles don&apos;t count here; this weekend, real use is the builder&apos;s own
+          checks.
         </p>
       )}
       <ol className="space-y-2">
@@ -114,15 +115,18 @@ function Safety({ d }: { d: Summary }) {
   return (
     <section className="rounded-2xl border border-border bg-surface p-4">
       <h2 className="font-bold">Safety record</h2>
-      <p className="mb-2 text-xs text-muted">Real writes only, except where demo data is marked.</p>
-      <h3 className="mt-2 text-sm font-bold text-muted">Answers, after the code check and the second review</h3>
+      <p className="mb-2 text-xs text-muted">
+        Real use only, except where demo data is marked. Every draft passes a code check and a second review before anyone
+        sees it; tightening a draft is that review doing its job.
+      </p>
+      <h3 className="mt-2 text-sm font-bold text-muted">Answers</h3>
       <ul className="space-y-1">
-        <Row label="Approved as written" value={s.answers.approved} />
-        <Row label="Edited by the reviewer, then approved" value={s.answers.edited} />
-        <Row label="Blocked (never shown)" value={s.answers.blocked} />
-        <Row label="Failed (busy service or timeout)" value={s.answers.failed} />
-        <Row label="Answers the code check fixed or trimmed" value={s.codeChecks.answersTouched} />
-        <Row label="Fixes and removals by the code check" value={s.codeChecks.fixes} />
+        <Row label="Shown, after both checks" value={s.answers.approved + s.answers.edited} />
+        <Row label="Of those, wording tightened to stay within the sources" value={s.answers.edited} />
+        <Row label="Held back by the safety check (never shown)" value={s.answers.blocked} />
+        <Row label="Didn't finish (busy service or timeout), with a Try again" value={s.answers.failed} />
+        <Row label="Drafts the code check trimmed" value={s.codeChecks.answersTouched} />
+        <Row label="Claims or swaps it removed" value={s.codeChecks.fixes} />
       </ul>
       <h3 className="mt-3 text-sm font-bold text-muted">Shared or kept private after screening</h3>
       <ul className="space-y-1">
@@ -171,7 +175,10 @@ function Impact({ anonId }: { anonId: string }) {
 
       <section className="space-y-3">
         <h2 className="font-bold">All activity, including demo data</h2>
-        <p className="text-xs text-muted">Big numbers are real use; the seeded demo community is counted separately.</p>
+        <p className="text-xs text-muted">
+          Big numbers are real use; the seeded demo community and demo profiles are counted separately. These count every
+          logged answer, not only those that began with a Villi flag, so some can be larger than the steps above.
+        </p>
         <ul className="space-y-3">
           {d.metrics.map((m) => (
             <li key={m.key} className="rounded-2xl border border-border bg-surface p-4">

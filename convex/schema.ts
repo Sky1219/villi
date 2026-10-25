@@ -128,6 +128,9 @@ export default defineSchema({
     ),
     // "father" | "peer" for demo templates that /demo clones.
     templateKey: v.optional(v.string()),
+    // Set by /demo: a real device trying a demo profile. Its writes are real rows but
+    // never count as real use on /impact. Stays set after edits; delete-my-data clears it.
+    demoClone: v.optional(v.boolean()),
     createdAt: v.number(),
   })
     .index("by_anonId", ["anonId"])

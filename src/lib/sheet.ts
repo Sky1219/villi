@@ -45,7 +45,7 @@ export function patternSentence(p: SheetData["patterns"][number]): string {
 export const REQUEST_TITLE = "Medication review request";
 
 export const REQUEST_FOOTER =
-  "What Villi is: a free tool for people who've had much of their intestine removed, and their families. It reads the FDA label and published short bowel syndrome guidance, flags what may not suit this anatomy, cites both sources, and writes the question. What it isn't: a prescriber or an interaction checker. It gives no doses and makes no decisions. Label text from openFDA, which says not to rely on it alone for medical decisions; guideline lines are Villi's summaries of the cited source.";
+  "Villi is not medical advice. What Villi is: a free tool for people who've had much of their intestine removed, and their families. It reads the FDA label and published short bowel syndrome guidance, flags what may not suit this anatomy, cites both sources, and writes the question. What it isn't: a prescriber or an interaction checker. It gives no doses and makes no decisions. Label text from openFDA, which says not to rely on it alone for medical decisions; guideline lines are Villi's summaries of the cited source.";
 
 export function anatomyLine(d: Pick<SheetData, "anatomyText" | "anatomyConfirmed">): string {
   return d.anatomyConfirmed

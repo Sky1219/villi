@@ -262,6 +262,7 @@ export const cloneDemo = mutation({
         diagram: template.diagram,
         anatomyConfirmed: true,
         clinicianDemoVerified: false,
+        demoClone: true,
       });
     }
     const profileId =
@@ -277,6 +278,7 @@ export const cloneDemo = mutation({
         anatomyConfirmed: true,
         clinicianDemoVerified: false,
         synthetic: false,
+        demoClone: true,
         createdAt: Date.now(),
       }));
     const meds = await ctx.db
