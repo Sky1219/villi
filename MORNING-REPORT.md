@@ -10,7 +10,7 @@
 
 ### 1. Read the answer aloud
 - **What:** a "Read this answer aloud" button under the answer title speaks the reviewed answer (state, verdict, why, swap, the one question) with the phone's built-in voice, citation tokens dropped and ER/DR/mg spelled out.
-- **Why it matters for judging:** care for tired, older and low-vision users (criterion 1, and the polish bonus); no AI call and no audio leaves the phone.
+- **Why it matters for judging:** care for tired, older and low-vision users (criterion 1, and the polish bonus); no AI call; it prefers an on-device voice.
 - **Risk to the demo:** low. It's one extra button on a finished answer; it renders nothing where the browser can't speak, and leaving the page stops the voice.
 - **Verify:** open any finished answer (e.g. metoprolol from Recent checks), tap **Read this answer aloud**, hear it, tap **Stop reading**.
 - **Commit:** 7c0a5d3
@@ -118,3 +118,11 @@
 - **Risk to the demo:** low. Text only; hidden when timestamps are missing, backwards or over 15 minutes (cloned demo answers may hide it, which is fine).
 - **Verify:** open a finished answer and read the "How Villi checked this" line.
 - **Commit:** 9db9bb3
+
+### 16. Fixes from a second review (scroll lock, voice, card)
+A second independent review of the later commits found these; each is its own commit.
+- **88c9141, scroll lock:** if the pharmacist view unmounted while open (a back gesture, or the last open question answered live through the care-team link), the page stayed unscrollable. Now released on unmount. Risk: low; needs commits 2, 5 and 11.
+- **afb698f, read-aloud voice:** some browsers offer network voices (Chrome's "Google …"), which send the text off the phone. It now prefers an on-device voice for the answer's language, and `/how`, README and QA say "prefers an on-device voice" instead of "no audio leaves the phone". Risk: low; needs commits 1, 8 and 12.
+- **891cedb, card wording:** a medicine whose label was looked up and *not found* also reads "Can't tell yet"; the card printed "Label not checked yet" for it, which is untrue. It now prints the list review's own summary. **Back** links to the sheet. Risk: low; needs commit 13.
+- **d6553f2, demo badge on the card:** `sheet.get` returns a new boolean `demo` (additive), and a demo profile's card shows a "demo data" pill. **This is the only commit tonight that changes Convex code**, so it needs `npm run deploy:convex` to take effect; without the deploy the field is just absent and no pill shows (nothing breaks). Test: `convex/sheetDemo.test.ts`. Risk: low.
+- **Verify:** open and close the pharmacist view, then scroll home; read an answer aloud; open the card for a profile with a misspelled medicine.
