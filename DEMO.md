@@ -37,7 +37,7 @@ One check runs live. Everything else was run beforehand on the same profile and 
 | 8 | 1:45 | **Your sheet** → tap **I asked this** on the metoprolol question | "This is what we bring Monday: his questions, his own patterns as hypotheses, his medicines with what the labels say. Either of us can hand it over. When the pharmacist answers, I log what they said and what changed." Don't open the print dialog on stage. |
 | 9 | 1:55 | Home → footer → **Is Villi working?** | "First, was the flag news to him? Every flag asks. Then the question has to reach a care team and change something. This counts that, live and by anatomy: flags, questions asked, answers logged, formulation changes. Real use and demo data are counted separately." |
 
-**Leave something on the table.** Print the review request beforehand (**Your sheet** → **Review request (PDF)** → print, from your dad's real profile), and hand it to the judges at the end: "This is the page we take to his pharmacist." It's the product's real output, on paper.
+**Leave something on the table.** Print the review request beforehand (**Your sheet** → **Review request (PDF)** → print, from your dad's real profile), and hand it to the judges at the end: "This is the page we take to his pharmacist." It's the product's real output, on paper. Optionally print the **wallet card** too (**Your sheet** → **Wallet card: medicines and anatomy**): "This is what he carries to the ER, where nobody knows his anatomy."
 
 **Say this unprompted, once:** "A citation proves Villi retrieved a source. It doesn't prove the source says the claim. The code checks and the reviewer catch most of that, not all of it. That's why every answer ends in a question, not an instruction."
 
