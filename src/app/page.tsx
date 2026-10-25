@@ -6,7 +6,7 @@ import { api } from "@convex/_generated/api";
 import { useAnonId } from "@/lib/anon";
 import { GutDiagram } from "@/components/GutDiagram";
 import { MedsEditor } from "@/components/MedsEditor";
-import { MedReview } from "@/components/MedReview";
+import { MedReviewSummary } from "@/components/MedReview";
 import { AfterChangeCards } from "@/components/AfterChange";
 import { AnswerNudges } from "@/components/AnswerNudges";
 import { DeviceLinks, EnterDeviceCode } from "@/components/DeviceLinks";
@@ -127,6 +127,8 @@ function Home({ anonId }: { anonId: string }) {
   const prefill = typeof window === "undefined" ? "" : (new URLSearchParams(window.location.search).get("q") ?? "");
   if (profile === undefined) return <p className="pt-10 text-center text-muted">Loading…</p>;
   if (profile === null) return <Welcome anonId={anonId} />;
+  const person = personFor(profile.role, profile.caresFor);
+  const openQuestions = questions?.filter((q) => q.status !== "answered").length ?? 0;
 
   return (
     <main className="space-y-5">
@@ -138,7 +140,7 @@ function Home({ anonId }: { anonId: string }) {
           stoma={profile.diagram.stomaAfter ? { afterSegment: profile.diagram.stomaAfter } : null}
         />
         <div className="min-w-0 flex-1">
-          <p className="text-sm text-muted">{profile.role === "caregiver" ? `Checking for ${personFor(profile.role, profile.caresFor)}` : "Your anatomy"}</p>
+          <p className="text-sm text-muted">{profile.role === "caregiver" ? `Checking for ${person}` : "Your anatomy"}</p>
           <p className="font-bold">{profile.anatomyText}</p>
         </div>
         <Link href="/onboarding" className="flex min-h-11 shrink-0 items-center text-sm font-bold text-accent underline">
@@ -146,39 +148,35 @@ function Home({ anonId }: { anonId: string }) {
         </Link>
       </section>
 
+      <ScanBox anonId={anonId} initialText={prefill} />
+
+      {answers && answers.length > 0 && <RecentChecks answers={answers} />}
+
+      <AnswerNudges anonId={anonId} />
+      <AfterChangeCards anonId={anonId} person={person} />
+
+      <MedReviewSummary anonId={anonId} person={person} />
+
       <nav className="grid grid-cols-2 gap-2">
+        <Link href="/sheet" className="flex min-h-12 items-center justify-center rounded-xl border border-border bg-surface font-bold">
+          Your sheet{openQuestions ? ` (${openQuestions})` : ""}
+        </Link>
         <Link href="/community" className="flex min-h-12 items-center justify-center rounded-xl border border-border bg-surface font-bold">
           Community
         </Link>
-        <Link href="/sheet" className="flex min-h-12 items-center justify-center rounded-xl border border-border bg-surface font-bold">
-          Your sheet{questions && questions.filter((q) => q.status !== "answered").length ? ` (${questions.filter((q) => q.status !== "answered").length})` : ""}
-        </Link>
-        <Link href="/impact" className="col-span-2 flex min-h-12 items-center justify-center rounded-xl border border-border bg-surface font-bold">
-          Is Villi working?
+        <Link href="/saw" className="col-span-2 flex min-h-12 items-center justify-center rounded-xl border border-border bg-surface font-bold">
+          I saw something (a tablet came through)
         </Link>
       </nav>
 
-      <AnswerNudges anonId={anonId} />
-      <AfterChangeCards anonId={anonId} person={personFor(profile.role, profile.caresFor)} />
-
-      <ScanBox anonId={anonId} initialText={prefill} />
-
-      <Link href="/saw" className="flex min-h-12 items-center justify-center rounded-xl border border-border bg-surface font-bold">
-        I saw something (a tablet came through)
-      </Link>
-
       <HelpNow />
 
-      <QuickLog anonId={anonId} person={personFor(profile.role, profile.caresFor)} />
+      <QuickLog anonId={anonId} person={person} />
 
       <section>
         <h2 className="mb-2 font-bold">Medicines on file</h2>
         <MedsEditor anonId={anonId} meds={profile.meds} checkable />
       </section>
-
-      <MedReview anonId={anonId} person={personFor(profile.role, profile.caresFor)} />
-
-      {answers && answers.length > 0 && <RecentChecks answers={answers} />}
 
       <DeviceLinks anonId={anonId} />
 
@@ -198,6 +196,9 @@ function Home({ anonId }: { anonId: string }) {
           </Link>
           <Link href="/sources" className="inline-flex min-h-11 items-center font-bold text-accent underline">
             Sources
+          </Link>
+          <Link href="/impact" className="inline-flex min-h-11 items-center font-bold text-accent underline">
+            Is Villi working?
           </Link>
         </p>
         <DeleteMyData anonId={anonId} />

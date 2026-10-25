@@ -18,7 +18,7 @@ export function AnswerNudges({ anonId }: { anonId: string }) {
         <section key={q._id} className="rounded-2xl border-2 border-accent bg-accent-soft p-4">
           <h2 className="font-bold">Did you get an answer?</h2>
           <p className="mt-1">
-            You asked: <span className="italic">{q.text}</span>
+            You asked: &ldquo;{q.text}&rdquo;
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <Link

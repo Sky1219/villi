@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMutation, useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -138,13 +139,36 @@ function Row({
   );
 }
 
+// One line on home: the full review lives on the appointment sheet.
+export function MedReviewSummary({ anonId, person = "you" }: { anonId: string; person?: string }) {
+  const rows = useQuery(api.meds.review, { anonId });
+  if (!rows || rows.length === 0) return null;
+  const whose = person === "you" ? "your" : `${person}'s`;
+  const flagged = rows.filter((r) => r.state === "flagged").length;
+  const pending = rows.filter((r) => r.state === "cant-tell").length;
+  return (
+    <Link href="/sheet#med-review" className="flex min-h-16 items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3">
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm text-muted">Review of {whose} {rows.length} medicines</span>
+        <span className={`block font-bold ${flagged ? "text-flag" : ""}`}>
+          {flagged ? `${flagged} of ${rows.length} to discuss` : "Nothing flagged in the sections checked"}
+        </span>
+        {pending > 0 && <span className="block text-sm text-muted">{pending} still being read</span>}
+      </span>
+      <span aria-hidden className="font-bold text-accent">
+        →
+      </span>
+    </Link>
+  );
+}
+
 // Instant first pass over every medicine on file, from the cached FDA label and fixed guideline mappings.
 export function MedReview({ anonId, person = "you" }: { anonId: string; person?: string }) {
   const rows = useQuery(api.meds.review, { anonId });
   if (!rows || rows.length === 0) return null;
   const whose = person === "you" ? "your" : `${person}'s`;
   return (
-    <section>
+    <section id="med-review" className="scroll-mt-4">
       <h2 className="font-bold">Medicine list review</h2>
       <p className="mb-2 text-sm text-muted">
         An instant first pass over {whose} medicines, from the FDA label and the guidelines. It doesn&apos;t decide anything;

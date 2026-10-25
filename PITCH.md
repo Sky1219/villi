@@ -10,7 +10,7 @@ Follows the flow in `DEMO.md`. Times are cumulative. Every line below is true of
 
 "Watch the trace: his anatomy, the FDA label, where the NDC listing says extended release, then the guidelines and what people with his anatomy logged. Code checks every citation and the community numbers and blocks doses, then a second Claude reviews it. He sees nothing until both pass." When it lands: "Flag to discuss. Every claim has a source; tap one. It doesn't decide. It writes the question."
 
-**1:00 to 1:15: the whole list** (scroll to **Medicine list review**, if you use the optional swap)
+**1:00 to 1:15: the whole list** (tap the medicine review line on home, if you use the optional swap)
 
 "That was one pill. This is his whole list, instantly, from the labels, with no AI call. Pantoprazole reads differently, because acid medicine is commonly used after resection; the question is which form."
 
