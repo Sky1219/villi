@@ -20,6 +20,7 @@ import { personFor } from "@convex/lib/careFor";
 import { Loading } from "@/components/Loading";
 import { displayName } from "@/lib/displayName";
 import { answerScript } from "@/lib/readAloud";
+import { checkSeconds } from "@/lib/checkTime";
 import { ReadAloud } from "@/components/ReadAloud";
 import { ShowPharmacist } from "@/components/ShowPharmacist";
 import { WaitNote } from "@/components/WaitNote";
@@ -102,19 +103,23 @@ function Receipt({
   trace,
   final,
   review,
+  createdAt,
 }: {
   trace: Trace[];
   final: FinalAnswer;
   review: ReviewSummary;
+  createdAt: number;
 }) {
   const hasLabel = JSON.stringify(final.why).includes("[L:");
   const changes = reviewChanges(review);
   const changed = changes.length === 0 ? "" : changes.length === 1 ? ", 1 wording change" : `, ${changes.length} wording changes`;
+  const secs = checkSeconds(createdAt, trace);
   return (
     <section className="space-y-2">
       <details className="group rounded-2xl border border-border bg-surface px-4 text-sm">
         <summary className="flex min-h-12 cursor-pointer items-center font-bold">
-          How Villi checked this ({trace.length} steps, {final.sourcesChecked.length} sources{changed})
+          How Villi checked this ({trace.length} steps, {final.sourcesChecked.length} sources{changed}
+          {secs !== null && `, ${secs} ${secs === 1 ? "second" : "seconds"}`})
         </summary>
         <div className="space-y-4 pb-4">
           <TraceSteps trace={trace} />
@@ -700,7 +705,7 @@ function AnswerView({ anonId, answerId }: { anonId: string; answerId: Id<"answer
             <Useful anonId={anonId} answerId={a._id} value={a.useful} />
           )}
           {a.itemId && itemName && <LogCard anonId={anonId} answerId={a._id} itemName={itemName} person={person} />}
-          <Receipt trace={a.toolTrace} final={final} review={a.reviewSummary} />
+          <Receipt trace={a.toolTrace} final={final} review={a.reviewSummary} createdAt={a.createdAt} />
           <SomethingWrong anonId={anonId} answerId={a._id} value={a.problemReport} />
           {/* The page ends where the person's next step is: asking more. */}
           <FollowUp anonId={anonId} parentId={a.kind === "followup" && a.parentId ? a.parentId : a._id} />
