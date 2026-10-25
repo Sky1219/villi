@@ -13,6 +13,7 @@ import schema from "../convex/schema";
 import { api, internal } from "../convex/_generated/api";
 import type { Id } from "../convex/_generated/dataModel";
 import type { EvalCase, RunResult, ShownAnswer } from "./types";
+import { CliLimitError, emulateMessages } from "./cli";
 
 const modules = import.meta.glob(["../convex/**/*.ts", "!../convex/**/*.test.ts"]);
 
@@ -23,6 +24,12 @@ const LIMIT = Number(process.env.EVAL_LIMIT ?? "0");
 const IDS = process.env.EVAL_IDS ? new Set(process.env.EVAL_IDS.split(",")) : null;
 const CONCURRENCY = Number(process.env.EVAL_CONCURRENCY ?? "6");
 const CASE_TIMEOUT_MS = 8 * 60_000;
+// "api" calls Anthropic directly; "cli" routes every model call through local
+// `claude -p` (eval/cli.ts): structured outputs map one to one, the agent's
+// custom tools are emulated as a JSON list of calls per turn.
+const TRANSPORT = process.env.EVAL_TRANSPORT ?? "api";
+let transportErrors = 0;
+let limitHit: string | null = null;
 
 // ---- fetch: cache openFDA and Voyage document embeddings across worlds (they are
 // deterministic and rate-limited), and tally Anthropic token usage.
@@ -48,6 +55,27 @@ globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
     } catch (e) {
       fetchCache.delete(key);
       throw e;
+    }
+  }
+  if (TRANSPORT === "cli" && url.includes("api.anthropic.com") && url.includes("/v1/messages")) {
+    try {
+      const req = JSON.parse(body);
+      const { body: out, usage: u } = await emulateMessages(req);
+      const m = (usage[`${req.model} (cli)`] ??= { calls: 0, input: 0, output: 0, cacheRead: 0, cacheWrite: 0 });
+      m.calls++;
+      m.input += u.input;
+      m.output += u.output;
+      m.cacheRead += u.cacheRead;
+      m.cacheWrite += u.cacheWrite;
+      return new Response(JSON.stringify(out), { status: 200, headers: { "content-type": "application/json" } });
+    } catch (e) {
+      transportErrors++;
+      if (e instanceof CliLimitError) limitHit = (e as Error).message;
+      // 529 lets the SDK's own retries run, as for an overloaded API.
+      return new Response(JSON.stringify({ type: "error", error: { type: "overloaded_error", message: `cli transport: ${(e as Error).message}` } }), {
+        status: 529,
+        headers: { "content-type": "application/json", "x-should-retry": limitHit ? "false" : "true" },
+      });
     }
   }
   const res = await realFetch(input, init);
@@ -257,13 +285,25 @@ async function runSwapCase(c: EvalCase, base: Pick<RunResult, "id" | "run" | "st
 async function runCase(c: EvalCase): Promise<RunResult> {
   const base = { id: c.id, run: RUN, startedAt: new Date().toISOString() };
   const started = Date.now();
+  const errorsBefore = transportErrors;
+  let r: RunResult;
   try {
-    if (c.input.type === "log") return await runLogCase(c, base);
-    if (c.input.type === "swap") return await runSwapCase(c, base);
-    return await runAnswerCase(c, base);
+    r = c.input.type === "log" ? await runLogCase(c, base) : c.input.type === "swap" ? await runSwapCase(c, base) : await runAnswerCase(c, base);
   } catch (e) {
-    return { ...base, harnessError: (e as Error).stack?.slice(0, 1500) ?? String(e), latency: { totalMs: Date.now() - started } };
+    return { ...base, transport: TRANSPORT, harnessError: (e as Error).stack?.slice(0, 1500) ?? String(e), latency: { totalMs: Date.now() - started } };
   }
+  r.transport = TRANSPORT;
+  // An outage of the model transport is not the pipeline's safety behavior (fail-closed
+  // blocks and "moderation unavailable" would read as correct refusals), so rerun it.
+  const outage =
+    r.status === "failed" ||
+    r.status === "timeout" ||
+    r.blockedBy === "reviewer-unavailable" ||
+    /unavailable|moderator declined/.test(r.moderationReason ?? "");
+  if (outage && (transportErrors > errorsBefore || limitHit)) {
+    r.harnessError = `model transport failed during this case (${r.status ?? r.moderationReason}): ${r.error ?? ""}`;
+  }
+  return r;
 }
 
 it("runs eval cases through the real pipeline", async () => {
@@ -287,7 +327,7 @@ it("runs eval cases through the real pipeline", async () => {
   const started = Date.now();
   await Promise.all(
     Array.from({ length: CONCURRENCY }, async () => {
-      while (next < todo.length) {
+      while (next < todo.length && !limitHit) {
         const c = todo[next++];
         const r = await runCase(c);
         appendFileSync(resultsPath, JSON.stringify(r) + "\n");
@@ -301,6 +341,7 @@ it("runs eval cases through the real pipeline", async () => {
   await sleep(1000);
   const usagePath = `${OUT_DIR}/usage.json`;
   const prev = existsSync(usagePath) ? JSON.parse(readFileSync(usagePath, "utf8")) : { segments: [] };
-  prev.segments.push({ at: new Date().toISOString(), cases: todo.length, wallMs: Date.now() - started, usage });
+  prev.segments.push({ at: new Date().toISOString(), transport: TRANSPORT, commit: process.env.EVAL_COMMIT ?? null, cases: finished, wallMs: Date.now() - started, usage });
   writeFileSync(usagePath, JSON.stringify(prev, null, 2));
+  if (limitHit) throw new Error(`stopped early: claude -p usage limit (${limitHit}); rerun the same command to resume`);
 });

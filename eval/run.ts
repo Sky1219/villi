@@ -1,10 +1,10 @@
 // `npm run eval -- [--split tune|holdout|all] [--run NAME] [--limit N] [--ids a,b]
-//                  [--concurrency N] [--no-grade] [--no-report]`
+//                  [--concurrency N] [--transport api|cli] [--no-grade] [--no-report]`
 // Runs cases through the pipeline (eval/pipeline.eval.ts), grades them
 // (eval/grade.ts), and rewrites eval/REPORT.md (eval/report.ts).
 // Defaults: the held-out split, run name "holdout"; its results are also copied
 // to eval/results.jsonl.
-import { spawnSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { copyFileSync, existsSync } from "node:fs";
 import { loadEnv } from "./env";
 
@@ -27,9 +27,13 @@ const env = {
   EVAL_RUN: run,
   EVAL_OUT: out,
   EVAL_SPLIT: split,
+  // The code the run measured: commit plus whether the tree had uncommitted changes.
+  EVAL_COMMIT: `${execFileSync("git", ["rev-parse", "--short", "HEAD"], { encoding: "utf8" }).trim()}${execFileSync("git", ["status", "--porcelain", "convex", "data"], { encoding: "utf8" }).trim() ? "+dirty" : ""}`,
   ...(flag("limit") ? { EVAL_LIMIT: flag("limit") } : {}),
   ...(flag("ids") ? { EVAL_IDS: flag("ids") } : {}),
   ...(flag("concurrency") ? { EVAL_CONCURRENCY: flag("concurrency") } : {}),
+  // api (default) or cli: every model call through local `claude -p` (eval/cli.ts).
+  ...(flag("transport") ? { EVAL_TRANSPORT: flag("transport") } : {}),
 };
 const sh = process.platform === "win32";
 
@@ -47,5 +51,5 @@ if (!argv.includes("--no-report")) {
 }
 
 function readUsage() {
-  return "npm run eval -- [--split tune|holdout|all] [--run NAME] [--limit N] [--ids a,b] [--concurrency N] [--no-grade] [--no-report]";
+  return "npm run eval -- [--split tune|holdout|all] [--run NAME] [--limit N] [--ids a,b] [--concurrency N] [--transport api|cli] [--no-grade] [--no-report]";
 }

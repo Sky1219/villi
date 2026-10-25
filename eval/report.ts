@@ -16,16 +16,16 @@ const cases = new Map<string, EvalCase>(
 
 type Row = { c: EvalCase; r: RunResult; g: GradedResult };
 
-function load(run: string): Row[] | null {
+function load(run: string, file = "graded.jsonl"): Row[] | null {
   const dir = `eval/runs/${run}`;
-  if (!existsSync(`${dir}/graded.jsonl`)) return null;
+  if (!existsSync(`${dir}/${file}`)) return null;
   const results = new Map<string, RunResult>();
   for (const l of readFileSync(`${dir}/results.jsonl`, "utf8").trim().split("\n").filter(Boolean)) {
     const r: RunResult = JSON.parse(l);
     if (!r.harnessError || !results.has(r.id)) results.set(r.id, r);
   }
   const rows: Row[] = [];
-  for (const l of readFileSync(`${dir}/graded.jsonl`, "utf8").trim().split("\n").filter(Boolean)) {
+  for (const l of readFileSync(`${dir}/${file}`, "utf8").trim().split("\n").filter(Boolean)) {
     const g: GradedResult = JSON.parse(l);
     const r = results.get(g.id);
     const c = cases.get(g.id);
@@ -196,14 +196,20 @@ function cost(run: string) {
   const PRICE: Record<string, [number, number]> = { "claude-opus-5-5": [4, 20], "claude-sonnet-5-5": [2, 10], "claude-haiku-5-5": [0.1, 0.5] };
   let usd = 0;
   let wall = 0;
+  let cliCalls = 0;
   for (const s of JSON.parse(readFileSync(p, "utf8")).segments) {
     wall += s.wallMs;
-    for (const [m, u] of Object.entries(s.usage as Record<string, { input: number; output: number; cacheRead: number; cacheWrite: number }>)) {
+    for (const [m, u] of Object.entries(s.usage as Record<string, { calls: number; input: number; output: number; cacheRead: number; cacheWrite: number }>)) {
+      // claude -p calls run on the claude.ai subscription, not API credit.
+      if (m.endsWith("(cli)")) {
+        cliCalls += u.calls;
+        continue;
+      }
       const [i, o] = PRICE[m] ?? [4, 20];
       usd += (u.input * i + u.cacheWrite * i * 1.25 + u.cacheRead * i * 0.1 + u.output * o) / 1e6;
     }
   }
-  return `pipeline model spend for this run about $${usd.toFixed(2)} (grader not included), wall clock ${(wall / 60000).toFixed(0)} min`;
+  return `pipeline API spend about $${usd.toFixed(2)}${cliCalls ? ` plus ${cliCalls} claude -p calls on the subscription` : ""} (grader not included), wall clock ${(wall / 60000).toFixed(0)} min`;
 }
 
 function compare(before: Row[], after: Row[]) {
@@ -224,12 +230,59 @@ function compare(before: Row[], after: Row[]) {
   return lines.join("\n");
 }
 
+// Which model transport ran the pipeline, on which commit, and who graded it.
+function provenance(run: string, rows: Row[]) {
+  const count = (f: (x: Row) => string) =>
+    Object.entries(rows.reduce<Record<string, number>>((m, x) => ((m[f(x)] = (m[f(x)] ?? 0) + 1), m), {}))
+      .map(([k, v]) => `${v} ${k}`)
+      .join(", ");
+  const p = `eval/runs/${run}/usage.json`;
+  const commits = existsSync(p)
+    ? [...new Set((JSON.parse(readFileSync(p, "utf8")).segments as { commit?: string | null }[]).map((s) => s.commit).filter(Boolean))]
+    : [];
+  return `Pipeline transport: ${count((x) => (x.r.transport === "cli" ? "local claude -p" : "Anthropic API"))}. Grader: ${count((x) => (x.g.graderTransport === "cli" ? "claude -p" : "Anthropic API"))}.${commits.length ? ` Code: ${commits.join(", ")}.` : ""}`;
+}
+
+// Same cases graded by both grader transports: how often they agree.
+function calibration() {
+  const p = "eval/runs/baseline/graded-cli-sample.jsonl";
+  if (!existsSync(p) || !baselineApi) return null;
+  const api = new Map(baselineApi.map((x) => [x.g.id, x.g]));
+  const cli: GradedResult[] = readFileSync(p, "utf8").trim().split("\n").filter(Boolean).map((l) => JSON.parse(l));
+  const lines = ["| Dimension | Both graders agree (draft and final) | API only | claude -p only |", "|---|---|---|---|"];
+  for (const dim of DIMENSIONS.filter((d) => d !== "pooled_when_shouldnt")) {
+    let agree = 0;
+    let apiOnly = 0;
+    let cliOnly = 0;
+    let n = 0;
+    for (const c of cli) {
+      const a = api.get(c.id);
+      if (!a) continue;
+      for (const [x, y] of [[a.draftGrade, c.draftGrade], [a.finalGrade, c.finalGrade]] as const) {
+        if (!x || !y) continue;
+        n++;
+        if (x[dim].violated === y[dim].violated) agree++;
+        else if (x[dim].violated) apiOnly++;
+        else cliOnly++;
+      }
+    }
+    lines.push(`| ${dim} | ${frac(agree, n)} | ${apiOnly} | ${cliOnly} |`);
+  }
+  return [
+    "## Grader calibration (API vs claude -p)",
+    "",
+    `The baseline was graded through the Anthropic API; later runs were graded through local \`claude -p\` (same model, prompt and schema) after the API credit ran out. ${cli.length} baseline cases, picked by hash, were graded both ways:`,
+    "",
+    ...lines,
+  ].join("\n");
+}
+
 function section(title: string, run: string, rows: Row[]) {
   const c = cost(run);
   return [
     `## ${title}`,
     "",
-    `${rows.length} cases (${["routine", "adversarial", "edge"].map((k) => `${rows.filter((x) => x.c.category === k).length} ${k}`).join(", ")}). Run date ${rows[0]?.r.startedAt.slice(0, 10) ?? "?"}${c ? `; ${c}` : ""}.`,
+    `${rows.length} cases (${["routine", "adversarial", "edge"].map((k) => `${rows.filter((x) => x.c.category === k).length} ${k}`).join(", ")}). Run date ${rows[0]?.r.startedAt.slice(0, 10) ?? "?"}${c ? `; ${c}` : ""}. ${provenance(run, rows)}`,
     "",
     "### Outcomes",
     "",
@@ -274,7 +327,11 @@ function ungradedCompare(run: string): string | null {
   ].join("\n");
 }
 
-const baseline = load("baseline");
+// The baseline was first graded through the API; once a full claude -p regrade exists,
+// it is used everywhere so before/after comparisons share one grader.
+const baselineApi = load("baseline");
+const baselineCli = load("baseline", "graded-cli.jsonl");
+const baseline = baselineCli && baselineApi && baselineCli.length >= baselineApi.length ? baselineCli : baselineApi;
 const patched = load("patched");
 const holdout = load("holdout");
 
@@ -302,6 +359,8 @@ if (!holdout) {
     "",
   );
 }
+const calib = calibration();
+if (calib) parts.push(calib, "");
 const partial = ungradedCompare("patched");
 if (partial) parts.push(partial, "", existsSync(FIXES_PATH) ? `### The fixes
 

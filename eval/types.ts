@@ -62,6 +62,8 @@ export type RunResult = {
   id: string;
   run: string;
   startedAt: string;
+  // "api" (Anthropic API) or "cli" (local claude -p, see eval/cli.ts). Absent = api.
+  transport?: "api" | "cli" | string;
   // answer cases
   status?: "final" | "blocked" | "failed" | "rejected" | "timeout";
   rejectedMessage?: string;
@@ -106,4 +108,5 @@ export type GradedResult = {
   finalGrade: Grade;
   // A one-line note on what the user actually saw.
   shown: string;
+  graderTransport?: string;
 };

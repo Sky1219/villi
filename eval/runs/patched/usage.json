@@ -20,6 +20,45 @@
           "cacheWrite": 27345
         }
       }
+    },
+    {
+      "at": "2026-10-24T17:14:52.991Z",
+      "transport": "cli",
+      "commit": "9fe8673",
+      "cases": 161,
+      "wallMs": 2199440,
+      "usage": {
+        "claude-haiku-5-5 (cli)": {
+          "calls": 279,
+          "input": 558,
+          "output": 142410,
+          "cacheRead": 390878,
+          "cacheWrite": 424468
+        },
+        "claude-opus-5-5 (cli)": {
+          "calls": 832,
+          "input": 1678,
+          "output": 933437,
+          "cacheRead": 5253225,
+          "cacheWrite": 2980113
+        }
+      }
+    },
+    {
+      "at": "2026-10-24T19:13:29.452Z",
+      "transport": "cli",
+      "commit": "94ec630+dirty",
+      "cases": 35,
+      "wallMs": 5813157,
+      "usage": {
+        "claude-haiku-5-5 (cli)": {
+          "calls": 89,
+          "input": 178,
+          "output": 36358,
+          "cacheRead": 173954,
+          "cacheWrite": 71419
+        }
+      }
     }
   ]
 }

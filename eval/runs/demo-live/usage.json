@@ -1,0 +1,27 @@
+{
+  "segments": [
+    {
+      "at": "2026-10-24T19:33:38.546Z",
+      "transport": "cli",
+      "commit": null,
+      "cases": 12,
+      "wallMs": 1016741,
+      "usage": {
+        "claude-haiku-5-5 (cli)": {
+          "calls": 53,
+          "input": 106,
+          "output": 24442,
+          "cacheRead": 123304,
+          "cacheWrite": 37402
+        },
+        "claude-opus-5-5 (cli)": {
+          "calls": 18,
+          "input": 36,
+          "output": 24099,
+          "cacheRead": 116897,
+          "cacheWrite": 83221
+        }
+      }
+    }
+  ]
+}
