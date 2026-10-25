@@ -34,6 +34,7 @@ import type * as lib_pillMatch from "../lib/pillMatch.js";
 import type * as lib_prompts from "../lib/prompts.js";
 import type * as lib_retrier from "../lib/retrier.js";
 import type * as lib_safety from "../lib/safety.js";
+import type * as lib_safetyBadge from "../lib/safetyBadge.js";
 import type * as lib_seedData from "../lib/seedData.js";
 import type * as lib_swapCheck from "../lib/swapCheck.js";
 import type * as lib_vision from "../lib/vision.js";
@@ -81,6 +82,7 @@ declare const fullApi: ApiFromModules<{
   "lib/prompts": typeof lib_prompts;
   "lib/retrier": typeof lib_retrier;
   "lib/safety": typeof lib_safety;
+  "lib/safetyBadge": typeof lib_safetyBadge;
   "lib/seedData": typeof lib_seedData;
   "lib/swapCheck": typeof lib_swapCheck;
   "lib/vision": typeof lib_vision;

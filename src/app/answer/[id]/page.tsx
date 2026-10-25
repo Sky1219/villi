@@ -183,16 +183,56 @@ const STATE_STYLE = {
   "cant-tell": { box: "bg-surface-2 border-border", tag: "Can't tell yet", tagCls: "text-muted" },
 } as const;
 
+// "Safety check · passed" or "· 1 change": what the code check and the second review
+// changed before this answer was shown, in plain words written by code.
+function SafetyBadge({ review }: { review: { edited: boolean; safetyChanges?: string[] } | null }) {
+  const [open, setOpen] = useState(false);
+  if (!review) return null;
+  // Answers reviewed before the badge existed only know whether they were edited.
+  const changes = review.safetyChanges ?? (review.edited ? ["The second review reworded this answer to stay within its sources."] : []);
+  const label = changes.length === 0 ? "passed" : changes.length === 1 ? "1 change" : `${changes.length} changes`;
+  return (
+    <div className="mt-3">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border bg-surface px-3 text-sm font-bold"
+      >
+        <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M12 3l8 3v6c0 4.5-3.4 8.2-8 9-4.6-.8-8-4.5-8-9V6l8-3z" />
+        </svg>
+        Safety check · {label}
+      </button>
+      {open && (
+        <div className="mt-2 rounded-xl bg-surface-2 p-3 text-sm">
+          <p>Before you saw this, code checked every citation, dose and directive, and a second Claude reviewed it against its sources.</p>
+          {changes.length > 0 ? (
+            <ul className="mt-2 list-disc space-y-1 pl-5">
+              {changes.map((c) => (
+                <li key={c}>{c}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-2">Nothing needed changing.</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AnswerCard({
   final,
   answerId,
   anonId,
   itemId,
+  review,
 }: {
   final: FinalAnswer;
   answerId: Id<"answers">;
   anonId: string;
   itemId: Id<"items"> | null;
+  review: { edited: boolean; safetyChanges?: string[] } | null;
 }) {
   const gIds = Array.from(
     new Set(
@@ -223,6 +263,7 @@ function AnswerCard({
         <p className={`mb-1 text-xs font-bold uppercase tracking-wide ${style.tagCls}`}>{style.tag}</p>
         <p className="text-xl font-bold leading-snug">{prose(final.verdict)}</p>
         {inlineCites(final.verdict) && <Citations citation={inlineCites(final.verdict)} final={final} titles={titles} />}
+        <SafetyBadge review={review} />
       </section>
 
       {profile && (
@@ -555,7 +596,7 @@ function AnswerView({ anonId, answerId }: { anonId: string; answerId: Id<"answer
 
       {!done && <TraceList trace={a.toolTrace} status={a.status} />}
 
-      {done && <AnswerCard final={final} answerId={a._id} anonId={anonId} itemId={a.itemId} />}
+      {done && <AnswerCard final={final} answerId={a._id} anonId={anonId} itemId={a.itemId} review={a.reviewSummary} />}
 
       {(a.status === "failed" || a.status === "blocked") && (
         <section className="rounded-2xl border border-border bg-surface-2 p-4">

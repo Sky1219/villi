@@ -394,6 +394,8 @@ export default defineSchema({
         approved: v.boolean(),
         edited: v.boolean(),
         blockedReasons: v.array(v.string()),
+        // Plain-words list of what the code check and the second review changed (the safety badge).
+        safetyChanges: v.optional(v.array(v.string())),
       }),
     ),
     error: v.optional(v.string()),

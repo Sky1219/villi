@@ -264,7 +264,8 @@ function citationSet(a: Answer): Set<string> {
 }
 
 export type ReviewOutcome =
-  | { status: "final"; final: Answer; edited: boolean; lint: string[]; decision: ReviewerDecision | null }
+  // linted: the draft after the code check, before any reviewer edit (for the safety badge).
+  | { status: "final"; final: Answer; linted: Answer; edited: boolean; lint: string[]; decision: ReviewerDecision | null }
   | { status: "blocked"; blockedReasons: string[]; lint: string[]; decision: ReviewerDecision | null };
 
 // Full review: deterministic lint is an unconditional gate, then the Claude
@@ -302,7 +303,7 @@ export async function reviewDraft(
     if (second.blocking.length > 0) {
       return { status: "blocked", blockedReasons: second.blocking, lint: [...first.issues, ...second.issues], decision };
     }
-    return { status: "final", final: second.answer, edited: true, lint: [...first.issues, ...second.issues], decision };
+    return { status: "final", final: second.answer, linted: first.answer, edited: true, lint: [...first.issues, ...second.issues], decision };
   }
   if (!decision.approved) {
     return {
@@ -312,5 +313,5 @@ export async function reviewDraft(
       decision,
     };
   }
-  return { status: "final", final: first.answer, edited: false, lint: first.issues, decision };
+  return { status: "final", final: first.answer, linted: first.answer, edited: false, lint: first.issues, decision };
 }

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { reviewDraft, type CitationRegistry } from "./lib/safety";
+import { safetyChanges } from "./lib/safetyBadge";
 import type { Answer, ReviewerDecision } from "./lib/answerSchema";
 import { COLON, type DiagramState } from "./lib/anatomy";
 
@@ -169,5 +170,33 @@ describe("release illustration (cut)", () => {
       expect(out.status).toBe("final");
       if (out.status === "final") expect(out.final.simulation).toBeNull();
     }
+  });
+});
+
+describe("safety badge", () => {
+  const badgeFor = async (draft: Answer, review: (a: Answer) => Promise<ReviewerDecision>) => {
+    const out = await reviewDraft(draft, registry, review);
+    if (out.status !== "final") throw new Error("expected a final answer");
+    return safetyChanges(out.linted, out.final, out.lint, out.edited);
+  };
+
+  it("passes with no changes when nothing was edited or removed", async () => {
+    expect(await badgeFor(good, approve)).toEqual([]);
+  });
+
+  it("shows 1 change, in plain words, when the reviewer reworded the summary", async () => {
+    const reworded = async (a: Answer): Promise<ReviewerDecision> => ({
+      approved: true,
+      edits: JSON.stringify({ ...a, verdict: "This is an extended-release tablet, and the guidelines flag that form after extensive resection." }),
+      blockedReasons: [],
+    });
+    const changes = await badgeFor(good, reworded);
+    expect(changes).toEqual(["The second review reworded the summary to stay within its sources."]);
+    expect(changes.join(" ")).not.toMatch(/[{}[\]"]/); // never raw JSON
+  });
+
+  it("explains a claim the code check removed", async () => {
+    const draft: Answer = { ...good, why: [...good.why, { claim: "It works in the stomach.", citation: "[G:made-up#chunk]" }] };
+    expect(await badgeFor(draft, approve)).toEqual(["Removed a claim whose source didn't check out."]);
   });
 });

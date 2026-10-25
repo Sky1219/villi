@@ -299,6 +299,7 @@ export const finalize = internalMutation({
     edited: v.boolean(),
     blockedReasons: v.array(v.string()),
     lint: v.array(v.string()),
+    safetyChanges: v.optional(v.array(v.string())),
     decision: v.union(
       v.object({ approved: v.boolean(), edits: v.union(v.string(), v.null()), blockedReasons: v.array(v.string()) }),
       v.null(),
@@ -340,6 +341,7 @@ export const finalize = internalMutation({
         approved: args.status === "final",
         edited: args.edited,
         blockedReasons: args.blockedReasons,
+        safetyChanges: args.status === "final" ? (args.safetyChanges ?? []) : undefined,
       },
       error:
         args.status === "blocked"

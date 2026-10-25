@@ -7,6 +7,7 @@ import { REVIEWER_SYSTEM } from "./lib/prompts";
 import { ReviewerSchema, type Answer, type ReviewerDecision } from "./lib/answerSchema";
 import { reviewDraft, type CitationRegistry } from "./lib/safety";
 import { attachEvidence } from "./lib/evidence";
+import { safetyChanges } from "./lib/safetyBadge";
 
 type Registry = CitationRegistry & { evidence?: Record<string, string> };
 
@@ -65,6 +66,7 @@ export const run = internalAction({
       blockedReasons: outcome.status === "blocked" ? outcome.blockedReasons : [],
       lint: outcome.lint,
       decision: outcome.decision,
+      safetyChanges: outcome.status === "final" ? safetyChanges(outcome.linted, outcome.final, outcome.lint, outcome.edited) : [],
     });
     return null;
   },
