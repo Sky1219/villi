@@ -230,8 +230,8 @@ export default function HowPage() {
           The three &ldquo;A&rdquo; buttons on the home screen make every screen larger, and the choice stays on this phone.
         </p>
         <p>
-          &ldquo;Read this answer aloud&rdquo; uses the phone&apos;s own voice: no audio leaves the phone and there is no extra AI
-          call. &ldquo;Show this to the pharmacist&rdquo; puts the question full-screen in large type, to turn the phone around at
+          &ldquo;Read this answer aloud&rdquo; uses the phone&apos;s built-in speech, preferring a voice that runs on the phone, and makes no
+          extra AI call. &ldquo;Show this to the pharmacist&rdquo; puts the question full-screen in large type, to turn the phone around at
           the counter.
         </p>
       </Section>

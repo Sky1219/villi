@@ -36,7 +36,7 @@ Sonnet runs the tool loop, where speed and cost matter. Opus does the one review
 Nothing unreviewed is ever shown: the answer says the service is busy and offers to try again. Label facts for the top 300 drugs come from Villi's own drug table, so a check still works if openFDA is down. Guideline search falls back to keywords if Voyage is down, and the trace says so.
 
 **"What about older, tired or low-vision users?"**
-The whole app uses Atkinson Hyperlegible, a typeface made for low vision, with 44px or larger tap targets. Three text sizes on home scale every screen. Any answer can be read aloud with the phone's own voice, so no audio leaves the phone and there's no extra AI call. At the pharmacy, **Show this to the pharmacist** puts the question full-screen in large type. → home header, any answer.
+The whole app uses Atkinson Hyperlegible, a typeface made for low vision, with 44px or larger tap targets. Three text sizes on home scale every screen. Any answer can be read aloud with the phone's built-in speech, preferring an on-device voice, with no extra AI call. At the pharmacy, **Show this to the pharmacist** puts the question full-screen in large type. → home header, any answer.
 
 **"What about privacy? It's health data."**
 No accounts, names or birthdays: a random id on the device is the only credential. Photos are deleted right after they're read, because bottle labels show names. "Delete my data" removes everything personal. Shared entries are anonymous and split only by coarse anatomy.

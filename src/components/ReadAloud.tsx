@@ -4,8 +4,8 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 const noop = () => () => {};
 
-// Reads the answer aloud with the browser's own speech voice. No audio leaves the phone
-// and there is no extra AI call: it speaks the reviewed text, minus citation tokens.
+// Reads the answer aloud with the browser's built-in speech, preferring a voice that runs on
+// the device. No extra AI call: it speaks the reviewed text, minus citation tokens.
 export function ReadAloud({ parts, lang }: { parts: string[]; lang: string }) {
   // False while prerendering, so the button only appears where the browser can speak.
   const supported = useSyncExternalStore(
@@ -58,10 +58,14 @@ export function ReadAloud({ parts, lang }: { parts: string[]; lang: string }) {
     // Chrome sometimes drops a speak() that comes right after an unneeded cancel().
     if (synth.speaking || synth.pending) synth.cancel();
     queued.current = [];
+    // Some browsers offer network voices (Chrome's "Google …"); use an on-device one when there is one.
+    const base = lang.split("-")[0];
+    const voice = synth.getVoices().find((v) => v.localService && v.lang.toLowerCase().startsWith(base)) ?? null;
     // One utterance per section, so the voice pauses between them.
     parts.forEach((text, i) => {
       const u = new SpeechSynthesisUtterance(text);
       u.lang = lang;
+      if (voice) u.voice = voice;
       u.rate = 0.9;
       if (i === parts.length - 1) {
         u.onend = () => setSpeaking(false);
