@@ -107,7 +107,7 @@ export function MedsEditor({ anonId, meds, checkable = false }: { anonId: string
         </p>
       )}
       <form
-        className="flex gap-2"
+        className="flex flex-wrap gap-2"
         onSubmit={async (e) => {
           e.preventDefault();
           if (!name.trim()) return;
@@ -131,7 +131,7 @@ export function MedsEditor({ anonId, meds, checkable = false }: { anonId: string
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Name as printed on the label"
-          className="min-h-12 min-w-0 flex-1 rounded-xl border border-border bg-background px-3"
+          className="min-h-12 min-w-0 flex-[1_1_12rem] rounded-xl border border-border bg-background px-3"
           autoComplete="off"
         />
         <button disabled={busy || !name.trim()} className="min-h-12 rounded-xl border border-accent px-4 font-bold text-accent disabled:opacity-50">

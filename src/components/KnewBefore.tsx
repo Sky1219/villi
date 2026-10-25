@@ -34,7 +34,7 @@ export function KnewBefore({
       <p id={id} className={compact ? "mb-1 text-sm font-bold" : "mb-2 font-bold"}>
         Did {who} know this already?
       </p>
-      <div role="group" aria-labelledby={id} className="flex gap-2">
+      <div role="group" aria-labelledby={id} className="flex flex-wrap gap-2">
         <button onClick={() => pick(false)} aria-pressed={value === false} className={btn(value === false)}>
           {person === "you" ? "New to me" : "New to us"}
         </button>

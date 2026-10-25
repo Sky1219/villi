@@ -100,7 +100,7 @@ export function CheckNewForm({ anonId, questionId, initial }: { anonId: string; 
       <label htmlFor={`newform-${questionId}`} className="block text-sm font-bold">
         What&apos;s the new form called? (optional)
       </label>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <input
           id={`newform-${questionId}`}
           value={name}

@@ -83,7 +83,7 @@ function Saw({ anonId }: { anonId: string }) {
 
       <fieldset>
         <legend className="mb-2 font-bold">Shape</legend>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(9rem,1fr))] gap-2">
           {SHAPES.map((s) => (
             <button key={s.v} onClick={() => setShape(toggle(shape, s.v))} aria-pressed={shape === s.v} className={chip(shape === s.v)}>
               <span aria-hidden className={`inline-block shrink-0 border border-control-border bg-removed/40 ${s.cls}`} />
@@ -95,7 +95,7 @@ function Saw({ anonId }: { anonId: string }) {
 
       <fieldset>
         <legend className="mb-2 font-bold">Color</legend>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(6.5rem,1fr))] gap-2">
           {COLORS.map((c) => (
             <button key={c.v} onClick={() => setColor(toggle(color, c.v))} aria-pressed={color === c.v} className={chip(color === c.v)}>
               <span aria-hidden className="inline-block h-5 w-5 shrink-0 rounded-full border border-border" style={{ background: c.hex }} />
@@ -107,7 +107,7 @@ function Saw({ anonId }: { anonId: string }) {
 
       <fieldset>
         <legend className="mb-2 font-bold">Size</legend>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(6.5rem,1fr))] gap-2">
           {SIZES.map((s) => (
             <button key={s} onClick={() => setSize(toggle(size, s))} aria-pressed={size === s} className={`${chip(size === s)} justify-center capitalize`}>
               {s}

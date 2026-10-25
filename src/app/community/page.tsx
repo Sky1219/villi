@@ -253,7 +253,7 @@ function Community({ anonId }: { anonId: string }) {
             key={f.key}
             onClick={() => setFilter(f.key)}
             aria-pressed={filter === f.key}
-            className={`min-h-11 shrink-0 rounded-full border px-3 text-sm ${filter === f.key ? "border-accent bg-accent-soft font-bold" : "border-border bg-surface"}`}
+            className={`min-h-11 max-w-full rounded-full border px-3 text-left text-sm ${filter === f.key ? "border-accent bg-accent-soft font-bold" : "border-border bg-surface"}`}
           >
             {f.label}
           </button>

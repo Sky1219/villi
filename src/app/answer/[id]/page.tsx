@@ -71,7 +71,8 @@ function TraceSteps({ trace }: { trace: Trace[] }) {
 function TraceList({ trace, status }: { trace: Trace[]; status: string }) {
   const working = isWorking(status);
   return (
-    <section className="rounded-2xl border border-border bg-surface p-4">
+    // Each new step is read out as it lands, as DESIGN.md's live trace promises.
+    <section aria-live="polite" aria-busy={working} className="rounded-2xl border border-border bg-surface p-4">
       <h2 className="mb-2 flex items-center gap-2 text-sm font-bold text-muted">
         {working && <span className="inline-block h-2 w-2 rounded-full bg-accent motion-safe:animate-[villi-pulse_1.2s_ease-in-out_infinite]" />}
         {status === "reviewing" ? "Safety review in progress…" : working ? "Checking sources…" : "What Villi checked"}
@@ -437,7 +438,7 @@ function Useful({ anonId, answerId, value }: { anonId: string; answerId: Id<"ans
       <h2 id="useful" className="mb-2 font-bold">
         Was this useful?
       </h2>
-      <div role="group" aria-labelledby="useful" className="flex gap-2">
+      <div role="group" aria-labelledby="useful" className="flex flex-wrap gap-2">
         <button onClick={() => pick(true)} aria-pressed={value === true} className={btn(value === true)}>
           Yes
         </button>
@@ -526,13 +527,13 @@ function FollowUp({ anonId, parentId }: { anonId: string; parentId: Id<"answers"
       <label htmlFor="followup" className="mb-2 block font-bold">
         Ask a follow-up
       </label>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <input
           id="followup"
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="e.g. Can I crush it?"
-          className="min-h-12 flex-1 rounded-xl border border-border bg-background px-3"
+          className="min-h-12 min-w-0 flex-[1_1_12rem] rounded-xl border border-border bg-background px-3"
         />
         <button disabled={busy || !text.trim()} className="min-h-12 rounded-xl border border-accent px-4 font-bold text-accent disabled:opacity-50">
           Ask

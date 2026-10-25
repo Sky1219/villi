@@ -114,7 +114,7 @@ export function ScanBox({ anonId, initialText = "" }: { anonId: string; initialT
         }}
       />
       <form
-        className="flex gap-2"
+        className="flex flex-wrap gap-2"
         onSubmit={async (e) => {
           e.preventDefault();
           if (!text.trim()) return;
@@ -137,7 +137,7 @@ export function ScanBox({ anonId, initialText = "" }: { anonId: string; initialT
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="e.g. Metoprolol ER 50 mg"
-          className="min-h-12 flex-1 rounded-xl border border-border bg-background px-3 text-base"
+          className="min-h-12 min-w-0 flex-[1_1_12rem] rounded-xl border border-border bg-background px-3 text-base"
           autoComplete="off"
         />
         <button
