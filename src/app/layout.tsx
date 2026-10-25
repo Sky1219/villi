@@ -3,6 +3,7 @@ import { Atkinson_Hyperlegible, Noto_Sans_Arabic } from "next/font/google";
 import "./globals.css";
 import { ConvexClientProvider } from "@/components/ConvexClientProvider";
 import { AnatomyBanner } from "@/components/AnatomyBanner";
+import { ConnectionBanner } from "@/components/ConnectionBanner";
 import { TEXT_SIZE_BOOT } from "@/lib/textSize";
 
 const atkinson = Atkinson_Hyperlegible({
@@ -43,6 +44,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full font-sans">
         <ConvexClientProvider>
           <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-4 pb-10 print:max-w-none print:px-0 print:pb-0">
+            <ConnectionBanner />
             <AnatomyBanner />
             {children}
           </div>
