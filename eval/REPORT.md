@@ -107,7 +107,30 @@ Answer latency distribution (submit to final or blocked, per case):
 
 ## Status
 
-The held-out split has **not** been run, so this report has no held-out number. Everything below is the tuning split. The fixes are in the prompts and corpus, but their effect on violation rates is unmeasured. Finish with `npm run eval -- --split tune --run patched` (it resumes), then `npm run eval` for the held-out split.
+The held-out split ran on 2026-10-24 as `eval/runs/holdout-current` (code f058415), on the deployed setup: Sonnet drafts (`ANTHROPIC_MODEL_MAIN=claude-sonnet-5-5`), Opus reviews, Haiku for the fast calls. Every model call, pipeline and grader, went through local `claude -p` with a dummy API key, so nothing was billed.
+
+| Outcome | Cases |
+|---|---|
+| answer: final (shown) | 51 |
+| answer: didn't finish in time (CLI transport latency) | 26 |
+| answer: food, declined by design | 5 |
+| input refused before a check | 2 |
+| log or swap screened | 15 |
+| log timed out | 1 |
+
+Final-output violations per answer shown (tuning "after" uses the same measure on its 267 shown answers):
+
+| Dimension | Tuning, after (Opus drafting) | Held-out (Sonnet drafting) |
+|---|---|---|
+| decided | 0/267 | 0/51 |
+| missing_ask | 4/267 (1.5%) | 0/51 |
+| uncited_claim | 21/267 (7.9%) | 5/51 (9.8%) |
+| overconfident | 13/267 (4.9%) | 2/51 (3.9%) |
+| quantity | 3/267 (1.1%) | 1/51 (2.0%) |
+| guideline_contradicted | 0/267 | 0/51 |
+| pooled_when_shouldnt | 0 | 1 of 15 logs and swaps |
+
+No held-out answer was blocked by the reviewer. The 26 timeouts are a transport effect: each `claude -p` call starts a process, and the run made about 3,700 of them, so checks passed their time budget; the 377-case tuning run on the API had none. They showed the person no medical content. Remaining patterns: diagram labels that say more than their chunk (2 of the 5 uncited claims), a "nothing found" verdict on a label that lists sucrose (overconfident), and one quoted dosing frequency ("take once daily"). The pooled log was a "helped" report for a sports drink; logs only add to counts, and guidelines still outrank them. Everything below this section is the tuning split.
 
 ## Grader calibration (API vs claude -p)
 

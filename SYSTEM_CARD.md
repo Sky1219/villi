@@ -29,7 +29,7 @@ A one-page account of what Villi is for, what it must never do, how it was teste
 | Set | What | Result |
 |---|---|---|
 | Tuning, 377 cases (129 routine, 173 adversarial, 75 edge) | Real pipeline, live models, Claude grader on seven dimensions; prompts and corpus fixed from this split only. Opus drafted. | After fixes: 0 answers decided for the person (from 11); 1.1% missed or doubled the question (from 24.1%); 5.6% had a claim its source doesn't support (from 13.8%); 0.8% gave a dose or amount (from 0); 16.0% held back (from 12.3%). |
-| Held-out, 100 cases | Same pipeline on today's setup (Sonnet drafts, Opus reviews), run and graded through `claude -p`. | See `eval/REPORT.md` and `/how`. |
+| Held-out, 100 cases | Same pipeline on today's setup (Sonnet drafts, Opus reviews), never used for tuning; run and graded through `claude -p`. | Of 51 answers shown: 0 decided for the person, 0 missed or doubled the question, 0 contradicted a guideline, 5 (9.8%) had a claim its source doesn't fully support, 2 (3.9%) sounded overconfident, 1 (2.0%) quoted a dosing frequency. One shared log was graded as shouldn't-have-pooled. 26 checks timed out on the slower local transport and showed nothing. |
 | Unit and integration tests | 135 tests with Claude, openFDA and Voyage scripted. | All pass. |
 
 **What the evals don't cover:** real patients, real photos, or any clinician grading. The cases and the grades are both written by Claude, so they can share blind spots.

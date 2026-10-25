@@ -1,0 +1,42 @@
+{
+  "segments": [
+    {
+      "at": "2026-10-25T03:34:45.527Z",
+      "transport": "cli",
+      "commit": "f058415",
+      "cases": 0,
+      "wallMs": 1008,
+      "usage": {}
+    },
+    {
+      "at": "2026-10-25T04:29:55.829Z",
+      "transport": "cli",
+      "commit": "f058415",
+      "cases": 100,
+      "wallMs": 3311306,
+      "usage": {
+        "claude-haiku-5-5 (cli)": {
+          "calls": 3507,
+          "input": 7014,
+          "output": 2033871,
+          "cacheRead": 8384975,
+          "cacheWrite": 2329714
+        },
+        "claude-sonnet-5-5 (cli)": {
+          "calls": 141,
+          "input": 604,
+          "output": 180234,
+          "cacheRead": 2746484,
+          "cacheWrite": 616353
+        },
+        "claude-opus-5-5 (cli)": {
+          "calls": 77,
+          "input": 154,
+          "output": 103030,
+          "cacheRead": 115064,
+          "cacheWrite": 194699
+        }
+      }
+    }
+  ]
+}

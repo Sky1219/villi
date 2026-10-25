@@ -30,6 +30,22 @@ const EVAL = {
   blocked: { before: "39 of 318 (12.3%)", after: "51 of 318 (16.0%)" },
 };
 
+// The 100 held-out cases, never used for tuning, on today's setup (Sonnet drafts,
+// Opus reviews), run and graded through claude -p on October 24, 2026. Rates are per
+// answer shown; the tuning column is the same measure on its 267 shown answers.
+const HELDOUT = {
+  shown: 51,
+  timedOut: 26,
+  rows: [
+    { what: "Decides for the person", tuning: "0 of 267", heldout: "0 of 51" },
+    { what: "Missing ASK, or two questions in one", tuning: "4 of 267 (1.5%)", heldout: "0 of 51" },
+    { what: "A claim its source doesn't support", tuning: "21 of 267 (7.9%)", heldout: "5 of 51 (9.8%)" },
+    { what: "Sounds more certain than the evidence", tuning: "13 of 267 (4.9%)", heldout: "2 of 51 (3.9%)" },
+    { what: "Gives a dose or amount", tuning: "3 of 267 (1.1%)", heldout: "1 of 51 (2.0%)" },
+    { what: "Contradicts a guideline", tuning: "0 of 267", heldout: "0 of 51" },
+  ],
+};
+
 // Every sentence here describes what the code does; keep it in step with it.
 export default function HowPage() {
   return (
@@ -117,11 +133,42 @@ export default function HowPage() {
           Held back by the safety checks, never shown: {EVAL.blocked.before} before, {EVAL.blocked.after} after. Stricter
           checks hold back more answers; a held-back answer tells the person to try again or ask their pharmacist.
         </p>
+        <h3 className="pt-2 font-bold">On 100 cases it had never seen</h3>
+        <p>
+          These cases were held back from the fixes. They ran on today&apos;s setup, with Claude Sonnet drafting and Claude
+          Opus reviewing. {HELDOUT.shown} produced an answer; per answer shown:
+        </p>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <caption className="sr-only">Answers with each problem, per answer shown, tuning cases against held-out cases</caption>
+            <thead>
+              <tr className="border-b border-border">
+                <th scope="col" className="py-2 pr-2 font-bold">Answers that…</th>
+                <th scope="col" className="py-2 pr-2 font-bold">Tuning, after</th>
+                <th scope="col" className="py-2 font-bold">Held-out</th>
+              </tr>
+            </thead>
+            <tbody>
+              {HELDOUT.rows.map((r) => (
+                <tr key={r.what} className="border-b border-border align-top">
+                  <th scope="row" className="py-2 pr-2 font-normal">
+                    {r.what}
+                  </th>
+                  <td className="py-2 pr-2">{r.tuning}</td>
+                  <td className="py-2 font-bold">{r.heldout}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p>
+          {HELDOUT.timedOut} held-out checks didn&apos;t finish in time and showed no medical content. That run went through
+          a slower local test path than the live app uses; the 377-case run, on the live path, had none.
+        </p>
         <p className="text-muted">
           Limits: the cases and the grades are both written by Claude, not by patients or clinicians, and none uses a real
-          photo. The 100 held-out cases haven&apos;t been graded yet. Some problems went up after the fixes; they are listed
-          as they are. These runs used Claude Opus to draft answers; the app now drafts with Claude Sonnet and still reviews
-          with Opus, and that setup hasn&apos;t been re-tested.
+          photo. With 51 answers, each held-out answer is about 2 points. Some problems went up after the fixes; they are
+          listed as they are. The tuning runs drafted with Claude Opus; the held-out run used today&apos;s Sonnet drafting.
         </p>
       </Section>
 
