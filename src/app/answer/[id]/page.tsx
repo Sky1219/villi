@@ -19,6 +19,8 @@ import type { SegmentId } from "@convex/lib/anatomy";
 import { personFor } from "@convex/lib/careFor";
 import { Loading } from "@/components/Loading";
 import { displayName } from "@/lib/displayName";
+import { answerScript } from "@/lib/readAloud";
+import { ReadAloud } from "@/components/ReadAloud";
 
 type FinalAnswer = Answer & {
   evidence?: Record<string, { kind: string; text: string }>;
@@ -614,6 +616,13 @@ function AnswerView({ anonId, answerId }: { anonId: string; answerId: Id<"answer
           </Link>
         )}
       </section>
+
+      {done && (
+        <ReadAloud
+          parts={answerScript(final, a.kind === "followup" || !itemName ? null : displayName(itemName))}
+          lang={profile?.language ?? "en"}
+        />
+      )}
 
       {!done && <TraceList trace={a.toolTrace} status={a.status} />}
 
