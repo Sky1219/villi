@@ -63,3 +63,26 @@
 - **Risk to the demo:** none. Docs only. Describes commits 1, 2, 3, 5 and 6: if you skip any of those, drop its sentence (or skip this commit).
 - **Verify:** read the three added README/DEMO/QA paragraphs.
 - **Commit:** 561f167
+
+### 9. Connection banner
+- **What:** if the Convex connection drops for more than 4 seconds, every screen shows "No connection. Reconnecting…" (a started check keeps going on the server; the page updates when it's back); if it never opens within 10 seconds, "Can't reach Villi yet. Still trying…".
+- **Why it matters for judging:** on a venue hotspot, a frozen-looking page is the worst live failure; this tells you (and a tired user at home) what's happening (polish, criterion 3).
+- **Risk to the demo:** low. Read-only use of `useConvexConnectionState`; debounced so a blip shows nothing. If the banner appears on stage, the network really is down: switch to the screen recording. Checked in a browser against an unreachable backend: nothing at 3 s, the banner at 12 s.
+- **Verify:** on the laptop, open DevTools → Network → Offline for 5 seconds; the banner appears, then goes when you go back online.
+- **Commit:** 7d43f9b
+
+### 10. Read-aloud fixes from a review
+- **What:** an independent review of tonight's diff found read-aloud could stick on "Stop reading" on Chrome Android and keep talking when the app goes to the background, and that "go to the ER" would be read as "go to the extended-release". Fixed: utterances are kept referenced, a fallback resets the button, the voice stops when the page is hidden, and ER/XL/SR/DR/EC are expanded only after a drug word.
+- **Why it matters for judging:** polish and care for the users read-aloud is for (criterion 1).
+- **Risk to the demo:** low. Only changes commit 1's button; needs commit 1.
+- **Verify:** read an answer aloud, switch apps: it stops, and the button says "Read this answer aloud" again.
+- **Commit:** 750169f
+
+### 11. Pharmacist-view fixes from the same review
+- **What:** the dialog's title id is unique (`useId`), the page behind it no longer scrolls on iOS while it's open, and sheet questions have any citation tokens stripped before they're shown large.
+- **Why it matters for judging:** polish and accessibility (criterion 1).
+- **Risk to the demo:** low. Needs commits 2 and 5. Checked in a browser: overflow is reset after **Done** and after Escape.
+- **Verify:** open the view, try to scroll the page behind, tap **Done**, scroll the page normally.
+- **Commit:** ea0c0c8
+
+**Review findings not acted on:** React 19 may log a dev-only console warning about the `<script>` in `<head>` (none seen in this dev server's log; prod is unaffected). Questions already marked "asked" still appear in the pharmacist view, on purpose: an asked question can still be waiting for its answer.
