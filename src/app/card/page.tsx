@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { useAnonId } from "@/lib/anon";
@@ -20,9 +21,9 @@ function Card({ anonId }: { anonId: string }) {
           <button onClick={() => window.print()} className="min-h-12 flex-1 rounded-xl bg-accent px-4 font-bold text-accent-ink">
             Print or save as PDF
           </button>
-          <button onClick={() => history.back()} className="min-h-12 rounded-xl border border-border px-4 font-bold">
+          <Link href="/sheet" className="flex min-h-12 items-center rounded-xl border border-border px-4 font-bold">
             Back
-          </button>
+          </Link>
         </div>
         <p className="text-sm">Print it and cut along the dashed line to carry it, or keep it on the phone.</p>
       </div>
