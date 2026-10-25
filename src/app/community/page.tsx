@@ -247,7 +247,7 @@ function Community({ anonId }: { anonId: string }) {
           </button>
         ))}
       </div>
-      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1" aria-label="Filter by anatomy">
+      <div className="flex flex-wrap gap-2" aria-label="Filter by anatomy">
         {FILTERS.map((f) => (
           <button
             key={f.key}

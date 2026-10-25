@@ -12,17 +12,21 @@ import { KnewBefore } from "./KnewBefore";
 
 const STATE = {
   flagged: { tag: "Flag to discuss", cls: "text-flag", box: "border-flag bg-flag-soft" },
-  "nothing-found": { tag: "Nothing found in the sections checked", cls: "text-muted", box: "border-border bg-surface" },
+  "nothing-found": { tag: "Nothing found in the sources I checked", cls: "text-muted", box: "border-border bg-surface" },
   "cant-tell": { tag: "Can't tell yet", cls: "text-muted", box: "border-border bg-surface-2" },
 } as const;
 
 function Chips({ citations }: { citations: ReviewCitation[] }) {
   const [open, setOpen] = useState<string | null>(null);
+  const [all, setAll] = useState(false);
   const c = citations.find((x) => x.key === open);
+  // Two chips, then "+N more": a wall of pills reads as noise, not evidence.
+  const shown = all ? citations : citations.slice(0, 2);
+  const hidden = citations.length - shown.length;
   return (
     <span className="block">
       <span className="flex flex-wrap gap-x-1">
-        {citations.map((x) => (
+        {shown.map((x) => (
           <button
             key={x.key}
             onClick={() => setOpen(open === x.key ? null : x.key)}
@@ -33,6 +37,11 @@ function Chips({ citations }: { citations: ReviewCitation[] }) {
             <span className="inline-flex min-h-8 items-center rounded-full bg-info-soft px-2.5 text-xs font-bold text-info">{x.label}</span>
           </button>
         ))}
+        {hidden > 0 && (
+          <button onClick={() => setAll(true)} className="flex min-h-11 items-center px-1 text-xs font-bold text-info underline">
+            +{hidden} more {hidden === 1 ? "source" : "sources"}
+          </button>
+        )}
       </span>
       {c && (
         <span className="mt-1 block rounded-xl bg-info-soft p-3 text-sm">
@@ -151,7 +160,7 @@ export function MedReviewSummary({ anonId, person = "you" }: { anonId: string; p
       <span className="min-w-0 flex-1">
         <span className="block text-sm text-muted">Review of {whose} {rows.length} medicines</span>
         <span className={`block font-bold ${flagged ? "text-flag" : ""}`}>
-          {flagged ? `${flagged} of ${rows.length} to discuss` : "Nothing flagged in the sections checked"}
+          {flagged ? `${flagged} of ${rows.length} to discuss` : "Nothing found in the sources I checked"}
         </span>
         {pending > 0 && <span className="block text-sm text-muted">{pending} still being read</span>}
       </span>

@@ -47,7 +47,7 @@ export function ShareWithTeam({ anonId }: { anonId: string }) {
             setError(friendlyError(e));
           }
         }}
-        className="min-h-12 w-full rounded-xl bg-accent px-4 font-bold text-accent-ink"
+        className="min-h-12 w-full rounded-xl border border-accent px-4 font-bold text-accent"
       >
         Create a link
       </button>
@@ -55,7 +55,7 @@ export function ShareWithTeam({ anonId }: { anonId: string }) {
         <ul className="space-y-2">
           {links.map((l) => (
             <li key={l.token} className="rounded-xl bg-surface-2 p-3 text-sm">
-              <p className="break-all font-mono text-xs">{linkFor(l.token)}</p>
+              <p className="break-all text-xs">{linkFor(l.token)}</p>
               <p className="text-xs text-muted">Expires {new Date(l.expiresAt).toLocaleDateString()}</p>
               <div className="mt-2 grid grid-cols-2 gap-2">
                 <button onClick={() => share(l.token)} className="min-h-11 rounded-xl border border-accent px-3 font-bold text-accent">

@@ -103,7 +103,7 @@ export function requestMarkdown(d: SheetData, date: string): string {
     `## Medicines to review (${flagged.length})`,
     ``,
   ];
-  if (flagged.length === 0) lines.push(`No flags in the label sections checked.`, ``);
+  if (flagged.length === 0) lines.push(`Nothing found in the sources I checked.`, ``);
   flagged.forEach((m, i) => {
     lines.push(`### ${i + 1}. ${m.name}${m.dosageForm ? ` (${m.dosageForm.toLowerCase()})` : ""}`);
     for (const f of m.requestFlags) {
@@ -114,7 +114,7 @@ export function requestMarkdown(d: SheetData, date: string): string {
     }
     lines.push(`- **Question:** ${m.question}`, ``);
   });
-  if (clear.length) lines.push(`No flags in the label sections checked: ${clear.map((m) => m.name).join(", ")}.`);
+  if (clear.length) lines.push(`Nothing found in the sources I checked: ${clear.map((m) => m.name).join(", ")}.`);
   if (unchecked.length) lines.push(`Label not checked yet: ${unchecked.map((m) => m.name).join(", ")}.`);
   if (d.warnings.length) {
     lines.push(``, `## Warning signs logged`, ``);

@@ -86,7 +86,7 @@ function Saw({ anonId }: { anonId: string }) {
         <div className="grid grid-cols-2 gap-2">
           {SHAPES.map((s) => (
             <button key={s.v} onClick={() => setShape(toggle(shape, s.v))} aria-pressed={shape === s.v} className={chip(shape === s.v)}>
-              <span aria-hidden className={`inline-block shrink-0 border border-border bg-surface-2 ${s.cls}`} />
+              <span aria-hidden className={`inline-block shrink-0 border border-control-border bg-removed/40 ${s.cls}`} />
               {s.label}
             </button>
           ))}
@@ -99,7 +99,7 @@ function Saw({ anonId }: { anonId: string }) {
           {COLORS.map((c) => (
             <button key={c.v} onClick={() => setColor(toggle(color, c.v))} aria-pressed={color === c.v} className={chip(color === c.v)}>
               <span aria-hidden className="inline-block h-5 w-5 shrink-0 rounded-full border border-border" style={{ background: c.hex }} />
-              <span className="capitalize">{c.v}</span>
+              <span>{c.v.charAt(0).toUpperCase() + c.v.slice(1)}</span>
             </button>
           ))}
         </div>

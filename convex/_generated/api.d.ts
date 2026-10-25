@@ -29,6 +29,7 @@ import type * as lib_evidence from "../lib/evidence.js";
 import type * as lib_fridge from "../lib/fridge.js";
 import type * as lib_impact from "../lib/impact.js";
 import type * as lib_labelNames from "../lib/labelNames.js";
+import type * as lib_labelText from "../lib/labelText.js";
 import type * as lib_llm from "../lib/llm.js";
 import type * as lib_medReview from "../lib/medReview.js";
 import type * as lib_moderation from "../lib/moderation.js";
@@ -80,6 +81,7 @@ declare const fullApi: ApiFromModules<{
   "lib/fridge": typeof lib_fridge;
   "lib/impact": typeof lib_impact;
   "lib/labelNames": typeof lib_labelNames;
+  "lib/labelText": typeof lib_labelText;
   "lib/llm": typeof lib_llm;
   "lib/medReview": typeof lib_medReview;
   "lib/moderation": typeof lib_moderation;

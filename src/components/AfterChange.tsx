@@ -32,7 +32,7 @@ export function AfterChangeCards({ anonId, person }: { anonId: string; person: s
         </section>
       )}
       {(due ?? []).map((q) => (
-        <section key={q._id} className="rounded-2xl border-2 border-accent bg-accent-soft p-4">
+        <section key={q._id} className="rounded-2xl border border-border bg-surface-2 p-4">
           <h2 className="flex flex-wrap items-center gap-2 font-bold">
             Two weeks on
             {q.synthetic && <span className="rounded-full bg-surface-2 px-2.5 py-1 text-xs font-bold text-muted">demo data</span>}

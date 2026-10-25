@@ -283,7 +283,7 @@ export const list = query({
       };
     };
     const board = await Promise.all(
-      rows.sort((a, b) => b.clinicianEndorsements.length - a.clinicianEndorsements.length || b.upvotes - a.upvotes).slice(0, 60).map(view),
+      rows.sort((a, b) => b.upvotes - a.upvotes || b.createdAt - a.createdAt).slice(0, 60).map(view),
     );
     return {
       canEndorse: me.role === "clinician" && me.clinicianDemoVerified,

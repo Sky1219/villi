@@ -160,11 +160,15 @@ type SourceInfo = { title: string; section: string | null; verifiedAgainst: stri
 
 function Citations({ citation, final, titles }: { citation: string; final: FinalAnswer; titles: Record<string, SourceInfo> }) {
   const [open, setOpen] = useState<string | null>(null);
+  const [all, setAll] = useState(false);
   const cites = Array.from(citation.matchAll(/\[(G|L|C|T):([^\]]+)\]/g), (m) => ({ kind: m[1], ref: m[2].trim() }));
+  // Two chips, then "+N more": a wall of pills reads as noise, not evidence.
+  const shown = all ? cites : cites.slice(0, 2);
+  const hidden = cites.length - shown.length;
   return (
     <span className="block">
       <span className="flex flex-wrap gap-x-1">
-        {cites.map((c) => {
+        {shown.map((c) => {
           const key = `${c.kind}:${c.ref}`;
           // 44px tap area around a 32px pill; the label says it opens the source.
           return (
@@ -182,6 +186,11 @@ function Citations({ citation, final, titles }: { citation: string; final: Final
             </button>
           );
         })}
+        {hidden > 0 && (
+          <button onClick={() => setAll(true)} className="flex min-h-11 items-center px-1 text-xs font-bold text-info underline">
+            +{hidden} more {hidden === 1 ? "source" : "sources"}
+          </button>
+        )}
       </span>
       {open && (
         <span className="mt-2 block rounded-xl bg-info-soft p-3 text-sm">

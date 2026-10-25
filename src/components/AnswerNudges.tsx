@@ -15,7 +15,7 @@ export function AnswerNudges({ anonId }: { anonId: string }) {
   return (
     <>
       {nudges.map((q) => (
-        <section key={q._id} className="rounded-2xl border-2 border-accent bg-accent-soft p-4">
+        <section key={q._id} className="rounded-2xl border border-border bg-surface-2 p-4">
           <h2 className="font-bold">Did you get an answer?</h2>
           <p className="mt-1">
             You asked: &ldquo;{q.text}&rdquo;

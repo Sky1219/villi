@@ -76,7 +76,7 @@ describe("medicine list review", () => {
   it("says nothing found only after reading the label, and lists the sections it read", () => {
     const o = review("ondansetron", JEJ);
     expect(o).toMatchObject({ state: "nothing-found", flags: [] });
-    expect(o.summary).toBe("Nothing found in the sections checked: dosage form (NDC), dosage and administration.");
+    expect(o.summary).toBe("Label sections checked: dosage form (NDC), dosage and administration.");
     expect(review("unchecked", JEJ)).toMatchObject({ state: "cant-tell", summary: "Label not checked yet." });
     expect(review("unlisted", JEJ).state).toBe("cant-tell");
     expect(review("unlisted", JEJ).summary).toMatch(/No FDA label found/);

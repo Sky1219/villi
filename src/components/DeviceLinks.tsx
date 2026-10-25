@@ -22,7 +22,7 @@ export function DeviceLinks({ anonId }: { anonId: string }) {
       {code ? (
         <p className="mt-2" role="status">
           On the other phone, open Villi and tap &ldquo;I have a code from another phone&rdquo;. Enter{" "}
-          <span className="font-mono text-2xl font-bold tracking-widest">{code.code}</span> before{" "}
+          <span className="text-2xl font-bold tabular-nums tracking-widest">{code.code}</span> before{" "}
           {new Date(code.expiresAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}. It works once.
         </p>
       ) : (
@@ -116,7 +116,7 @@ export function EnterDeviceCode({ anonId }: { anonId: string }) {
         inputMode="numeric"
         autoComplete="one-time-code"
         maxLength={7}
-        className="min-h-12 w-full rounded-xl border border-border bg-background px-3 font-mono text-xl tracking-widest"
+        className="min-h-12 w-full rounded-xl border border-border bg-background px-3 text-xl tabular-nums tracking-widest"
       />
       <button disabled={busy || code.replace(/\D/g, "").length !== 6} className="min-h-12 w-full rounded-xl bg-accent font-bold text-accent-ink disabled:opacity-60">
         Join

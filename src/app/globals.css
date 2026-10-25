@@ -74,6 +74,10 @@ body {
   color: var(--foreground);
 }
 
+:lang(ar) {
+  font-family: var(--font-arabic), var(--font-atkinson), sans-serif;
+}
+
 /* Unlayered on purpose so they win over utility classes: every focus ring, form
    control edge and placeholder meets WCAG 2.2 AA (3:1 non-text, 4.5:1 text). */
 :focus-visible {
@@ -109,7 +113,7 @@ button[aria-pressed="false"] {
   }
   .print-sheet {
     max-width: none;
-    font-size: 9.5pt;
+    font-size: 11pt;
   }
 }
 

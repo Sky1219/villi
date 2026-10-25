@@ -144,7 +144,7 @@ It's a single phone-width column with big, forgiving controls, the kind you can 
 
 **Key Characteristics:**
 - One warm rust accent for action and for the question to bring to a professional; everything else is paper and ink.
-- Atkinson Hyperlegible everywhere, regular and bold only, sized for low vision.
+- Atkinson Hyperlegible everywhere, regular and bold only, sized for low vision. Arabic answers use Noto Sans Arabic, which Atkinson lacks glyphs for.
 - Three answer states told apart by surface and border, never by a green "all clear".
 - Tap targets of 44px at minimum, and usually 48 to 64px.
 - Flat 2D SVG only: no photos of bodies, no 3D anatomy, no stoma-bag imagery.
@@ -206,7 +206,7 @@ A single centered column, at most 448px wide (`max-w-md`), with 16px side gutter
 
 Answer pages run in a fixed reading order: the state card with the verdict, then the gut diagram, Why, a swap to ask about, community counts, care-team answers, your own log, and sources checked. The ASK card and follow-up come last. Arabic answers flip the whole answer container to `dir="rtl"`.
 
-Print (`/sheet/print`) drops all chrome marked `.no-print`, forces white paper and black ink, and sets 12pt type.
+Print (`/sheet/print`) drops all chrome marked `.no-print`, forces white paper and black ink, and sets 11pt type so the review request stays on one page.
 
 ### Named Rules
 **The One Thumb Rule.** Every interactive element is at least 44px tall (`min-h-11`). Primary rows are 48px, the main camera action is 56px, and home entry cards are 64px.

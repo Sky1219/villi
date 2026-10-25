@@ -170,7 +170,7 @@ export function reviewMed(m: MedReviewInput): MedReview {
   }
   return {
     state: "nothing-found",
-    summary: `Nothing found in the sections checked: ${sectionsChecked.join(", ") || "none of the usual sections were on this label"}.`,
+    summary: `Label sections checked: ${sectionsChecked.join(", ") || "none of the usual sections were on this label"}.`,
     flags: [],
     sectionsChecked,
   };

@@ -16,6 +16,7 @@ import { coreName, type LabelResult } from "./fda";
 import type { ChunkView } from "./guidelines";
 import type { CareOutcomes, StratifiedCounts } from "./community";
 import type { Canonical } from "./canonicalize";
+import { labelUsedText } from "./lib/labelText";
 
 const MAX_TURNS = 8;
 const REFUSAL_MESSAGE = "The model declined to answer this one. Try rephrasing, or ask your pharmacist directly.";
@@ -110,7 +111,7 @@ function labelForModel(l: LabelResult) {
   }
   return {
     found: true,
-    labelUsed: `${l.brandName ?? l.genericName} (${l.manufacturer ?? "unknown manufacturer"}, effective ${l.effectiveTime ?? "?"})`,
+    labelUsed: labelUsedText(l.brandName ?? l.genericName, l.manufacturer, l.effectiveTime),
     source: SOURCE_WORDS[l.source],
     // Reviewed facts from Villi's drug table; each backed by the quote in sections[labelSectionCitations[field]].
     ...(l.tableFacts ? { tableFacts: l.tableFacts } : {}),

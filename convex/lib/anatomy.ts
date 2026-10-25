@@ -61,9 +61,10 @@ export function describeAnatomy(a: Anatomy): string {
     "100-200cm": "100 to 200 cm of small bowel",
     ">200cm": "over 200 cm of small bowel",
   }[a.bowelLengthBand];
-  return `${ANATOMY_LABELS[anatomyKeyOf(a)]}, ${len}, colon ${
-    a.colonInContinuity ? "in continuity" : "not in continuity"
-  }`;
+  const key = anatomyKeyOf(a);
+  // The end-jejunostomy and colon-in-continuity labels already say where the colon is.
+  const colon = key === "end-jejunostomy" || key === "colon-in-continuity" ? "" : `, colon ${a.colonInContinuity ? "in continuity" : "not in continuity"}`;
+  return `${ANATOMY_LABELS[key]}, ${len}${colon}`;
 }
 
 // "an end-jejunostomy (no colon) and under 100 cm of small bowel", for a spoken question.

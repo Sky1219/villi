@@ -19,7 +19,7 @@ function Print({ anonId }: { anonId: string }) {
   const firstUse = new Map<string, string>();
   for (const m of flagged) for (const f of m.requestFlags) if (f.guideline && !firstUse.has(f.guideline.key)) firstUse.set(f.guideline.key, `${m._id}:${f.text}`);
   return (
-    <main className="print-sheet space-y-3 bg-white py-6 print:py-0 text-[13px] leading-snug text-black">
+    <main className="print-sheet space-y-3 bg-white py-6 print:py-0 text-sm leading-snug text-black">
       <div className="no-print flex gap-2">
         <button onClick={() => window.print()} className="min-h-12 flex-1 rounded-xl bg-accent px-4 font-bold text-accent-ink">
           Print or save as PDF
@@ -40,7 +40,7 @@ function Print({ anonId }: { anonId: string }) {
 
       <section>
         <h2 className="mb-1 text-base font-bold">Medicines to review ({flagged.length})</h2>
-        {flagged.length === 0 && <p>No flags in the label sections checked.</p>}
+        {flagged.length === 0 && <p>Nothing found in the sources I checked.</p>}
         <ol className="space-y-2">
           {flagged.map((m, i) => (
             <li key={m._id} className="break-inside-avoid">
@@ -76,7 +76,7 @@ function Print({ anonId }: { anonId: string }) {
             </li>
           ))}
         </ol>
-        {clear.length > 0 && <p className="mt-2">No flags in the label sections checked: {clear.map((m) => m.name).join(", ")}.</p>}
+        {clear.length > 0 && <p className="mt-2">Nothing found in the sources I checked: {clear.map((m) => m.name).join(", ")}.</p>}
         {unchecked.length > 0 && <p>Label not checked yet: {unchecked.map((m) => m.name).join(", ")}.</p>}
       </section>
 
@@ -105,7 +105,7 @@ function Print({ anonId }: { anonId: string }) {
         </ol>
       </section>
 
-      <p className="border-t pt-2 text-[11px] text-neutral-700">{REQUEST_FOOTER}</p>
+      <p className="border-t pt-2 text-xs text-neutral-700">{REQUEST_FOOTER}</p>
     </main>
   );
 }

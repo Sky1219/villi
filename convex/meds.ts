@@ -7,6 +7,7 @@ import { joinPhotoName, readPhoto } from "./lib/vision";
 import { labelKeyFor, type LabelResult } from "./fda";
 import type { Doc } from "./_generated/dataModel";
 import { reviewMed, type MedReview } from "./lib/medReview";
+import { labelUsedText } from "./lib/labelText";
 import { scopeTagsFor } from "./lib/anatomy";
 import { matchPills, type MedForMatch, type PillMatch } from "./lib/pillMatch";
 
@@ -170,7 +171,7 @@ export async function medReviewRows(ctx: QueryCtx, profile: Doc<"profiles">): Pr
       _id: m._id,
       name: m.name,
       dosageForm,
-      labelSource: cached?.found ? `${cached.brandName ?? cached.genericName ?? ""} (${cached.manufacturer ?? "?"}, ${cached.effectiveTime ?? "?"})` : null,
+      labelSource: cached?.found ? labelUsedText(cached.brandName ?? cached.genericName, cached.manufacturer, cached.effectiveTime) : null,
       knewBefore: m.knewBefore ?? null,
     });
   }
