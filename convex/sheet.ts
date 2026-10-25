@@ -96,6 +96,8 @@ export async function sheetFor(ctx: QueryCtx, me: Doc<"profiles">) {
       synthetic: q.synthetic,
     });
     return {
+      // A demo profile (seeded, or started from "Demo: the builder's dad"): printouts say so.
+      demo: me.synthetic || me.demoClone === true,
       anatomyText: describeAnatomy(me.anatomy),
       anatomyConfirmed: me.anatomyConfirmed !== false,
       role: me.role,

@@ -28,7 +28,10 @@ function Card({ anonId }: { anonId: string }) {
         <p className="text-sm">Print it and cut along the dashed line to carry it, or keep it on the phone.</p>
       </div>
       <section className="break-inside-avoid space-y-2 rounded-xl border-2 border-dashed border-black p-4 text-sm print:w-[4in]">
-        <h1 className="text-lg font-bold">Medicine card</h1>
+        <h1 className="flex flex-wrap items-center gap-2 text-lg font-bold">
+          Medicine card
+          {d.demo && <span className="rounded-full border border-neutral-400 px-2.5 py-0.5 text-xs font-bold">demo data</span>}
+        </h1>
         <p>
           <b>Anatomy:</b> {anatomyLine(d)}.
         </p>
