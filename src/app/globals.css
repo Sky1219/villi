@@ -69,6 +69,14 @@
   --font-sans: var(--font-atkinson);
 }
 
+/* Text size picked on home (TextSizePicker); everything is sized in rem. */
+html[data-text="large"] {
+  font-size: 112.5%;
+}
+html[data-text="largest"] {
+  font-size: 125%;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -104,6 +112,9 @@ button[aria-pressed="false"] {
 }
 
 @media print {
+  html[data-text] {
+    font-size: 100%;
+  }
   .no-print {
     display: none !important;
   }

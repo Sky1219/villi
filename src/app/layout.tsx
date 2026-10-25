@@ -3,6 +3,7 @@ import { Atkinson_Hyperlegible, Noto_Sans_Arabic } from "next/font/google";
 import "./globals.css";
 import { ConvexClientProvider } from "@/components/ConvexClientProvider";
 import { AnatomyBanner } from "@/components/AnatomyBanner";
+import { TEXT_SIZE_BOOT } from "@/lib/textSize";
 
 const atkinson = Atkinson_Hyperlegible({
   variable: "--font-atkinson",
@@ -34,7 +35,11 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${atkinson.variable} ${arabic.variable} h-full antialiased`}>
+    // The text-size script sets data-text on <html> before React hydrates.
+    <html lang="en" className={`${atkinson.variable} ${arabic.variable} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: TEXT_SIZE_BOOT }} />
+      </head>
       <body className="min-h-full font-sans">
         <ConvexClientProvider>
           <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-4 pb-10 print:max-w-none print:px-0 print:pb-0">

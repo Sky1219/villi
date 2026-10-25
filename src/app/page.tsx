@@ -18,11 +18,15 @@ import { stripCitations } from "@/lib/citations";
 import { personFor } from "@convex/lib/careFor";
 import { Loading } from "@/components/Loading";
 import { displayName } from "@/lib/displayName";
+import { TextSizePicker } from "@/components/TextSizePicker";
 
 function Header() {
   return (
     <header className="pt-6 pb-4">
-      <h1 className="text-3xl font-bold tracking-tight">Villi</h1>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-3xl font-bold tracking-tight">Villi</h1>
+        <TextSizePicker />
+      </div>
       <p className="text-muted">Can a body with this much intestine actually use this?</p>
     </header>
   );
