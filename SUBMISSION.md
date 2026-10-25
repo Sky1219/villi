@@ -40,6 +40,19 @@ Our pilot targets, set before any pilot data: at least half of answered flags ar
 - **Real FDA data is messy.** Modern labels lack the fields we expected, so the dosage form comes from the NDC directory, and a single label can be 200 KB.
 - **Honest numbers.** Demo profiles, seeded community data and real use are counted separately everywhere.
 
+## Accomplishments we're proud of
+
+- **It held up on cases it had never seen.** On 100 held-out cases, run on today's setup (Sonnet drafting, Opus reviewing), none of the 51 answers shown decided for the person, missed the question, or contradicted a guideline. 5 had a claim its source doesn't fully support, and the app's `/how` page says so.
+- **Your whole medicine list in a tenth of a second.** My dad's five FDA labels run to about 40,000 words. The list review reads them against his anatomy and the guidelines with no AI call.
+- **Built for tired, older, low-vision users.** Atkinson Hyperlegible type, 44 px tap targets, and no page scrolls sideways at 200% text. An automated WCAG 2.2 AA scan (axe) finds zero violations on every page, in light and dark mode.
+- **Privacy by default.** No accounts or names, photos deleted after reading, and one-tap "Delete my data".
+
+## What we learned
+
+- Code catches what the model misses, and the model catches what code misses. Citation, count and dose checks are deterministic; a second Claude catches paraphrased advice the code can't see.
+- A protective answer can still be a decision. "Don't crush it" sounds safe, but it isn't Villi's call to make.
+- Measure the problem, not just the product. Asking "Did you know this already?" on every flag tests the reason Villi exists.
+
 ## What's next
 
 - A clinician review of the 51 guideline summaries; today, only Claude has checked them.
