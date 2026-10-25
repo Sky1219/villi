@@ -249,6 +249,9 @@ function Sheet({ anonId }: { anonId: string }) {
         <button onClick={download} className="col-span-2 min-h-11 text-sm font-bold text-accent underline">
           Download as Markdown
         </button>
+        <Link href="/fridge" className="col-span-2 flex min-h-12 items-center justify-center rounded-xl border border-border bg-surface px-3 font-bold">
+          Fridge sheet: drinks for this anatomy
+        </Link>
       </div>
 
       <ShareWithTeam anonId={anonId} />
