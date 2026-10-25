@@ -48,6 +48,32 @@ const PROBLEM = [
   },
 ];
 
+// What an answer can say, before anyone checks anything. Styled like the real state cards.
+const THREE_ANSWERS = [
+  { tag: "Flag to discuss", cls: "border-2 border-flag bg-flag-soft", tagCls: "text-flag", text: "A cited source raises a concern for this anatomy, worth raising with the care team." },
+  { tag: "Nothing found in the sources I checked", cls: "border border-border bg-surface", tagCls: "text-muted", text: "The sources it lists raised no concern. That isn't the same as safe." },
+  { tag: "Can't tell yet", cls: "border border-border bg-surface-2", tagCls: "text-muted", text: "The item wasn't identified, or its label is missing what's needed." },
+];
+
+function ThreeAnswers() {
+  return (
+    <section aria-labelledby="answers" className="space-y-2">
+      <h2 id="answers" className="font-bold">
+        Three possible answers, and none of them is &ldquo;safe&rdquo;
+      </h2>
+      <ul className="space-y-2">
+        {THREE_ANSWERS.map((a) => (
+          <li key={a.tag} className={`rounded-xl px-3 py-2 ${a.cls}`}>
+            <span className={`block text-xs font-bold uppercase tracking-wide ${a.tagCls}`}>{a.tag}</span>
+            <span className="block text-sm">{a.text}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="text-sm text-muted">Each one cites its sources and ends with one question for the pharmacist or doctor.</p>
+    </section>
+  );
+}
+
 function Welcome({ anonId }: { anonId: string }) {
   return (
     <main className="space-y-6">
@@ -97,6 +123,7 @@ function Welcome({ anonId }: { anonId: string }) {
       >
         Set up your own (about a minute)
       </Link>
+      <ThreeAnswers />
       <p className="text-sm text-muted">
         Check a medicine or drink for that anatomy and get a cited answer with one question for the pharmacist. Demo
         profiles never count as real use.
