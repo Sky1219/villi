@@ -223,6 +223,18 @@ export default function HowPage() {
           community stays, anonymous and no longer linked to this phone.
         </p>
       </Section>
+
+      <Section title="Made for tired eyes">
+        <p>
+          The typeface is Atkinson Hyperlegible, designed for low vision, and every button is at least 44 pixels tall.
+          The three <b>A</b> buttons on the home screen make every screen larger, and the choice stays on this phone.
+        </p>
+        <p>
+          <b>Read this answer aloud</b> uses the phone&apos;s own voice: no audio leaves the phone and there is no extra AI
+          call. <b>Show this to the pharmacist</b> puts the question full-screen in large type, to turn the phone around at
+          the counter.
+        </p>
+      </Section>
     </main>
   );
 }
