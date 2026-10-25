@@ -11,6 +11,7 @@ import { citationLabel, humanizeCitations, sectionOf } from "@/lib/citations";
 import { AnatomyBadge } from "@/components/AnatomyBadge";
 import { CareOutcomesList } from "@/components/CareOutcomes";
 import { Loading } from "@/components/Loading";
+import { displayName } from "@/lib/displayName";
 
 const FILTERS = [{ key: "mine", label: "Like me" }, { key: "all", label: "Everyone" }, ...ANATOMY_KEYS.map((k) => ({ key: k, label: ANATOMY_LABELS[k] }))];
 
@@ -118,7 +119,7 @@ function Swaps({ anonId, filter }: { anonId: string; filter: string }) {
             .map((s) => (
               <div key={s._id} className="rounded-xl border border-border bg-surface-2 p-3 text-sm">
                 <p className="font-bold">
-                  Instead of {s.insteadOf} → {s.use}
+                  Instead of {displayName(s.insteadOf)} → {displayName(s.use)}
                 </p>
                 <p className="text-muted">{s.status === "checking" ? "Checking against the guidelines…" : humanizeCitations(s.nudge ?? "Kept private to you.")}</p>
               </div>
@@ -131,8 +132,8 @@ function Swaps({ anonId, filter }: { anonId: string; filter: string }) {
             <div className="flex items-start gap-3">
               <AnatomyBadge anatomyKey={s.anatomyKey} />
               <div className="min-w-0 flex-1">
-                <p className="text-sm text-muted">Instead of {s.insteadOf}</p>
-                <p className="text-lg font-bold leading-snug">{s.use}</p>
+                <p className="text-sm text-muted">Instead of {displayName(s.insteadOf)}</p>
+                <p className="text-lg font-bold leading-snug">{displayName(s.use)}</p>
                 {s.note && <p className="mt-1">{s.note}</p>}
                 <p className="mt-1 text-xs text-muted">Posted by someone with {s.anatomyLabel}</p>
                 <Badges synthetic={s.synthetic} />

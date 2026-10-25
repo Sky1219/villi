@@ -18,6 +18,7 @@ import { KnewBefore } from "@/components/KnewBefore";
 import type { SegmentId } from "@convex/lib/anatomy";
 import { personFor } from "@convex/lib/careFor";
 import { Loading } from "@/components/Loading";
+import { displayName } from "@/lib/displayName";
 
 type FinalAnswer = Answer & {
   evidence?: Record<string, { kind: string; text: string }>;
@@ -600,7 +601,7 @@ function AnswerView({ anonId, answerId }: { anonId: string; answerId: Id<"answer
       </div>
       <section>
         <p className="text-sm text-muted">{a.kind === "followup" ? "Follow-up" : "Checking"}</p>
-        <h1 className="text-2xl font-bold">{a.kind === "followup" ? a.inputText : (a.identified ?? a.inputText ?? "Your photo")}</h1>
+        <h1 className="text-2xl font-bold">{a.kind === "followup" ? a.inputText : a.identified ? displayName(a.identified) : (a.inputText ?? "Your photo")}</h1>
         {a.kind === "scan" && !a.isSaw && a.identified && a.hadPhoto === false && a.inputText === null && (
           <p className="text-sm text-muted">Read from your photo.</p>
         )}

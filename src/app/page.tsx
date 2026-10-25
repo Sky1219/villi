@@ -17,6 +17,7 @@ import { useState } from "react";
 import { stripCitations } from "@/lib/citations";
 import { personFor } from "@convex/lib/careFor";
 import { Loading } from "@/components/Loading";
+import { displayName } from "@/lib/displayName";
 
 function Header() {
   return (
@@ -138,7 +139,7 @@ function RecentChecks({ answers }: { answers: RecentCheck[] }) {
                 <span className={`block text-xs font-bold uppercase tracking-wide ${tag?.cls ?? "text-muted"}`}>
                   {tag?.label ?? STATUS_TAG[a.status] ?? "Answer"}
                 </span>
-                <span className="block font-bold">{a.title}</span>
+                <span className="block font-bold">{displayName(a.title)}</span>
                 {a.verdict && <span className="line-clamp-2 text-sm text-muted">{stripCitations(a.verdict)}</span>}
               </Link>
             </li>
