@@ -111,3 +111,10 @@
 - **Commit:** 50c45d5
 
 **Investigated, not changed: stricter directive lint.** I tested candidate patterns ("please don't…", "you shouldn't…", "don't change…", "I'd recommend stopping…") against every stored answer in `eval/runs/*` (about 900 drafts and finals). On today's setup (patched, holdout-current, demo runs) no shown answer matches any of them; in the old baseline run the matches were mostly deferrals the grader judged fine ("Please don't change anything on your own"). Adding them would block more good answers than bad ones, so `convex/lib/safety.ts` is untouched. (The old `demo-live` blocks were all the simulation caption, which the lint now removes.)
+
+### 15. How long the check took, in the receipt
+- **What:** the collapsed receipt line on every finished answer now ends with the time it took, e.g. "How Villi checked this (8 steps, 6 sources, 34 seconds)", from when the check was asked to the reviewer's verdict.
+- **Why it matters for judging:** a per-answer, measured latency next to the steps, honest about the wait (criterion 3, honesty); useful if a judge asks "how long does a check take?".
+- **Risk to the demo:** low. Text only; hidden when timestamps are missing, backwards or over 15 minutes (cloned demo answers may hide it, which is fine).
+- **Verify:** open a finished answer and read the "How Villi checked this" line.
+- **Commit:** 9db9bb3
