@@ -8,6 +8,7 @@ import { ReviewerSchema, type Answer, type ReviewerDecision } from "./lib/answer
 import { reviewDraft, type CitationRegistry } from "./lib/safety";
 import { attachEvidence } from "./lib/evidence";
 import { safetyChanges } from "./lib/safetyBadge";
+import { coverageNoteFor } from "./lib/coverage";
 
 type Registry = CitationRegistry & { evidence?: Record<string, string> };
 
@@ -60,6 +61,8 @@ export const run = internalAction({
               evidence: attachEvidence(outcome.final, r.registry.evidence ?? {}),
               // Set by code from what was retrieved, not by the model.
               communitySynthetic: !!r.registry.communitySynthetic,
+              // Rule-based, appended after review: liquid/IR swaps can cost more or need approval.
+              coverageNote: coverageNoteFor(outcome.final, r.registry.labelSections ?? []),
             }
           : undefined,
       edited: outcome.status === "final" ? outcome.edited : false,

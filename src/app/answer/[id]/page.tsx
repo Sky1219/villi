@@ -17,7 +17,12 @@ import { LogCard } from "@/components/LogCard";
 import type { SegmentId } from "@convex/lib/anatomy";
 import { personFor } from "@convex/lib/careFor";
 
-type FinalAnswer = Answer & { evidence?: Record<string, { kind: string; text: string }>; communitySynthetic?: boolean };
+type FinalAnswer = Answer & {
+  evidence?: Record<string, { kind: string; text: string }>;
+  communitySynthetic?: boolean;
+  // Fixed sentence added by rule under a liquid or immediate-release swap.
+  coverageNote?: string | null;
+};
 type Trace = { step: number; tool: string; summary: string; ok: boolean; at: number };
 
 const TOOL_LABEL: Record<string, string> = {
@@ -304,6 +309,7 @@ function AnswerCard({
             From {final.swapToAskAbout.source === "community" ? "the community swaps board" : "the guidelines"}. Ask before changing anything.
           </p>
           <Citations citation={final.swapToAskAbout.citation} final={final} titles={titles} />
+          {final.coverageNote && <p className="mt-2 text-sm">{final.coverageNote}</p>}
         </section>
       )}
       </div>

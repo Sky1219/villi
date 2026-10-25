@@ -21,6 +21,7 @@ import type * as lib_answerSchema from "../lib/answerSchema.js";
 import type * as lib_barcode from "../lib/barcode.js";
 import type * as lib_careFor from "../lib/careFor.js";
 import type * as lib_cat from "../lib/cat.js";
+import type * as lib_coverage from "../lib/coverage.js";
 import type * as lib_drugTable from "../lib/drugTable.js";
 import type * as lib_embed from "../lib/embed.js";
 import type * as lib_evidence from "../lib/evidence.js";
@@ -69,6 +70,7 @@ declare const fullApi: ApiFromModules<{
   "lib/barcode": typeof lib_barcode;
   "lib/careFor": typeof lib_careFor;
   "lib/cat": typeof lib_cat;
+  "lib/coverage": typeof lib_coverage;
   "lib/drugTable": typeof lib_drugTable;
   "lib/embed": typeof lib_embed;
   "lib/evidence": typeof lib_evidence;
