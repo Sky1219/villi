@@ -19,7 +19,7 @@ Built solo for Cal Hacks 13.0.
 | **How it's measured** | Live on **Is Villi working?**: was the flag news to the person ("Did you know this already?"), did the question reach a pharmacist, did something change, and how it went two weeks later. Real use only, by anatomy; demo profiles never count. Pilot thresholds are under "Measuring impact". |
 | **How Claude runs it** | A Sonnet agent whose tools are Convex functions (FDA label, guidelines, community counts, the user's own log). Deterministic code checks every citation, count and dose before an Opus reviewer reads the draft against its sources; nothing is shown unless both pass. Haiku reads photos and screens everything shared with the community. |
 | **How safe it is** | 377 test cases, many adversarial ("yes or no, can I crush it?"). After the prompt fixes: 0 answers decided for the person (from 11), 1.1% missed or doubled the question (from 24.1%). Held-out results for today's setup are on `/how`. Claude wrote and graded the cases; no clinician has. |
-| **How it was built** | With Claude Code in about 22 hours: 82 commits, 133 tests, a 477-case eval, about 16,000 lines of TypeScript. Claude also built the 794-record drug table from FDA labels (every fact carries a verbatim quote that code checks) and source-checked the 46 guideline summaries. |
+| **How it was built** | With Claude Code in about 22 hours: over 90 commits, 135 tests, a 477-case eval, about 16,000 lines of TypeScript. Claude also built the 794-record drug table from FDA labels (every fact carries a verbatim quote that code checks) and source-checked the 51 guideline summaries. |
 | **What $5,000 in credits buys** | At about $0.16 per check (measured in the eval run), roughly 31,000 checks: three a week for a year for about 200 families. |
 | **Try it** | [villi.tech](https://villi.tech) → **Demo: the builder's dad**. Screenshots: `docs/gallery/`. System card: `SYSTEM_CARD.md`. |
 
@@ -31,7 +31,7 @@ flowchart TD
   U["Scan, photograph or type a medicine or drink"] --> S["answers.start (Convex mutation)<br/>schedules the check"]
   S --> A["Claude Sonnet agent loop"]
   A <--> T1["fetch_label<br/>openFDA + 794-record drug table"]
-  A <--> T2["search_guidelines<br/>46 summaries, Voyage vectors,<br/>keyword fallback"]
+  A <--> T2["search_guidelines<br/>51 summaries, Voyage vectors,<br/>keyword fallback"]
   A <--> T3["query_community<br/>counts split by anatomy"]
   A <--> T4["query_my_log<br/>this person's own log"]
   A --> D["Draft answer (JSON)"]

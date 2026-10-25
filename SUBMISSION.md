@@ -30,8 +30,8 @@ Our pilot targets, set before any pilot data: at least half of answered flags ar
 
 ## How we built it
 
-- **Claude in the product.** A Sonnet agent whose tools are Convex functions: the FDA label (openFDA plus a 794-record drug table), 46 guideline summaries, community counts and the user's own log. Deterministic code then checks every citation, count, dose and directive. An Opus reviewer reads the draft against its sources, and nothing is shown unless both pass. Haiku reads photos and screens anything shared with the community.
-- **Claude building the product.** Claude Code, spec first: research, a roadmap and quick tasks in `.planning/`, then critique, accessibility and red-team passes. About 22 hours, 82 commits, 133 tests. Claude built the drug table from FDA labels, and every fact carries a verbatim label quote that code verifies. Claude also source-checked every guideline summary against the papers' text.
+- **Claude in the product.** A Sonnet agent whose tools are Convex functions: the FDA label (openFDA plus a 794-record drug table), 51 guideline summaries, community counts and the user's own log. Deterministic code then checks every citation, count, dose and directive. An Opus reviewer reads the draft against its sources, and nothing is shown unless both pass. Haiku reads photos and screens anything shared with the community.
+- **Claude building the product.** Claude Code, spec first: research, a roadmap and quick tasks in `.planning/`, then critique, accessibility and red-team passes. About 22 hours, over 90 commits, 135 tests. Claude built the drug table from FDA labels, and every fact carries a verbatim label quote that code verifies. Claude also source-checked every guideline summary against the papers' text.
 - **Stack.** Next.js, Convex (database, functions, scheduler, vector search, file storage), the Anthropic SDK, Voyage embeddings and openFDA.
 
 ## Challenges
@@ -42,7 +42,7 @@ Our pilot targets, set before any pilot data: at least half of answered flags ar
 
 ## What's next
 
-- A clinician review of the 46 guideline summaries; today, only Claude has checked them.
+- A clinician review of the 51 guideline summaries; today, only Claude has checked them.
 - A pilot with an intestinal-rehabilitation clinic, with its pharmacists on the care-team links.
 - At about $0.16 per check, $5,000 in credits is roughly 31,000 checks: three a week for a year for about 200 families.
 

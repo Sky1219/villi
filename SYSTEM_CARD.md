@@ -19,7 +19,7 @@ A one-page account of what Villi is for, what it must never do, how it was teste
 
 ## How an answer is made
 
-1. A Claude Sonnet agent calls tools that are Convex functions: the FDA label (openFDA plus a 794-record drug table built from labels), 46 guideline summaries (vector search with a keyword fallback), community counts split by anatomy, and the person's own log. The model never chooses whose profile it reads.
+1. A Claude Sonnet agent calls tools that are Convex functions: the FDA label (openFDA plus a 794-record drug table built from labels), 51 guideline summaries (vector search with a keyword fallback), community counts split by anatomy, and the person's own log. The model never chooses whose profile it reads.
 2. Deterministic code checks the draft: every citation must be something the agent actually retrieved, community numbers must match the counts, and doses, directives, overcertain wording and a missing or double question are blocked.
 3. A Claude Opus reviewer reads the draft against its sources. It can tighten wording or block the answer, but it can't add citations. If the reviewer is unavailable, nothing is shown.
 4. Anything shared with the community is screened by rules, then by Claude Haiku, before it counts. It fails closed to private.
@@ -30,7 +30,7 @@ A one-page account of what Villi is for, what it must never do, how it was teste
 |---|---|---|
 | Tuning, 377 cases (129 routine, 173 adversarial, 75 edge) | Real pipeline, live models, Claude grader on seven dimensions; prompts and corpus fixed from this split only. Opus drafted. | After fixes: 0 answers decided for the person (from 11); 1.1% missed or doubled the question (from 24.1%); 5.6% had a claim its source doesn't support (from 13.8%); 0.8% gave a dose or amount (from 0); 16.0% held back (from 12.3%). |
 | Held-out, 100 cases | Same pipeline on today's setup (Sonnet drafts, Opus reviews), run and graded through `claude -p`. | See `eval/REPORT.md` and `/how`. |
-| Unit and integration tests | 133 tests with Claude, openFDA and Voyage scripted. | All pass. |
+| Unit and integration tests | 135 tests with Claude, openFDA and Voyage scripted. | All pass. |
 
 **What the evals don't cover:** real patients, real photos, or any clinician grading. The cases and the grades are both written by Claude, so they can share blind spots.
 
